@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M2 0H14C15.1046 0 16 0.895431 16 2V10C16 11.1046 15.1046 12 14 12H2C0.895431 12 0 11.1046 0 10V2C0 0.895431 0.895431 0 2 0Z" fill="#FFFFFF"/>
+  <path d="M2 0H4V12H2C0.895431 12 0 11.1046 0 10V2C0 0.895431 0.895431 0 2 0Z" fill="#FF0000"/>
+  <path d="M12 0H14C15.1046 0 16 0.895431 16 2V10C16 11.1046 15.1046 12 14 12H12V0Z" fill="#FF0000"/>
+  <path d="M8 2.2L8.55 4.05H10.5L8.95 5.2L9.5 7.05L8 5.9L6.5 7.05L7.05 5.2L5.5 4.05H7.45L8 2.2Z" fill="#FF0000"/>
+</svg>
