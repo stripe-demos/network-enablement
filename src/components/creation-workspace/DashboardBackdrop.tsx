@@ -16,7 +16,7 @@ type FlowContext = { title: string; columns: number; navActive: number }
 
 // Map each Simple example flow to the list page it would launch from.
 const FLOW_CONTEXT: Record<string, FlowContext> = {
-  "account-configurations": { title: "Accounts", columns: 4, navActive: 3 },
+  "account-configurations": { title: "Network", columns: 4, navActive: 3 },
   products: { title: "Products", columns: 4, navActive: 4 },
   coupons: { title: "Coupons", columns: 4, navActive: 4 },
   customers: { title: "Customers", columns: 4, navActive: 3 },

@@ -41,6 +41,7 @@ export type AccountDetailsDraft = {
   firstName: string
   lastName: string
   accountEmail: string
+  displayName: string
   country: string
   useAccountEmailForBilling: boolean
   billingEmail: string
@@ -202,7 +203,7 @@ function initialsFromName(name: string) {
 export const NETWORK_ACCOUNTS: NetworkAccount[] = [
   { id: "acct_nathan", name: "Nathan Richardson", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "US", initials: "NR" },
   { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
-  { id: "acct_juniper", name: "Juniper Yoga Collective", directName: "Maya Chen", email: "billing@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true },
+  { id: "acct_juniper", name: "Juniper Yoga Collective", directName: "Maya Chen", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true },
   { id: "acct_tandem", name: "Tandem Fitness Network", directName: "Jordan Hale", email: "finance@tandemfitness.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "TF", hasBrandIcon: true },
   { id: "acct_cedar", name: "Cedar Therapy Group", directName: "Elena Voss", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "CG" },
   { id: "acct_lucent", name: "Lucent Recovery Studio", directName: "Marcus Reed", email: "payments@lucentrecovery.example", configurations: ["merchant", "customer"], country: "US", initials: "LS" },
@@ -231,6 +232,7 @@ export const INITIAL_ACCOUNT_DETAILS: AccountDetailsDraft = {
   firstName: "",
   lastName: "",
   accountEmail: "",
+  displayName: "",
   country: "",
   useAccountEmailForBilling: true,
   billingEmail: "",
@@ -302,6 +304,7 @@ export function getAvailableConfigurations(account: NetworkAccount | null) {
 }
 
 export function getDraftName(details: AccountDetailsDraft) {
+  if (details.displayName?.trim()) return details.displayName.trim()
   if (details.type === "Company") return details.registeredName.trim()
   return `${details.firstName.trim()} ${details.lastName.trim()}`.trim()
 }

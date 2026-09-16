@@ -192,6 +192,7 @@ export function AccountConfigurationPreview({
 
         <div className="border-t border-[#ECF1F6] px-[22px] py-[18px]">
           <p className="text-[13px] font-[600] leading-[18px] text-[#1A2C44]">Configurations</p>
+          <p className="mt-[4px] text-[12px] leading-[18px] text-[#818DA0]">A configuration defines what an account can do, and capabilities are the features it enables.</p>
           {effectiveOptions.length > 0 ? (
             <div className="mt-[12px] flex flex-col gap-[14px]">
               {previewGroups.map((group, index) => (

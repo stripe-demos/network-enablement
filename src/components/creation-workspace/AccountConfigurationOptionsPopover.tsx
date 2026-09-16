@@ -71,7 +71,7 @@ const CONFLICT_NUDGE_OPTIONS: ReadonlyArray<{
   {
     value: "automatic",
     label: "Auto",
-    description: "Appears for a unique match, such as billing@juniperyoga.example.",
+    description: "Appears for a unique match, such as accounts@juniperyoga.example.",
   },
   {
     value: "always",

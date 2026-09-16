@@ -261,6 +261,14 @@ function AccountIdentityFields({
           onDismiss={() => setDismissedMatchId(matchingAccount.id)}
         />
       ) : null}
+      <Field label="Display name">
+        <input
+          className={tokens.inputClass}
+          placeholder="Shown on this account"
+          value={details.displayName ?? ""}
+          onChange={(event) => onChange({ displayName: event.target.value })}
+        />
+      </Field>
       <div className="flex flex-col gap-[4px]">
         <span className={tokens.labelClass}>Account type</span>
         <SegmentedControl
