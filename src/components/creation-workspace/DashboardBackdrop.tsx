@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from "react"
 import { motion } from "framer-motion"
 import { DemoContextBar } from "@/components/creation-workspace/DemoContextBar"
 
@@ -40,6 +41,7 @@ export function DashboardBackdrop({
   onBack,
   patternLabel = "Simple pattern",
   showContextBar = true,
+  headerAction,
 }: {
   flow: string
   exampleLabel: string
@@ -49,6 +51,8 @@ export function DashboardBackdrop({
   patternLabel?: string
   /** Hide when the caller already owns the demo wayfinding bar. */
   showContextBar?: boolean
+  /** Real list-page action that replaces the wireframe create button. */
+  headerAction?: ReactNode
 }) {
   const ctx = FLOW_CONTEXT[flow] ?? DEFAULT_CONTEXT
 
@@ -117,7 +121,11 @@ export function DashboardBackdrop({
                 <p className="text-[28px] font-bold tracking-[-0.56px] text-[#0D111A]">
                   {ctx.title}
                 </p>
-                <div className="h-[34px] w-[132px] rounded-[8px] bg-[#EAEEF3]" />
+                {headerAction ? (
+                  <div className="pointer-events-auto">{headerAction}</div>
+                ) : (
+                  <div className="h-[34px] w-[132px] rounded-[8px] bg-[#EAEEF3]" />
+                )}
               </div>
 
               {/* Toolbar tabs */}

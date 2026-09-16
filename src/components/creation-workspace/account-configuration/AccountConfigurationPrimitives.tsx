@@ -118,11 +118,8 @@ export function AccountSummaryCard({
       <AccountAvatar account={account} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-[600] leading-[18px] tracking-[-0.08px] text-[#1A2C44]">{account.name}</p>
-        <p className="flex min-w-0 items-baseline text-[11px] font-[400] leading-[16px] text-[#596171]">
-          <span className="min-w-0 truncate">{account.email}</span>
-          <span className="mx-[6px] shrink-0">·</span>
-          <span className="shrink-0 font-mono">{account.id}</span>
-        </p>
+        <p className="truncate text-[11px] font-[400] leading-[16px] text-[#596171]">{account.email}</p>
+        <p className="truncate font-mono text-[11px] leading-[16px] text-[#596171]">{account.id}</p>
       </div>
       <CountryBadge country={account.country} />
       {actionLabel && onAction ? (

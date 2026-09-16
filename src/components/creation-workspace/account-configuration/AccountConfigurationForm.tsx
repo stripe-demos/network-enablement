@@ -32,6 +32,8 @@ import {
   PAYOUT_METHODS,
   getCapabilities,
   getAccountRoles,
+  getConfigurationOptions,
+  getDisplayedNetworkAccount,
   getDraftName,
   isNewAccountIdentityValid,
   type AccountDetailsDraft,
@@ -44,6 +46,7 @@ import {
   type NetworkAccount,
   type PayoutMethod,
   type PayoutMethodDetailDraft,
+  type UserPath,
 } from "./model"
 
 const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
@@ -135,20 +138,29 @@ function PropertyLabel({ label, hint }: { label: string; hint: string }) {
     </div>
   )
 }
-const NETWORK_ACCOUNT_ITEMS = NETWORK_ACCOUNTS.map((account) => ({ id: account.id, name: account.name, detail: account.email }))
-
-function getNetworkAccountSearchText(item: { id: string; name: string }) {
-  const account = NETWORK_ACCOUNTS.find((candidate) => candidate.id === item.id)
-  return account ? `${account.name} ${account.email} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}` : item.name
+function getNetworkAccounts(userPath?: UserPath) {
+  return NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, userPath))
 }
 
-function AccountPickerOption({ id }: { id: string }) {
-  const account = NETWORK_ACCOUNTS.find((candidate) => candidate.id === id)
+function getNetworkAccountItems(userPath?: UserPath) {
+  return getNetworkAccounts(userPath).map((account) => ({ id: account.id, name: account.name, detail: account.email }))
+}
+
+function getNetworkAccountSearchText(userPath?: UserPath) {
+  return (item: { id: string; name: string }) => {
+    const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === item.id)
+    return account ? `${account.name} ${account.email} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}` : item.name
+  }
+}
+
+function AccountPickerOption({ id, userPath }: { id: string; userPath?: UserPath }) {
+  const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
   if (!account) return null
   const configurations = CONFIGURATION_OPTIONS
     .filter((option) => account.configurations.includes(option.id))
     .map((option) => option.title)
     .join(", ")
+  const meta = [account.email, configurations].filter(Boolean).join(" · ")
 
   return (
     <span className="flex min-w-0 flex-1 flex-col py-[2px]">
@@ -156,7 +168,7 @@ function AccountPickerOption({ id }: { id: string }) {
         <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{account.name}</span>
         <CountryBadge country={account.country} size="sm" />
       </span>
-      <span className="mt-[1px] truncate text-[11px] leading-[16px] text-[#6C7688]">{account.email} · {configurations}</span>
+      <span className="mt-[1px] truncate text-[11px] leading-[16px] text-[#6C7688]">{meta}</span>
     </span>
   )
 }
@@ -190,7 +202,7 @@ function DuplicateAccountNudge({
       <div className="p-[8px]">
         <AccountSummaryCard account={account} />
         <p className="px-[8px] pb-[4px] pt-[8px] text-[11px] leading-[16px] text-[#3C4F69]">
-          This email matches an existing account in your network. Continue with it to add configurations and any remaining details instead of creating a duplicate.
+          This email matches an existing account in your network. Continue with it to add configurations instead of creating a duplicate account.
         </p>
       </div>
       <div className="flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] p-[8px]">
@@ -299,6 +311,7 @@ function AccountSelector({
   source,
   selectedAccountId,
   details,
+  userPath,
   onChooseExisting,
   onPrepareNew,
   onChooseNew,
@@ -309,6 +322,7 @@ function AccountSelector({
   source: AccountSource
   selectedAccountId: string
   details: AccountDetailsDraft
+  userPath?: UserPath
   onChooseExisting: () => void
   onPrepareNew: () => void
   onChooseNew: () => void
@@ -322,7 +336,7 @@ function AccountSelector({
   const draftName = getDraftName(details)
   const selectedLabel = source === "new" ? draftName || "New account" : undefined
   const selectedAccount = source === "existing"
-    ? NETWORK_ACCOUNTS.find((account) => account.id === selectedAccountId)
+    ? getNetworkAccounts(userPath).find((account) => account.id === selectedAccountId)
     : undefined
 
   useEffect(() => {
@@ -331,7 +345,7 @@ function AccountSelector({
   }, [])
 
   const selectExisting = (id: string) => {
-    const account = NETWORK_ACCOUNTS.find((candidate) => candidate.id === id)
+    const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
     if (account) onSelectExisting(account)
   }
 
@@ -341,9 +355,9 @@ function AccountSelector({
       label="Account"
       placeholder="Find or add an account"
       searchPlaceholder="Search by name, email, or account ID"
-      items={NETWORK_ACCOUNT_ITEMS}
-      getSearchText={getNetworkAccountSearchText}
-      renderOption={(item) => <AccountPickerOption id={item.id} />}
+      items={getNetworkAccountItems(userPath)}
+      getSearchText={getNetworkAccountSearchText(userPath)}
+      renderOption={(item) => <AccountPickerOption id={item.id} userPath={userPath} />}
       insetOptionHover
       selectedId={source === "existing" ? selectedAccountId : ""}
       selectedLabel={selectedLabel}
@@ -477,16 +491,19 @@ function ConfigurationRow({
 function ConfigurationPicker({
   selected,
   existing,
+  userPath,
   onChange,
 }: {
   selected: ConfigurationKind[]
   existing: ConfigurationKind[]
+  userPath?: UserPath
   onChange: (next: ConfigurationKind[]) => void
 }) {
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
-  const existingOptions = CONFIGURATION_OPTIONS.filter((option) => existing.includes(option.id))
-  const addableOptions = CONFIGURATION_OPTIONS.filter((option) => !existing.includes(option.id))
+  const options = getConfigurationOptions(userPath)
+  const existingOptions = options.filter((option) => existing.includes(option.id))
+  const addableOptions = options.filter((option) => !existing.includes(option.id))
   const toggle = (option: ConfigurationOption) => {
     onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])
   }
@@ -625,23 +642,29 @@ function HoverTip({ text, children }: { text: string; children: ReactNode }) {
 
 function PayoutInformationSection({
   configurations,
+  existingConfigurations,
   details,
+  userPath,
   onChange,
 }: {
   configurations: ConfigurationKind[]
+  existingConfigurations: ConfigurationKind[]
   details: AccountDetailsDraft
+  userPath?: UserPath
   onChange: (patch: Partial<AccountDetailsDraft>) => void
 }) {
   const [openMethod, setOpenMethod] = useState<PayoutMethod | null>(null)
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
-  const merchantSelected = configurations.includes("merchant")
+  const isDirect = userPath === "direct"
+  const merchantSelected = configurations.includes("merchant") || existingConfigurations.includes("merchant")
+  const payoutMethods = isDirect ? PAYOUT_METHODS.filter((method) => method.id !== "stripe-balance") : PAYOUT_METHODS
 
   useEffect(() => {
-    if (merchantSelected || !details.payoutMethods.includes("stripe-balance")) return
+    if ((!isDirect && merchantSelected) || !details.payoutMethods.includes("stripe-balance")) return
     onChange({ payoutMethods: details.payoutMethods.filter((method) => method !== "stripe-balance") })
     if (openMethod === "stripe-balance") setOpenMethod(null)
-  }, [merchantSelected, details.payoutMethods, onChange, openMethod])
+  }, [isDirect, merchantSelected, details.payoutMethods, onChange, openMethod])
 
   const toggleMethod = (method: PayoutMethod, checked: boolean) => {
     onChange({
@@ -690,7 +713,7 @@ function PayoutInformationSection({
         <p className="mt-[3px] text-[11px] leading-[16px] text-[#596171]">Select where funds should be deposited.</p>
       </div>
       <div className="flex flex-col gap-[7px]">
-        {PAYOUT_METHODS.map((method) => {
+        {payoutMethods.map((method) => {
           const checked = details.payoutMethods.includes(method.id)
           const methodDetails = details.payoutMethodDetails[method.id]
           const hasDetails = Boolean(methodDetails.primary || methodDetails.secondary)
@@ -760,11 +783,14 @@ function PayoutInformationSection({
         })}
       </div>
       {needsPayoutEmail ? (
-        <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F4F7FA] px-[12px] py-[10px]">
-          <p className="text-[12px] leading-[16px] text-[#3C4F69]">
-            If you don’t have the recipient’s payout information, Stripe will email the account after creation to collect it.
-          </p>
-        </div>
+        <p className="flex items-start gap-[6px] text-[11px] leading-[16px] text-[#596171]">
+          <svg className="mt-[2px] shrink-0 text-[#818DA0]" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
+            <circle cx="6" cy="3.75" r="0.7" fill="currentColor" />
+            <path d="M6 5.5v3.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+          If you don’t have payout details, you can choose to have Stripe collect them by email after the account is created.
+        </p>
       ) : null}
     </section>
   )
@@ -1072,6 +1098,7 @@ export function AccountConfigurationForm({
   details,
   configurations,
   existingConfigurations,
+  userPath,
   onChooseExisting,
   onPrepareNew,
   onChooseNew,
@@ -1086,6 +1113,7 @@ export function AccountConfigurationForm({
   details: AccountDetailsDraft
   configurations: ConfigurationKind[]
   existingConfigurations: ConfigurationKind[]
+  userPath?: UserPath
   onChooseExisting: () => void
   onPrepareNew: () => void
   onChooseNew: () => void
@@ -1102,6 +1130,7 @@ export function AccountConfigurationForm({
         source={source}
         selectedAccountId={selectedAccountId}
         details={details}
+        userPath={userPath}
         onChooseExisting={onChooseExisting}
         onPrepareNew={onPrepareNew}
         onChooseNew={onChooseNew}
@@ -1112,12 +1141,13 @@ export function AccountConfigurationForm({
         <ConfigurationPicker
           selected={configurations}
           existing={existingConfigurations}
+          userPath={userPath}
           onChange={onConfigurationsChange}
         />
       ) : null}
       {configurations.includes("customer") ? <CustomerDetailsSection details={details} onChange={onDetailsChange} /> : null}
-      {configurations.includes("recipient") ? <PayoutInformationSection configurations={configurations} details={details} onChange={onDetailsChange} /> : null}
-      {configurations.includes("merchant") || configurations.includes("recipient") ? (
+      {configurations.includes("recipient") ? <PayoutInformationSection configurations={configurations} existingConfigurations={existingConfigurations} details={details} userPath={userPath} onChange={onDetailsChange} /> : null}
+      {userPath !== "direct" && (configurations.includes("merchant") || configurations.includes("recipient")) ? (
         <MoreDetailsSection configurations={configurations} details={details} onChange={onDetailsChange} />
       ) : null}
       {source === "new" && configurations.length > 0 && onboardingStyle === "pre-save" ? <OnboardingSection details={details} onChange={onDetailsChange} /> : null}

@@ -1,5 +1,7 @@
 export type AccountSource = "existing" | "new"
 
+export type UserPath = "direct" | "platform"
+
 export type ConfigurationKind = "merchant" | "customer" | "recipient"
 
 export type PayoutCollectionMode = "manual" | "email"
@@ -27,6 +29,10 @@ export type NetworkAccount = {
   country: "UK" | "US" | "CA"
   initials: string
   hasBrandIcon?: boolean
+  /** Person name used when this account appears in the Direct user path. */
+  directName?: string
+  /** Configurations shown in the Direct user path. Merchant is never shown there. */
+  directConfigurations?: ConfigurationKind[]
 }
 
 export type AccountDetailsDraft = {
@@ -62,6 +68,7 @@ export type AccountDetailsDraft = {
 
 export type AccountConfigurationPayload = {
   source: AccountSource
+  userPath?: UserPath
   account: NetworkAccount | AccountDetailsDraft
   configurations: ConfigurationKind[]
   deactivatedConfigurations?: ConfigurationKind[]
@@ -84,6 +91,11 @@ export type ConfigurationOption = {
   title: string
   relationship: string
   capabilities: string[]
+}
+
+export function getConfigurationOptions(userPath?: UserPath) {
+  if (userPath === "direct") return CONFIGURATION_OPTIONS.filter((option) => option.id !== "merchant")
+  return CONFIGURATION_OPTIONS
 }
 
 export const CONFIGURATION_OPTIONS: ConfigurationOption[] = [
@@ -183,17 +195,35 @@ export function getCapabilityGroup(name: string) {
   return CAPABILITY_GROUPS.find((group) => group.items.some((item) => item.name === name))
 }
 
+function initialsFromName(name: string) {
+  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()
+}
+
 export const NETWORK_ACCOUNTS: NetworkAccount[] = [
   { id: "acct_nathan", name: "Nathan Richardson", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "US", initials: "NR" },
-  { id: "acct_harbourwell", name: "Harbourwell Fitness", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
-  { id: "acct_juniper", name: "Juniper Yoga Collective", email: "billing@juniperyoga.example", configurations: ["merchant"], country: "UK", initials: "JY", hasBrandIcon: true },
-  { id: "acct_tandem", name: "Tandem Fitness Network", email: "finance@tandemfitness.example", configurations: ["merchant"], country: "UK", initials: "TF", hasBrandIcon: true },
-  { id: "acct_cedar", name: "Cedar Therapy Group", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], country: "US", initials: "CG" },
-  { id: "acct_lucent", name: "Lucent Recovery Studio", email: "payments@lucentrecovery.example", configurations: ["merchant", "customer"], country: "US", initials: "LS" },
-  { id: "acct_aspen", name: "Aspen Therapy Center", email: "info@aspentherapy.example", configurations: ["merchant", "customer"], country: "US", initials: "AT", hasBrandIcon: true },
+  { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
+  { id: "acct_juniper", name: "Juniper Yoga Collective", directName: "Maya Chen", email: "billing@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true },
+  { id: "acct_tandem", name: "Tandem Fitness Network", directName: "Jordan Hale", email: "finance@tandemfitness.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "TF", hasBrandIcon: true },
+  { id: "acct_cedar", name: "Cedar Therapy Group", directName: "Elena Voss", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "CG" },
+  { id: "acct_lucent", name: "Lucent Recovery Studio", directName: "Marcus Reed", email: "payments@lucentrecovery.example", configurations: ["merchant", "customer"], country: "US", initials: "LS" },
+  { id: "acct_aspen", name: "Aspen Therapy Center", directName: "Sofia Alvarez", email: "info@aspentherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "AT", hasBrandIcon: true },
   { id: "acct_priya", name: "Priya Shah", email: "priya.shah@example.com", configurations: ["customer"], country: "US", initials: "PS" },
   { id: "acct_cameron", name: "Cameron Ellis", email: "cameron.ellis@example.com", configurations: ["customer"], additionalRoles: ["Money manager"], country: "US", initials: "CE" },
 ]
+
+export function getDisplayedNetworkAccount(account: NetworkAccount, userPath?: UserPath): NetworkAccount {
+  if (userPath !== "direct") return account
+  const name = account.directName ?? account.name
+  const configurations = (account.directConfigurations ?? account.configurations.filter((configuration) => configuration !== "merchant"))
+    .filter((configuration) => configuration !== "merchant")
+  return {
+    ...account,
+    name,
+    initials: initialsFromName(name),
+    hasBrandIcon: false,
+    configurations: configurations.length > 0 ? configurations : ["recipient"],
+  }
+}
 
 export const INITIAL_ACCOUNT_DETAILS: AccountDetailsDraft = {
   type: "Company",

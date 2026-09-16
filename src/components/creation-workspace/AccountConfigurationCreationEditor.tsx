@@ -23,6 +23,7 @@ import {
   type AccountSource,
   type ConfigurationKind,
   type NetworkAccount,
+  type UserPath,
 } from "@/components/creation-workspace/account-configuration/model"
 
 export type { AccountConfigurationPayload } from "@/components/creation-workspace/account-configuration/model"
@@ -33,6 +34,7 @@ type AccountConfigurationCreationEditorProps = {
   onSubmit?: (payload: AccountConfigurationPayload) => void
   presentation?: WorkspacePresentation
   embedded?: boolean
+  userPath: UserPath
 }
 
 function countryName(country: NetworkAccount["country"]) {
@@ -47,6 +49,7 @@ export function AccountConfigurationCreationEditor({
   onSubmit,
   presentation = "fullscreen",
   embedded = false,
+  userPath,
 }: AccountConfigurationCreationEditorProps) {
   const { accountSelectionStyle } = useAccountSelectionStyle()
   const { accountOnboardingStyle } = useAccountOnboardingStyle()
@@ -123,6 +126,7 @@ export function AccountConfigurationCreationEditor({
     const onboardingEmail = getOnboardingEmail(details) || details.accountEmail
     return {
       source,
+      userPath,
       account: source === "existing" ? selectedAccount! : details,
       configurations,
       details,
@@ -173,7 +177,7 @@ export function AccountConfigurationCreationEditor({
           largeModalHugContent={!embedded}
           hideHeader
           header={null}
-          editor={<AccountSuccessPage payload={completedPayload} hugContent={!embedded} />}
+          editor={<AccountSuccessPage payload={completedPayload} hugContent={!embedded} onClose={onClose} onViewAccount={onClose} />}
         />
       </>
     )
@@ -209,6 +213,7 @@ export function AccountConfigurationCreationEditor({
           details={details}
           configurations={configurations}
           existingConfigurations={source === "existing" ? selectedAccount?.configurations ?? [] : []}
+          userPath={userPath}
           onChooseExisting={chooseExisting}
           onPrepareNew={prepareNew}
           onChooseNew={chooseNew}
@@ -219,7 +224,7 @@ export function AccountConfigurationCreationEditor({
       }
       preview={
         <div className="relative flex h-full min-h-[420px] w-full items-center justify-center px-[24px] py-[56px]">
-          <AccountConfigurationPreview source={source} selectedAccount={selectedAccount} configurations={configurations} details={details} />
+          <AccountConfigurationPreview source={source} selectedAccount={selectedAccount} configurations={configurations} details={details} userPath={userPath} />
         </div>
       }
     />

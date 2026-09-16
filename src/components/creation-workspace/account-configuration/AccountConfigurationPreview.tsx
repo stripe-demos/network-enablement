@@ -5,13 +5,14 @@ import { useState } from "react"
 
 import { AccountAvatar, CheckIcon, CountryBadge } from "./AccountConfigurationPrimitives"
 import {
-  CONFIGURATION_OPTIONS,
   getCapabilitiesForGroup,
+  getConfigurationOptions,
   getDraftName,
   type AccountDetailsDraft,
   type AccountSource,
   type ConfigurationKind,
   type NetworkAccount,
+  type UserPath,
 } from "./model"
 
 const PREVIEW_CAPABILITY_LIMIT = 2
@@ -22,14 +23,12 @@ function ConfigurationCapabilityGroup({
   capabilities,
   defaultExpanded,
   collapsible,
-  adding,
 }: {
   id: string
   title: string
   capabilities: string[]
   defaultExpanded: boolean
   collapsible: boolean
-  adding?: boolean
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [showAll, setShowAll] = useState(false)
@@ -50,7 +49,6 @@ function ConfigurationCapabilityGroup({
         >
           <CheckIcon />
           <span className="min-w-0 text-[12px] font-[600] leading-[16px] text-[#2C219E]">{title}</span>
-          {adding ? <span className="rounded-full bg-[#F1EEFF] px-[6px] py-[1px] text-[10px] font-[600] leading-[14px] text-[#533AFD]">Adding</span> : null}
           <span className="ml-auto flex items-center">
             {capabilityLabel ? (
               <span
@@ -70,7 +68,6 @@ function ConfigurationCapabilityGroup({
         <div className="flex w-full items-center gap-[8px]">
           <CheckIcon />
           <span className="text-[12px] font-[600] leading-[16px] text-[#2C219E]">{title}</span>
-          {adding ? <span className="rounded-full bg-[#F1EEFF] px-[6px] py-[1px] text-[10px] font-[600] leading-[14px] text-[#533AFD]">Adding</span> : null}
         </div>
       )}
       {capabilities.length > 0 ? (
@@ -116,7 +113,7 @@ function EmptyAccountPreview() {
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M5.5 7.5h11M5.5 11h7M5.5 14.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><rect x="2.75" y="3.25" width="16.5" height="15.5" rx="3.25" stroke="currentColor" strokeWidth="1.5" /></svg>
       </div>
       <h3 className="mt-[14px] text-[14px] font-[600] leading-[20px] text-[#1A2C44]">Account configuration</h3>
-      <p className="mx-auto mt-[5px] max-w-[310px] text-[12px] leading-[18px] text-[#596171]">Choose an existing account or create a new one. Its configurations will appear here.</p>
+      <p className="mx-auto mt-[5px] max-w-[310px] text-[12px] leading-[18px] text-[#596171]">Choose an existing account or create a new one. Its configurations and capabilities will appear here.</p>
     </div>
   )
 }
@@ -126,11 +123,13 @@ export function AccountConfigurationPreview({
   selectedAccount,
   configurations,
   details,
+  userPath,
 }: {
   source: AccountSource
   selectedAccount: NetworkAccount | null
   configurations: ConfigurationKind[]
   details: AccountDetailsDraft
+  userPath?: UserPath
 }) {
   const isNewAccount = source === "new"
   if (!isNewAccount && !selectedAccount) return <EmptyAccountPreview />
@@ -149,7 +148,7 @@ export function AccountConfigurationPreview({
     ...existingConfigurations,
     ...configurations,
   ]))
-  const effectiveOptions = CONFIGURATION_OPTIONS.filter((option) => effectiveConfigurations.includes(option.id))
+  const effectiveOptions = getConfigurationOptions(userPath).filter((option) => effectiveConfigurations.includes(option.id))
   const previewGroups = [
     ...effectiveOptions.map((option) => ({
       id: option.id,
@@ -178,11 +177,11 @@ export function AccountConfigurationPreview({
                 {isNewAccount ? <span data-preview-account-status className="rounded-full bg-[#F1F6FB] px-[7px] py-[2px] text-[10px] font-[600] leading-[14px] text-[#526378]">Draft</span> : null}
               </div>
               <p className="mt-[2px] flex min-w-0 items-baseline text-[12px] leading-[17px] text-[#596171]">
-                <span className="min-w-0 truncate">{account.email || "Add an account email"}</span>
+                <span className="shrink-0">{account.email || "Add an account email"}</span>
                 {!isNewAccount && account.id ? (
                   <>
                     <span className="mx-[6px] shrink-0">·</span>
-                    <span className="shrink-0 font-mono">{account.id}</span>
+                    <span className="min-w-0 truncate font-mono">{account.id}</span>
                   </>
                 ) : null}
               </p>
@@ -195,21 +194,16 @@ export function AccountConfigurationPreview({
           <p className="text-[13px] font-[600] leading-[18px] text-[#1A2C44]">Configurations</p>
           {effectiveOptions.length > 0 ? (
             <div className="mt-[12px] flex flex-col gap-[14px]">
-              {previewGroups.map((group, index) => {
-                const adding = !isNewAccount && configurations.includes(group.id as ConfigurationKind)
-                const firstAddingIndex = previewGroups.findIndex((candidate) => configurations.includes(candidate.id as ConfigurationKind))
-                return (
+              {previewGroups.map((group, index) => (
                 <ConfigurationCapabilityGroup
                   key={group.id}
                   id={group.id}
                   title={group.title}
                   capabilities={group.capabilities}
-                  defaultExpanded={firstAddingIndex >= 0 ? index === firstAddingIndex : index === 0}
+                  defaultExpanded={index === 0}
                   collapsible={group.capabilities.length > 0}
-                  adding={adding}
                 />
-                )
-              })}
+              ))}
             </div>
           ) : (
             <p className="mt-[7px] text-[12px] leading-[18px] text-[#818DA0]">Select configurations in the form to build this account setup.</p>
