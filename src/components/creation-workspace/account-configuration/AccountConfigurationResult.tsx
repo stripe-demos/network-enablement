@@ -229,7 +229,7 @@ function PreviewSuccessLayout({
 
 function ShareLinkButton({ onCopy }: { onCopy: () => Promise<void> }) {
   const [copied, setCopied] = useState(false)
-  const hideTimer = useRef<number>()
+  const hideTimer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(hideTimer.current), [])
 
