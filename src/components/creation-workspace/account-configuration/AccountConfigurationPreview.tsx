@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { useState } from "react"
 
+import { FieldHint } from "./AccountConfigurationForm"
 import { AccountAvatar, CheckIcon, CountryBadge } from "./AccountConfigurationPrimitives"
 import {
   getCapabilitiesForGroup,
@@ -191,8 +192,12 @@ export function AccountConfigurationPreview({
         </div>
 
         <div className="border-t border-[#ECF1F6] px-[22px] py-[18px]">
-          <p className="text-[13px] font-[600] leading-[18px] text-[#1A2C44]">Configurations</p>
-          <p className="mt-[4px] text-[12px] leading-[18px] text-[#818DA0]">A configuration defines what an account can do, and capabilities are the features it enables.</p>
+          <div className="inline-flex items-center gap-[4px]">
+            <p className="text-[13px] font-[600] leading-[18px] text-[#1A2C44]">Configurations and capabilities</p>
+            <FieldHint label="Configurations and capabilities">
+              A configuration defines what an account can do, and capabilities are the features it enables.
+            </FieldHint>
+          </div>
           {effectiveOptions.length > 0 ? (
             <div className="mt-[12px] flex flex-col gap-[14px]">
               {previewGroups.map((group, index) => (

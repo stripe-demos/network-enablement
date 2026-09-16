@@ -53,7 +53,7 @@ const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
 const ACCOUNT_SOURCE_OPTIONS = ["existing", "new"] as const
 const ONBOARDING_ACTION_OPTIONS = ["send-email", "copy-link"] as const
 
-function FieldHint({ label, children }: { label: string; children: string }) {
+export function FieldHint({ label, children }: { label: string; children: string }) {
   const tooltipId = `${label.replace(/\s+/g, "-").toLowerCase()}-hint`
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
