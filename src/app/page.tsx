@@ -1,5 +1,5 @@
-import { AccountConfigurationDemo } from "@/components/AccountConfigurationDemo"
+import { StandardLandingPage } from "@/components/StandardLandingPage"
 
 export default function Page() {
-  return <AccountConfigurationDemo />
+  return <StandardLandingPage />
 }

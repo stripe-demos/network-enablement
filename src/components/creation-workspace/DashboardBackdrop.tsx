@@ -23,6 +23,8 @@ const FLOW_CONTEXT: Record<string, FlowContext> = {
   "api-access-policy": { title: "API requests", columns: 4, navActive: 2 },
   "create-api-key": { title: "API keys", columns: 4, navActive: 2 },
   "buy-button": { title: "Payment links", columns: 4, navActive: 4 },
+  invoices: { title: "Invoices", columns: 4, navActive: 4 },
+  subscriptions: { title: "Subscriptions", columns: 4, navActive: 4 },
 }
 const DEFAULT_CONTEXT: FlowContext = { title: "Overview", columns: 4, navActive: 0 }
 
@@ -64,7 +66,7 @@ export function DashboardBackdrop({
       {/* Wireframe dashboard — fills the viewport behind the modal + dim. */}
       <motion.div
         className="fixed inset-0 z-30 flex bg-white"
-        aria-hidden
+        aria-hidden={headerAction ? undefined : true}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}

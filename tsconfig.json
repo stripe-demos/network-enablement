@@ -17,5 +17,10 @@
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "src/components/product-catalog/**",
+    "src/components/creation-workspace/ContractPlanEditorOverlay.tsx",
+    "src/components/creation-workspace/CreationFlowOverlay.tsx"
+  ]
 }

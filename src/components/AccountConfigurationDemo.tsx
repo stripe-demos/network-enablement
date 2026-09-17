@@ -19,7 +19,15 @@ import { LayoutSplitProvider } from "@/components/creation-workspace/layoutSplit
 import { ProductFormStyleProvider } from "@/components/creation-workspace/productFormStyle"
 import { SegmentedStyleProvider } from "@/components/creation-workspace/segmentedStyle"
 
-function DemoExperience() {
+function DemoExperience({
+  onExit,
+  patternLabel = "Standalone demo",
+  exampleLabel = "Account creation",
+}: {
+  onExit?: () => void
+  patternLabel?: string
+  exampleLabel?: string
+}) {
   const [userPath, setUserPath] = useState<UserPath | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [runKey, setRunKey] = useState(0)
@@ -38,8 +46,8 @@ function DemoExperience() {
     <main className="example-ui min-h-screen bg-white text-[#142234]">
       <DashboardBackdrop
         flow="account-configurations"
-        exampleLabel="Account configuration"
-        patternLabel="Standalone demo"
+        exampleLabel={exampleLabel}
+        patternLabel={patternLabel}
         onBack={() => {}}
         showContextBar={false}
         headerAction={
@@ -84,10 +92,20 @@ function DemoExperience() {
       ) : null}
 
       <DemoContextBar
-        patternLabel="Standalone demo"
-        exampleLabel="Account configuration"
+        patternLabel={patternLabel}
+        exampleLabel={exampleLabel}
         placement="bottom-left"
-        onBack={() => setIsEditorOpen(false)}
+        onBack={() => {
+          if (isEditorOpen) {
+            setIsEditorOpen(false)
+            return
+          }
+          if (onExit) {
+            onExit()
+            return
+          }
+          setIsEditorOpen(false)
+        }}
         trailingAction={<AccountConfigurationOptionsPopover />}
       />
 
@@ -102,7 +120,15 @@ function DemoExperience() {
   )
 }
 
-export function AccountConfigurationDemo() {
+export function AccountConfigurationDemo({
+  onExit,
+  patternLabel,
+  exampleLabel,
+}: {
+  onExit?: () => void
+  patternLabel?: string
+  exampleLabel?: string
+} = {}) {
   return (
     <InputFillProvider initial={false}>
       <SegmentedStyleProvider initial="segmented">
@@ -112,7 +138,7 @@ export function AccountConfigurationDemo() {
               <AccountConflictNudgeModeProvider initial="automatic" ignorePersisted>
                 <AccountOnboardingStyleProvider initial="success-page" ignorePersisted>
                   <AccountPropertiesLayoutProvider initial="combined" ignorePersisted>
-                    <DemoExperience />
+                    <DemoExperience onExit={onExit} patternLabel={patternLabel} exampleLabel={exampleLabel} />
                   </AccountPropertiesLayoutProvider>
                 </AccountOnboardingStyleProvider>
               </AccountConflictNudgeModeProvider>

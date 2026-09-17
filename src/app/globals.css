@@ -144,7 +144,7 @@ body {
    outside @layer so they win over the Tailwind text-/font-/leading-/tracking-
    utilities already on those elements. */
 .docs-root {
-  font-family: var(--hds-font-family);
+  font-family: Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -154,35 +154,35 @@ body {
 }
 
 .doc-title {        /* page/display H1 — big + tight + optically light, à la stripe.com / Linear display type */
-  font-family: var(--hds-font-family);
+  font-family: Inter, system-ui, sans-serif;
   font-weight: 440;  /* medium, not bold: presence comes from size + tight tracking, not weight */
   font-size: 72px;   /* was 44 — display tier lifted so page titles carry the page */
   line-height: 1.0;
   letter-spacing: -0.038em;
 }
 .doc-heading {      /* section H2 — a real step under the 72px display tier, above lead/body */
-  font-family: var(--hds-font-family);
+  font-family: Inter, system-ui, sans-serif;
   font-weight: 520;  /* heavier than display (optical comp: smaller type needs more weight) */
   font-size: 38px;   /* was 26 */
   line-height: 1.12;
   letter-spacing: -0.028em;
 }
 .doc-body {         /* hds-text--md — primary prose size */
-  font-family: var(--hds-font-family);
+  font-family: Inter, system-ui, sans-serif;
   font-weight: 340;  /* nudged up from 300 — 300 read a touch thin for muted body/caption prose */
   font-size: 16px;   /* hds 1rem @16px root */
   line-height: 1.5;
   letter-spacing: 0em;
 }
 .doc-lead {         /* hds-text--lg — intro/lead paragraphs, one step up so the intro reads first */
-  font-family: var(--hds-font-family);
+  font-family: Inter, system-ui, sans-serif;
   font-weight: 320;
   font-size: 20px;   /* was 18 */
   line-height: 1.55;
   letter-spacing: -0.01em;
 }
 .doc-body-sm {      /* hds-text--sm */
-  font-family: var(--hds-font-family);
+  font-family: Inter, system-ui, sans-serif;
   font-weight: 300;
   font-size: 14px;   /* hds 0.875rem @16px root */
   line-height: 1.4;
