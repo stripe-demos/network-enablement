@@ -204,6 +204,17 @@ export function SubscriptionCreationEditor({
     setShowCustomerModal(false)
   }
 
+  const handleUseExistingAccount = (account: { id: string; name: string }) => {
+    if (subscriptionObject) {
+      workflow.updateObjectData(subscriptionObject.id, {
+        customerId: account.id,
+        customerName: account.name,
+      })
+    }
+    setShowCustomerModal(false)
+    setCustomerModalData({})
+  }
+
   const handleSelectPage = (nextPage: SubscriptionActivePage) => {
     const currentIndex = subscriptionPageTabs.findIndex((tab) => tab.id === activePage)
     const nextIndex = subscriptionPageTabs.findIndex((tab) => tab.id === nextPage)
@@ -371,6 +382,7 @@ export function SubscriptionCreationEditor({
               layout="compose"
               data={customerModalData}
               onChange={(data) => setCustomerModalData((prev) => ({ ...prev, ...data }))}
+              onUseExistingAccount={handleUseExistingAccount}
             />
           </div>
         </ProductFormStyleProvider>

@@ -11,8 +11,9 @@ import type { CustomerFormLayout } from "@/components/creation-workspace/custome
 import { TrashIcon, LargeChevronIcon } from "@/components/ProductCatalogIcons"
 import { OptionalGroups, type OptionalGroup } from "./shared/ComposeGroup"
 import { EntityDropdown } from "./EntityDropdown"
-import { NetworkAccountOption, SelectControl } from "../account-configuration/AccountConfigurationPrimitives"
-import { getDisplayedNetworkAccount, NETWORK_ACCOUNTS } from "../account-configuration/model"
+import { useAccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
+import { DuplicateAccountNudge, NetworkAccountOption, SelectControl } from "../account-configuration/AccountConfigurationPrimitives"
+import { findMatchingNetworkAccount, getDisplayedNetworkAccount, NETWORK_ACCOUNTS, type NetworkAccount } from "../account-configuration/model"
 
 const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
 const COMPOSE_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
@@ -23,6 +24,7 @@ type CustomerFormProps = {
   errorFields?: Set<string>
   layout?: CustomerFormLayout | "compose"
   onOpenInvoiceEditor?: () => void
+  onUseExistingAccount?: (account: NetworkAccount) => void
 }
 
 type CustomerSection = {
@@ -112,9 +114,10 @@ function CustomerSectionNav({
   )
 }
 
-export function CustomerForm({ data, onChange, errorFields, layout = "stacked", onOpenInvoiceEditor }: CustomerFormProps) {
+export function CustomerForm({ data, onChange, errorFields, layout = "stacked", onOpenInvoiceEditor, onUseExistingAccount }: CustomerFormProps) {
   const { productFormStyle } = useProductFormStyle()
   const { inputFill } = useInputFill()
+  const { accountConflictNudgeMode } = useAccountConflictNudgeMode()
   const isSail = productFormStyle === "sail"
   const isRefresh = productFormStyle === "refresh"
   const tokens = getFormTokens(productFormStyle, { filled: inputFill })
@@ -123,6 +126,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
   const emailHasError = Boolean(errorFields?.has("email"))
   const [shakeEmail, setShakeEmail] = useState(false)
   const [activeSectionId, setActiveSectionId] = useState("account")
+  const [dismissedMatchId, setDismissedMatchId] = useState("")
   const additionalBillingEmails = Array.isArray(data.additionalBillingEmails) ? data.additionalBillingEmails as string[] : []
   const additionalTaxIds = Array.isArray(data.taxIds) ? data.taxIds as { taxIdType?: string; taxId?: string }[] : []
 
@@ -661,6 +665,29 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       onChange({ ...patch, email: nextEmail, name })
     }
 
+    const matchingAccount = accountConflictNudgeMode === "off"
+      ? undefined
+      : accountConflictNudgeMode === "always" && accountEmail.trim()
+        ? COMPOSE_ACCOUNTS.find((account) => account.id === "acct_juniper")
+        : (() => {
+            const match = findMatchingNetworkAccount(accountEmail)
+            return match ? COMPOSE_ACCOUNTS.find((account) => account.id === match.id) : undefined
+          })()
+
+    const applyExistingAccount = (account: NetworkAccount) => {
+      const country = account.country === "UK" ? "United Kingdom" : account.country === "CA" ? "Canada" : "United States"
+      onChange({
+        customerId: account.id,
+        name: account.name,
+        displayName: account.name,
+        accountEmail: account.email,
+        email: account.email,
+        accountCountry: country,
+        country,
+      })
+      onUseExistingAccount?.(account)
+    }
+
     return (
       <div className="flex flex-col gap-[16px]">
         <div className="flex flex-col gap-[12px]">
@@ -698,18 +725,28 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
             addNewLabel="Create new account"
             onAddNew={() => onChange({ customerId: "_new" })}
           />
-          <Field label="Account email">
-            <input
-              type="email"
-              className={ic("email")}
-              placeholder="email@example.com"
-              value={accountEmail}
-              onChange={(e) => syncIdentity({ accountEmail: e.target.value })}
-            />
-            {errorFields?.has("email") && (
-              <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
-            )}
-          </Field>
+          <div className="flex flex-col gap-[6px]">
+            <Field label="Account email">
+              <input
+                type="email"
+                className={ic("email")}
+                placeholder="email@example.com"
+                value={accountEmail}
+                onChange={(e) => syncIdentity({ accountEmail: e.target.value })}
+              />
+              {errorFields?.has("email") && (
+                <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
+              )}
+            </Field>
+            {matchingAccount && dismissedMatchId !== matchingAccount.id && data.customerId !== matchingAccount.id ? (
+              <DuplicateAccountNudge
+                account={matchingAccount}
+                description="This email matches an existing account in your network. Continue with it instead of creating a duplicate account."
+                onUseExisting={() => applyExistingAccount(matchingAccount)}
+                onDismiss={() => setDismissedMatchId(matchingAccount.id)}
+              />
+            ) : null}
+          </div>
           <Field label="Display name">
             <input
               className={tokens.inputClass}

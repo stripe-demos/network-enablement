@@ -138,9 +138,9 @@ export function AccountSummaryCard({
   return (
     <div data-account-summary-card className="flex items-start gap-[10px] rounded-[8px] bg-[#F4F7FA] p-[10px]">
       <AccountAvatar account={account} />
-      <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
+      <div className="flex min-w-0 flex-1 flex-col">
         <p className="truncate text-[13px] font-[600] leading-[18px] tracking-[-0.08px] text-[#1A2C44]">{account.name}</p>
-        <p className="flex min-w-0 items-center overflow-hidden text-[11px] font-[400] leading-[16px] text-[#596171]">
+        <p className="mt-[1px] flex min-w-0 items-center overflow-hidden text-[11px] font-[400] leading-[16px] text-[#596171]">
           <span className="min-w-0 truncate">{account.email}</span>
           <span className="shrink-0 px-[4px]">·</span>
           <span className="shrink-0">{account.id}</span>
@@ -152,6 +152,38 @@ export function AccountSummaryCard({
           {actionLabel}
         </button>
       ) : null}
+    </div>
+  )
+}
+
+export function DuplicateAccountNudge({
+  account,
+  onUseExisting,
+  onDismiss,
+  description = "This email matches an existing account in your network. Continue with it to add configurations instead of creating a duplicate account.",
+}: {
+  account: NetworkAccount
+  onUseExisting: () => void
+  onDismiss: () => void
+  description?: string
+}) {
+  return (
+    <div
+      className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white shadow-[0_8px_24px_rgba(26,44,68,0.12)]"
+      data-duplicate-account-nudge
+      role="region"
+      aria-label="Existing account found"
+    >
+      <div className="p-[8px]">
+        <AccountSummaryCard account={account} />
+        <p className="px-[8px] pb-[4px] pt-[8px] text-[12px] leading-[16px] text-[#3C4F69]">
+          {description}
+        </p>
+      </div>
+      <div className="flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] p-[8px]">
+        <button type="button" className="rounded-[6px] px-[8px] py-[5px] text-[11px] font-[600] text-[#526378] hover:bg-[#EEF2F6]" onClick={onDismiss}>Create new anyway</button>
+        <button type="button" className="rounded-[6px] bg-[#675DFF] px-[8px] py-[5px] text-[11px] font-[600] text-white hover:bg-[#5B52F0]" onClick={onUseExisting}>Use existing account</button>
+      </div>
     </div>
   )
 }

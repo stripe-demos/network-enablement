@@ -17,6 +17,7 @@ import type { AccountSelectionStyle } from "@/components/creation-workspace/acco
 
 import {
   AccountSummaryCard,
+  DuplicateAccountNudge,
   Field,
   NetworkAccountOption,
   ReviewRow,
@@ -30,6 +31,7 @@ import {
   EMAIL_PATTERN,
   NETWORK_ACCOUNTS,
   PAYOUT_METHODS,
+  findMatchingNetworkAccount,
   getCapabilities,
   getAccountRoles,
   getConfigurationOptions,
@@ -159,46 +161,6 @@ function AccountPickerOption({ id, userPath }: { id: string; userPath?: UserPath
   return <NetworkAccountOption account={account} />
 }
 
-function findMatchingNetworkAccount(email: string) {
-  const normalizedEmail = email.trim().toLowerCase()
-  if (!EMAIL_PATTERN.test(normalizedEmail)) return undefined
-
-  const matches = NETWORK_ACCOUNTS.filter((account) => (
-    account.email.toLowerCase() === normalizedEmail
-  ))
-  return matches.length === 1 ? matches[0] : undefined
-}
-
-function DuplicateAccountNudge({
-  account,
-  onUseExisting,
-  onDismiss,
-}: {
-  account: NetworkAccount
-  onUseExisting: () => void
-  onDismiss: () => void
-}) {
-  return (
-    <div
-      className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white shadow-[0_8px_24px_rgba(26,44,68,0.12)]"
-      data-duplicate-account-nudge
-      role="region"
-      aria-label="Existing account found"
-    >
-      <div className="p-[8px]">
-        <AccountSummaryCard account={account} />
-        <p className="px-[8px] pb-[4px] pt-[8px] text-[11px] leading-[16px] text-[#3C4F69]">
-          This email matches an existing account in your network. Continue with it to add configurations instead of creating a duplicate account.
-        </p>
-      </div>
-      <div className="flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] p-[8px]">
-        <button type="button" className="rounded-[6px] px-[8px] py-[5px] text-[11px] font-[600] text-[#526378] hover:bg-[#EEF2F6]" onClick={onDismiss}>Create new anyway</button>
-        <button type="button" className="rounded-[6px] bg-[#675DFF] px-[8px] py-[5px] text-[11px] font-[600] text-white hover:bg-[#5B52F0]" onClick={onUseExisting}>Use existing account</button>
-      </div>
-    </div>
-  )
-}
-
 function AccountIdentityFields({
   details,
   onChange,
@@ -229,24 +191,26 @@ function AccountIdentityFields({
 
   return (
     <div className="flex flex-col gap-[12px]" data-new-account-fields>
-      <Field label="Account email">
-        <input
-          ref={firstInputRef}
-          type="email"
-          className={tokens.inputClass}
-          placeholder="email@example.com"
-          value={details.accountEmail}
-          onChange={(event) => onChange({ accountEmail: event.target.value })}
-          aria-invalid={details.accountEmail.length > 0 && !EMAIL_PATTERN.test(details.accountEmail)}
-        />
-      </Field>
-      {matchingAccount && dismissedMatchId !== matchingAccount.id ? (
-        <DuplicateAccountNudge
-          account={matchingAccount}
-          onUseExisting={() => onUseExisting(matchingAccount)}
-          onDismiss={() => setDismissedMatchId(matchingAccount.id)}
-        />
-      ) : null}
+      <div className="flex flex-col gap-[6px]">
+        <Field label="Account email">
+          <input
+            ref={firstInputRef}
+            type="email"
+            className={tokens.inputClass}
+            placeholder="email@example.com"
+            value={details.accountEmail}
+            onChange={(event) => onChange({ accountEmail: event.target.value })}
+            aria-invalid={details.accountEmail.length > 0 && !EMAIL_PATTERN.test(details.accountEmail)}
+          />
+        </Field>
+        {matchingAccount && dismissedMatchId !== matchingAccount.id ? (
+          <DuplicateAccountNudge
+            account={matchingAccount}
+            onUseExisting={() => onUseExisting(matchingAccount)}
+            onDismiss={() => setDismissedMatchId(matchingAccount.id)}
+          />
+        ) : null}
+      </div>
       <Field label="Display name">
         <input
           className={tokens.inputClass}

@@ -159,6 +159,17 @@ export function InvoiceCreationEditor({
     setCustomerModalData({})
   }
 
+  const handleUseExistingAccount = (account: { id: string; name: string }) => {
+    if (invoiceObject) {
+      workflow.updateObjectData(invoiceObject.id, {
+        customerId: account.id,
+        customerName: account.name,
+      })
+    }
+    setShowCustomerModal(false)
+    setCustomerModalData({})
+  }
+
   const previewPanel = (
     <>
       {hasErrors && (
@@ -297,6 +308,7 @@ export function InvoiceCreationEditor({
             layout="compose"
             data={customerModalData}
             onChange={(data) => setCustomerModalData((prev) => ({ ...prev, ...data }))}
+            onUseExistingAccount={handleUseExistingAccount}
           />
         </div>
       </ProductFormStyleProvider>

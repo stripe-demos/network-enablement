@@ -203,7 +203,7 @@ function initialsFromName(name: string) {
 export const NETWORK_ACCOUNTS: NetworkAccount[] = [
   { id: "acct_nathan", name: "Nathan Richardson", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "US", initials: "NR" },
   { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "ahart@harbourwell.example", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
-  { id: "acct_juniper", name: "Juniper Yoga Collective", directName: "Maya Chen", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true },
+  { id: "acct_juniper", name: "Juniper Yoga Collective", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true },
   { id: "acct_tandem", name: "Tandem Fitness Network", directName: "Jordan Hale", email: "finance@tandemfitness.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "TF", hasBrandIcon: true },
   { id: "acct_cedar", name: "Cedar Therapy Group", directName: "Elena Voss", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "CG" },
   { id: "acct_lucent", name: "Lucent Recovery Studio", directName: "Marcus Reed", email: "payments@lucentrecovery.example", configurations: ["merchant", "customer"], country: "US", initials: "LS" },
@@ -221,7 +221,7 @@ export function getDisplayedNetworkAccount(account: NetworkAccount, userPath?: U
     ...account,
     name,
     initials: initialsFromName(name),
-    hasBrandIcon: false,
+    hasBrandIcon: !account.directName && Boolean(account.hasBrandIcon),
     configurations: configurations.length > 0 ? configurations : ["recipient"],
   }
 }
@@ -316,6 +316,16 @@ export function getPayoutEmail(details: AccountDetailsDraft) {
 export const ACCOUNT_ONBOARDING_LINK = "https://connect.stripe.com/d/setup/acct_demo"
 
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function findMatchingNetworkAccount(email: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!EMAIL_PATTERN.test(normalizedEmail)) return undefined
+
+  const matches = NETWORK_ACCOUNTS.filter((account) => (
+    account.email.toLowerCase() === normalizedEmail
+  ))
+  return matches.length === 1 ? matches[0] : undefined
+}
 
 export function getOnboardingEmail(details: AccountDetailsDraft) {
   return details.useAccountEmailForOnboarding ? details.accountEmail.trim() : details.onboardingEmail.trim()
