@@ -107,16 +107,16 @@ export type OptionalGroup = {
   render: () => ReactNode
 }
 
-export function OptionalGroups({ groups }: { groups: OptionalGroup[] }) {
+export function OptionalGroups({ groups, hideHeader = false }: { groups: OptionalGroup[]; hideHeader?: boolean }) {
   const { productFormStyle } = useProductFormStyle()
   const { customerDisclosure } = useCustomerDisclosure()
-  if (productFormStyle === "refresh") return <OptionalGroupsChevron groups={groups} />
+  if (productFormStyle === "refresh") return <OptionalGroupsChevron groups={groups} hideHeader={hideHeader} />
   return customerDisclosure === "rows"
-    ? <OptionalGroupsRows groups={groups} />
-    : <OptionalGroupsPills groups={groups} />
+    ? <OptionalGroupsRows groups={groups} hideHeader={hideHeader} />
+    : <OptionalGroupsPills groups={groups} hideHeader={hideHeader} />
 }
 
-function OptionalGroupsChevron({ groups }: { groups: OptionalGroup[] }) {
+function OptionalGroupsChevron({ groups, hideHeader = false }: { groups: OptionalGroup[]; hideHeader?: boolean }) {
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
   const { borderColor, dividerColor, fieldsBg } = composeColors(true)
@@ -133,7 +133,7 @@ function OptionalGroupsChevron({ groups }: { groups: OptionalGroup[] }) {
 
   return (
     <div className={isRefresh ? "-mx-[28px] flex flex-col border-t border-[#EAF0F6]" : "flex flex-col gap-2"}>
-      {!isRefresh && <OptionalFieldsHeader />}
+      {!isRefresh && !hideHeader && <OptionalFieldsHeader />}
       {groups.map((g) => {
         const isOpen = open === g.id
         return (
@@ -179,7 +179,7 @@ function OptionalGroupsChevron({ groups }: { groups: OptionalGroup[] }) {
 }
 
 // 'pills' — compose one group at a time via "+ Title" chips (the original Invoice behavior).
-function OptionalGroupsPills({ groups }: { groups: OptionalGroup[] }) {
+function OptionalGroupsPills({ groups, hideHeader = false }: { groups: OptionalGroup[]; hideHeader?: boolean }) {
   const [added, setAdded] = useState<string[]>([])
   const [open, setOpen] = useState<string | null>(null)
   const remaining = groups.filter((g) => !added.includes(g.id))
@@ -189,7 +189,7 @@ function OptionalGroupsPills({ groups }: { groups: OptionalGroup[] }) {
   }
   return (
     <div className="flex flex-col gap-2">
-      <OptionalFieldsHeader />
+      {!hideHeader && <OptionalFieldsHeader />}
       <AnimatePresence initial={false}>
         {added.map((id) => {
           const group = groups.find((g) => g.id === id)!
@@ -225,7 +225,7 @@ function OptionalGroupsPills({ groups }: { groups: OptionalGroup[] }) {
 }
 
 // 'rows' — every group is a defaulted review row; Edit reveals its fields in place.
-function OptionalGroupsRows({ groups }: { groups: OptionalGroup[] }) {
+function OptionalGroupsRows({ groups, hideHeader = false }: { groups: OptionalGroup[]; hideHeader?: boolean }) {
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
   const isRefresh = productFormStyle === "refresh"
@@ -250,7 +250,7 @@ function OptionalGroupsRows({ groups }: { groups: OptionalGroup[] }) {
   }, [open])
   return (
     <div className="flex flex-col gap-2">
-      <OptionalFieldsHeader />
+      {!hideHeader && <OptionalFieldsHeader />}
       {groups.map((g) => {
         const isOpen = open === g.id
         return (

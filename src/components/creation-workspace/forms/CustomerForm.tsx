@@ -4,16 +4,24 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { getFormTokens } from "./shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
+import { SegmentedControl } from "@/components/SegmentedControl"
 import { CustomSelect } from "./shared/CustomSelect"
 import { Checkbox } from "./shared/Checkbox"
 import type { CustomerFormLayout } from "@/components/creation-workspace/customerFormLayout"
 import { TrashIcon, LargeChevronIcon } from "@/components/ProductCatalogIcons"
+import { OptionalGroups, type OptionalGroup } from "./shared/ComposeGroup"
+import { EntityDropdown } from "./EntityDropdown"
+import { NetworkAccountOption, SelectControl } from "../account-configuration/AccountConfigurationPrimitives"
+import { getDisplayedNetworkAccount, NETWORK_ACCOUNTS } from "../account-configuration/model"
+
+const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
+const COMPOSE_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
 
 type CustomerFormProps = {
   data: Record<string, any>
   onChange: (data: Record<string, any>) => void
   errorFields?: Set<string>
-  layout?: CustomerFormLayout
+  layout?: CustomerFormLayout | "compose"
   onOpenInvoiceEditor?: () => void
 }
 
@@ -605,6 +613,193 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
   }
 
   const remainingSections = sections.filter(s => s.id !== "account")
+
+  if (layout === "compose") {
+    const billingSection = sections.find((section) => section.id === "billing")
+    const taxSection = sections.find((section) => section.id === "tax")
+    const shippingSection = sections.find((section) => section.id === "shipping")
+    const billingAdded = Boolean(data.country || data.phone || data.currency || data.timezone)
+    const taxAdded = Boolean(data.taxId || additionalTaxIds.some((taxId) => taxId.taxId?.trim()))
+    const shippingAdded = Boolean(data.shippingName || data.shippingCountry || data.shippingPhone)
+    const optionalGroups: OptionalGroup[] = [
+      {
+        id: "billing",
+        title: "Billing information",
+        summary: billingAdded ? [data.country, data.currency].filter(Boolean).join(" · ") || "Added" : "Not added",
+        render: () => <div className="flex flex-col gap-[12px]">{billingSection?.content}</div>,
+      },
+      {
+        id: "tax",
+        title: "Tax information",
+        summary: taxAdded ? `Tax ID · ${data.taxId || additionalTaxIds.find((taxId) => taxId.taxId)?.taxId}` : "Not added",
+        render: () => <div className="flex flex-col gap-[12px]">{taxSection?.content}</div>,
+      },
+      {
+        id: "shipping",
+        title: "Shipping information",
+        summary: shippingAdded ? data.shippingName || data.shippingCountry || "Added" : "Same as billing",
+        render: () => <div className="flex flex-col gap-[12px]">{shippingSection?.content}</div>,
+      },
+    ]
+
+    const accountType = data.accountType === "Individual" ? "Individual" : "Company"
+    const accountEmail = data.accountEmail ?? data.email ?? ""
+    const displayName = data.displayName ?? ""
+    const registeredName = data.registeredName ?? ""
+    const firstName = data.firstName ?? ""
+    const lastName = data.lastName ?? ""
+    const accountCountry = data.accountCountry ?? ""
+    const syncIdentity = (patch: Record<string, unknown>) => {
+      const nextType = patch.accountType ?? accountType
+      const nextDisplay = String(patch.displayName ?? displayName)
+      const nextRegistered = String(patch.registeredName ?? registeredName)
+      const nextFirst = String(patch.firstName ?? firstName)
+      const nextLast = String(patch.lastName ?? lastName)
+      const nextEmail = String(patch.accountEmail ?? accountEmail)
+      const name = nextDisplay.trim()
+        || (nextType === "Individual" ? `${nextFirst} ${nextLast}`.trim() : nextRegistered.trim())
+      onChange({ ...patch, email: nextEmail, name })
+    }
+
+    return (
+      <div className="flex flex-col gap-[16px]">
+        <div className="flex flex-col gap-[12px]">
+          <EntityDropdown
+            label="Account"
+            placeholder="Find or add an account"
+            searchPlaceholder="Search by name, email, or account ID"
+            items={COMPOSE_ACCOUNTS.map((account) => ({ id: account.id, name: account.name, detail: account.email }))}
+            getSearchText={(item) => {
+              const account = COMPOSE_ACCOUNTS.find((candidate) => candidate.id === item.id)
+              return account ? `${account.name} ${account.email} ${account.id}` : item.name
+            }}
+            renderOption={(item) => {
+              const account = COMPOSE_ACCOUNTS.find((candidate) => candidate.id === item.id)
+              return account ? <NetworkAccountOption account={account} /> : item.name
+            }}
+            insetOptionHover
+            selectedId={data.customerId && data.customerId !== "_new" ? data.customerId : ""}
+            selectedLabel={data.customerId && data.customerId !== "_new" ? data.name : "New account"}
+            selectedIsPlaceholder={!data.customerId || data.customerId === "_new"}
+            onSelect={(id) => {
+              const account = COMPOSE_ACCOUNTS.find((candidate) => candidate.id === id)
+              if (!account) return
+              const country = account.country === "UK" ? "United Kingdom" : account.country === "CA" ? "Canada" : "United States"
+              onChange({
+                customerId: account.id,
+                name: account.name,
+                displayName: account.name,
+                accountEmail: account.email,
+                email: account.email,
+                accountCountry: country,
+                country,
+              })
+            }}
+            addNewLabel="Create new account"
+            onAddNew={() => onChange({ customerId: "_new" })}
+          />
+          <Field label="Account email">
+            <input
+              type="email"
+              className={ic("email")}
+              placeholder="email@example.com"
+              value={accountEmail}
+              onChange={(e) => syncIdentity({ accountEmail: e.target.value })}
+            />
+            {errorFields?.has("email") && (
+              <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
+            )}
+          </Field>
+          <Field label="Display name">
+            <input
+              className={tokens.inputClass}
+              placeholder="Shown on this account"
+              value={displayName}
+              onChange={(e) => syncIdentity({ displayName: e.target.value })}
+            />
+          </Field>
+          <div className="flex flex-col gap-[4px]">
+            <span className={tokens.labelClass}>Account type</span>
+            <SegmentedControl
+              value={accountType}
+              options={ACCOUNT_TYPE_OPTIONS}
+              onChange={(type) => syncIdentity({ accountType: type })}
+              variantOverride="segmented"
+            />
+          </div>
+          {accountType === "Company" ? (
+            <Field label="Registered name">
+              <input
+                className={ic("name")}
+                placeholder="Example Corp Inc"
+                value={registeredName}
+                onChange={(e) => syncIdentity({ registeredName: e.target.value })}
+              />
+              {errorFields?.has("name") && (
+                <p className="text-[11px] text-[#DF1B41]">Enter a registered name</p>
+              )}
+            </Field>
+          ) : (
+            <Field label="Legal name">
+              <span className="grid gap-[6px]">
+                <input
+                  aria-label="First name"
+                  className={ic("name")}
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => syncIdentity({ firstName: e.target.value })}
+                />
+                <input
+                  aria-label="Last name"
+                  className={tokens.inputClass}
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => syncIdentity({ lastName: e.target.value })}
+                />
+              </span>
+            </Field>
+          )}
+          <Field label="Country">
+            <SelectControl
+              className={tokens.selectClass}
+              value={accountCountry}
+              onChange={(country) => syncIdentity({ accountCountry: country, country })}
+            >
+              <option value="">Select a country</option>
+              <option>United Kingdom</option>
+              <option>United States</option>
+              <option>Canada</option>
+            </SelectControl>
+          </Field>
+        </div>
+        <button
+          type="button"
+          aria-expanded={showMoreSettings}
+          aria-controls="account-more-settings"
+          className="flex w-full cursor-pointer items-center justify-between py-[8px]"
+          onClick={() => setShowMoreSettings((prev) => !prev)}
+        >
+          <span className="text-[12px] font-[600] leading-[16px] tracking-[-0.024px] text-[#1A2C44]">
+            More settings
+          </span>
+          <LargeChevronIcon rotated={showMoreSettings} />
+        </button>
+        <div
+          id="account-more-settings"
+          aria-hidden={!showMoreSettings}
+          className={`grid min-h-0 min-w-0 transition-[grid-template-rows,opacity] duration-200 ease-out ${
+            showMoreSettings ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          }`}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="pb-[8px]">
+              <OptionalGroups groups={optionalGroups} hideHeader />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-[16px]">

@@ -74,7 +74,7 @@ export function InvoiceCreationEditor({
     ? {
         id: initialCustomer.id,
         kind: "customer",
-        label: initialCustomer.data.name || initialCustomer.data.email || "Customer",
+        label: initialCustomer.data.name || initialCustomer.data.email || "Account",
         isPlaceholder: false,
         isComplete: true,
         data: initialCustomer.data,
@@ -286,13 +286,15 @@ export function InvoiceCreationEditor({
     <CreationModalShell
       isOpen={showCustomerModal}
       onClose={() => setShowCustomerModal(false)}
-      title="New customer"
-      primaryLabel="Save"
+      title="Create account"
+      subtitle="This account will be a customer."
+      primaryLabel="Create account"
       onPrimary={handleCreateCustomer}
     >
       <ProductFormStyleProvider initial={productFormStyle}>
         <div className="overflow-y-auto px-[20px] py-[16px]">
           <CustomerForm
+            layout="compose"
             data={customerModalData}
             onChange={(data) => setCustomerModalData((prev) => ({ ...prev, ...data }))}
           />

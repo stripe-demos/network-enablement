@@ -1,8 +1,8 @@
 export const EXISTING_CUSTOMERS = [
-  { id: "cus_1", name: "Acme Corporation", detail: "cus_1@example.com" },
-  { id: "cus_2", name: "Globex Corp", detail: "cus_2@example.com" },
-  { id: "cus_3", name: "Initech", detail: "cus_3@example.com" },
-  { id: "cus_4", name: "Umbrella Corp", detail: "cus_4@example.com" },
+  { id: "acct_1", name: "Acme Corporation", detail: "cus_1@example.com" },
+  { id: "acct_2", name: "Globex Corp", detail: "cus_2@example.com" },
+  { id: "acct_3", name: "Initech", detail: "cus_3@example.com" },
+  { id: "acct_4", name: "Umbrella Corp", detail: "cus_4@example.com" },
 ]
 
 export const EXISTING_PRODUCTS = [

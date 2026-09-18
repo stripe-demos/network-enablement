@@ -202,7 +202,7 @@ function initialsFromName(name: string) {
 
 export const NETWORK_ACCOUNTS: NetworkAccount[] = [
   { id: "acct_nathan", name: "Nathan Richardson", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "US", initials: "NR" },
-  { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
+  { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "ahart@harbourwell.example", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
   { id: "acct_juniper", name: "Juniper Yoga Collective", directName: "Maya Chen", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true },
   { id: "acct_tandem", name: "Tandem Fitness Network", directName: "Jordan Hale", email: "finance@tandemfitness.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "TF", hasBrandIcon: true },
   { id: "acct_cedar", name: "Cedar Therapy Group", directName: "Elena Voss", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "CG" },

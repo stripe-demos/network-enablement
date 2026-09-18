@@ -151,7 +151,7 @@ export function useWorkflowState(config: WorkflowConfig): WorkflowState {
     (kind: string): string => {
       const kindConfig = config.objectKinds[kind]
       if (!kindConfig) throw new Error(`Unknown object kind: ${kind}`)
-      const id = `obj_${nextIdRef.current++}`
+      const id = kind === "customer" ? `acct_${nextIdRef.current++}` : `obj_${nextIdRef.current++}`
       const existingCount = objects.filter((o) => o.kind === kind).length
       const obj: WorkflowObject = {
         id,

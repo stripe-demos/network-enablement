@@ -104,6 +104,7 @@ type ObjectKindOverride = {
   dependsOn?: string
   requiredFields?: string[]
   allowMultiple?: boolean
+  label?: string
 }
 
 function buildObjectKinds(
@@ -379,11 +380,12 @@ export function createInvoiceWorkflowConfig(forms: {
         formComponent: forms.invoice,
         previewComponent: forms.invoicePreview,
         suggestedNext: [
-          { kind: "customer", actionLabel: "Add a customer", reason: "to receive this invoice." },
+          { kind: "customer", actionLabel: "Add an account", reason: "to receive this invoice." },
           { kind: "coupon", actionLabel: "Add a coupon", reason: "to discount this invoice." },
         ],
       },
       customer: {
+        label: "Account",
         formComponent: forms.customer,
         suggestedNext: [{ kind: "product", actionLabel: "Add a product", reason: "to include on the invoice." }],
       },

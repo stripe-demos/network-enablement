@@ -88,18 +88,40 @@ const COUNTRY_FLAG_SRC: Record<string, string> = {
   CA: "/flag-ca.svg",
 }
 
-export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" }) {
+export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
+  return (
+    <span className="flex min-w-0 flex-1 flex-col py-[2px]">
+      <span className="flex min-w-0 items-center justify-between gap-[10px]">
+        <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{account.name}</span>
+        <CountryBadge country={account.country} size="sm" />
+      </span>
+      <span className="mt-[1px] flex min-w-0 items-center overflow-hidden text-[11px] leading-[16px] text-[#6C7688]">
+        <span className="min-w-0 truncate">{account.email}</span>
+        <span className="shrink-0 px-[4px]">·</span>
+        <span className="shrink-0">{account.id}</span>
+      </span>
+    </span>
+  )
+}
+
+const COUNTRY_BADGE_SIZE = {
+  sm: { width: 12, height: 9, flagClass: "h-[9px] w-[12px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
+  md: { width: 14, height: 10, flagClass: "h-[10px] w-[14px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
+  default: { width: 16, height: 12, flagClass: "h-[12px] w-[16px]", gap: "gap-[4px] rounded-[6px] px-[6px] py-[4px]", label: "text-[11px] font-[600] leading-[16px] text-[#1A2C44]" },
+} as const
+
+export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" | "md" }) {
   const countryCode = country === "United Kingdom" ? "UK" : country === "United States" ? "US" : country === "Canada" ? "CA" : country
   if (!countryCode) return null
   const flagSrc = COUNTRY_FLAG_SRC[countryCode]
-  const compact = size === "sm"
+  const badge = COUNTRY_BADGE_SIZE[size]
 
   return (
-    <span className={`flex shrink-0 items-center ${compact ? "gap-[3px]" : "gap-[4px] rounded-[6px] px-[6px] py-[4px]"}`}>
+    <span className={`flex shrink-0 items-center ${badge.gap}`}>
       {flagSrc ? (
-        <Image src={flagSrc} alt="" width={compact ? 12 : 16} height={compact ? 9 : 12} className={compact ? "h-[9px] w-[12px]" : "h-[12px] w-[16px]"} />
+        <Image src={flagSrc} alt="" width={badge.width} height={badge.height} className={badge.flagClass} />
       ) : null}
-      <span className={compact ? "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" : "text-[11px] font-[600] leading-[16px] text-[#1A2C44]"}>{countryCode || "—"}</span>
+      <span className={badge.label}>{countryCode || "—"}</span>
     </span>
   )
 }
@@ -116,12 +138,15 @@ export function AccountSummaryCard({
   return (
     <div data-account-summary-card className="flex items-start gap-[10px] rounded-[8px] bg-[#F4F7FA] p-[10px]">
       <AccountAvatar account={account} />
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
         <p className="truncate text-[13px] font-[600] leading-[18px] tracking-[-0.08px] text-[#1A2C44]">{account.name}</p>
-        <p className="truncate text-[11px] font-[400] leading-[16px] text-[#596171]">{account.email}</p>
-        <p className="truncate font-mono text-[11px] leading-[16px] text-[#596171]">{account.id}</p>
+        <p className="flex min-w-0 items-center overflow-hidden text-[11px] font-[400] leading-[16px] text-[#596171]">
+          <span className="min-w-0 truncate">{account.email}</span>
+          <span className="shrink-0 px-[4px]">·</span>
+          <span className="shrink-0">{account.id}</span>
+        </p>
       </div>
-      <CountryBadge country={account.country} />
+      <CountryBadge country={account.country} size="md" />
       {actionLabel && onAction ? (
         <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={onAction}>
           {actionLabel}

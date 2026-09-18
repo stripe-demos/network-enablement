@@ -1,10 +1,39 @@
 'use client'
 
 import { useState, useRef, useEffect, type KeyboardEvent, type ReactNode } from "react"
-import { EntityDropdown } from "./EntityDropdown"
+import { EntityDropdown, type EntityItem } from "./EntityDropdown"
 import type { WorkflowObject } from "../useWorkflowState"
+import { AccountSummaryCard, NetworkAccountOption } from "../account-configuration/AccountConfigurationPrimitives"
+import { getAccountRoles, getDisplayedNetworkAccount, NETWORK_ACCOUNTS } from "../account-configuration/model"
 
-import { EXISTING_CUSTOMERS, EXISTING_PRODUCTS as EXISTING_ITEMS, CURRENCY_OPTIONS } from "./shared/mockEntities"
+import { EXISTING_PRODUCTS as EXISTING_ITEMS, CURRENCY_OPTIONS } from "./shared/mockEntities"
+
+const INVOICE_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
+
+function getInvoiceAccountItems(created: EntityItem[] = []) {
+  return [
+    ...INVOICE_ACCOUNTS.map((account) => ({ id: account.id, name: account.name, detail: account.email })),
+    ...created,
+  ]
+}
+
+function invoiceAccountSearchText(item: EntityItem) {
+  const account = INVOICE_ACCOUNTS.find((candidate) => candidate.id === item.id)
+  return account
+    ? `${account.name} ${account.email} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}`
+    : `${item.name} ${item.detail ?? ""} ${item.id}`
+}
+
+function InvoiceAccountOption({ item }: { item: EntityItem }) {
+  const account = INVOICE_ACCOUNTS.find((candidate) => candidate.id === item.id)
+  if (account) return <NetworkAccountOption account={account} />
+  return (
+    <span className="flex min-w-0 flex-1 flex-col py-[2px]">
+      <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{item.name}</span>
+      {item.detail ? <span className="mt-[1px] truncate text-[11px] leading-[16px] text-[#6C7688]">{item.detail}</span> : null}
+    </span>
+  )
+}
 
 const DUE_OPTIONS = [
   { value: "30", label: "Within 30 days" },
@@ -462,6 +491,9 @@ export function InvoiceForm({ data, onChange, errorFields, onAddObject }: Invoic
   // the optional settings are grouped into focused sections rendered by <OptionalGroups>, which
   // discloses them as "+ …" chips or defaulted review rows per the Options-panel setting.
   const set = (key: string, value: unknown) => onChange({ [key]: value })
+  const selectedInvoiceAccount = data.customerId && data.customerId !== "_new"
+    ? INVOICE_ACCOUNTS.find((account) => account.id === data.customerId)
+    : undefined
 
   const paymentMethods: string[] = data.paymentMethods ?? ["Card", "Klarna", "Link"]
   const customFieldsEnabled = data.customFieldsEnabled === true || data.customFieldsEnabled === "true"
@@ -693,29 +725,33 @@ export function InvoiceForm({ data, onChange, errorFields, onAddObject }: Invoic
   return (
     <div className={isRefresh ? "flex flex-col gap-[24px]" : "flex flex-col gap-[16px]"}>
       <InvoiceFieldRegion field="invoice.customer">
-        <EntityDropdown
-          label="Customer"
-          placeholder="Find or add a customer"
-          searchPlaceholder="Search customers..."
-          items={[...EXISTING_CUSTOMERS, ...(data._createdCustomers ?? [])]}
-          selectedId={data.customerId ?? ""}
-          selectedLabel={data.customerName}
-          selectedIsPlaceholder={data.customerId === "_new" && (!data.customerName || data.customerName === "New customer")}
-          onSelect={(id) => {
-            const allCustomers = [...EXISTING_CUSTOMERS, ...(data._createdCustomers ?? [])]
-            const customer = allCustomers.find((c) => c.id === id)
-            onChange({ customerId: id, customerName: customer?.name ?? "" })
-          }}
-          addNewLabel="Add new customer"
-          onAddNew={() => {
-            onAddObject?.("customer")
-            onChange({ customerId: "_new", customerName: "New customer" })
-          }}
-          onEdit={() => onAddObject?.("customer")}
-          hasError={errorFields?.has("customerId")}
-          errorMessage="Select a customer"
-          autoFocus={isRefresh}
-        />
+        <div className="flex flex-col gap-[12px]">
+          <EntityDropdown
+            label="Account"
+            placeholder="Find or add an account"
+            searchPlaceholder="Search by name, email, or account ID"
+            items={getInvoiceAccountItems(data._createdCustomers ?? [])}
+            getSearchText={invoiceAccountSearchText}
+            renderOption={(item) => <InvoiceAccountOption item={item} />}
+            insetOptionHover
+            selectedId={data.customerId ?? ""}
+            selectedLabel={data.customerName}
+            selectedIsPlaceholder={data.customerId === "_new" && (!data.customerName || data.customerName === "New account")}
+            onSelect={(id) => {
+              const account = getInvoiceAccountItems(data._createdCustomers ?? []).find((candidate) => candidate.id === id)
+              onChange({ customerId: id, customerName: account?.name ?? "" })
+            }}
+            addNewLabel="Create new account"
+            onAddNew={() => {
+              onAddObject?.("customer")
+              onChange({ customerId: "_new", customerName: "New account" })
+            }}
+            hasError={errorFields?.has("customerId")}
+            errorMessage="Select an account"
+            autoFocus={isRefresh}
+          />
+          {selectedInvoiceAccount ? <AccountSummaryCard account={selectedInvoiceAccount} /> : null}
+        </div>
       </InvoiceFieldRegion>
 
       {isRefresh && (

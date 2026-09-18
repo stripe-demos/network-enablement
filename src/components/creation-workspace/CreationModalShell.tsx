@@ -9,6 +9,7 @@ type CreationModalShellProps = {
   isOpen: boolean
   onClose: () => void
   title: string
+  subtitle?: string
   primaryLabel?: string
   onPrimary?: () => void
   modalWidth?: string
@@ -29,6 +30,7 @@ export function CreationModalShell({
   isOpen,
   onClose,
   title,
+  subtitle,
   primaryLabel = "Create",
   onPrimary,
   modalWidth = "w-[480px]",
@@ -97,12 +99,17 @@ export function CreationModalShell({
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              {headerExtra ? (
+              {headerExtra || subtitle ? (
                 <div className={`${headerBorder} bg-white px-[20px] py-[14px]`}>
                   <div className="flex items-center justify-between">
-                    <p className={tokens.modalTitleClass}>
-                      {title}
-                    </p>
+                    <div className="min-w-0">
+                      <p className={tokens.modalTitleClass}>
+                        {title}
+                      </p>
+                      {subtitle ? (
+                        <p className={`mt-[4px] ${tokens.helperClass}`}>{subtitle}</p>
+                      ) : null}
+                    </div>
                     {actions}
                   </div>
                   {headerExtra}

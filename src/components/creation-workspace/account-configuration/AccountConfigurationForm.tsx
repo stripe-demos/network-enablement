@@ -17,8 +17,8 @@ import type { AccountSelectionStyle } from "@/components/creation-workspace/acco
 
 import {
   AccountSummaryCard,
-  CountryBadge,
   Field,
+  NetworkAccountOption,
   ReviewRow,
   SelectControl,
   Toggle,
@@ -156,21 +156,7 @@ function getNetworkAccountSearchText(userPath?: UserPath) {
 function AccountPickerOption({ id, userPath }: { id: string; userPath?: UserPath }) {
   const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
   if (!account) return null
-  const configurations = CONFIGURATION_OPTIONS
-    .filter((option) => account.configurations.includes(option.id))
-    .map((option) => option.title)
-    .join(", ")
-  const meta = [account.email, configurations].filter(Boolean).join(" · ")
-
-  return (
-    <span className="flex min-w-0 flex-1 flex-col py-[2px]">
-      <span className="flex min-w-0 items-center justify-between gap-[10px]">
-        <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{account.name}</span>
-        <CountryBadge country={account.country} size="sm" />
-      </span>
-      <span className="mt-[1px] truncate text-[11px] leading-[16px] text-[#6C7688]">{meta}</span>
-    </span>
-  )
+  return <NetworkAccountOption account={account} />
 }
 
 function findMatchingNetworkAccount(email: string) {

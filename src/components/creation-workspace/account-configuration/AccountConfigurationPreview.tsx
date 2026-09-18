@@ -182,7 +182,7 @@ export function AccountConfigurationPreview({
                 {!isNewAccount && account.id ? (
                   <>
                     <span className="mx-[6px] shrink-0">·</span>
-                    <span className="min-w-0 truncate font-mono">{account.id}</span>
+                    <span className="min-w-0 truncate">{account.id}</span>
                   </>
                 ) : null}
               </p>
