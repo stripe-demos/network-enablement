@@ -426,7 +426,7 @@ export function createSubscriptionWorkflowConfig(forms: {
         formComponent: forms.subscription,
         previewComponent: forms.subscriptionPreview,
         suggestedNext: [
-          { kind: "customer", actionLabel: "Add a customer", reason: "to subscribe to this plan." },
+          { kind: "customer", actionLabel: "Add an account", reason: "to subscribe to this plan." },
           { kind: "pricingPlan", actionLabel: "Select a pricing plan", reason: "to define billing (v2)." },
           { kind: "product", actionLabel: "Add a product", reason: "to define what's being billed (v1)." },
           { kind: "coupon", actionLabel: "Add a coupon", reason: "to discount this subscription." },
@@ -434,6 +434,7 @@ export function createSubscriptionWorkflowConfig(forms: {
         ],
       },
       customer: {
+        label: "Account",
         formComponent: forms.customer,
         suggestedNext: [
           { kind: "pricingPlan", actionLabel: "Select a pricing plan", reason: "to define billing (v2)." },

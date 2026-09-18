@@ -2,10 +2,39 @@
 
 import { useState, useRef, useEffect, type ReactNode } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { EntityDropdown, type EntityDropdownHandle } from "./EntityDropdown"
+import { EntityDropdown, type EntityDropdownHandle, type EntityItem } from "./EntityDropdown"
 import type { WorkflowObject } from "../useWorkflowState"
+import { AccountSummaryCard, NetworkAccountOption } from "../account-configuration/AccountConfigurationPrimitives"
+import { getAccountRoles, getDisplayedNetworkAccount, NETWORK_ACCOUNTS } from "../account-configuration/model"
 
-import { EXISTING_CUSTOMERS, EXISTING_PRODUCTS } from "./shared/mockEntities"
+import { EXISTING_PRODUCTS } from "./shared/mockEntities"
+
+const SUBSCRIPTION_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
+
+function getSubscriptionAccountItems(created: EntityItem[] = []) {
+  return [
+    ...SUBSCRIPTION_ACCOUNTS.map((account) => ({ id: account.id, name: account.name, detail: account.email })),
+    ...created,
+  ]
+}
+
+function subscriptionAccountSearchText(item: EntityItem) {
+  const account = SUBSCRIPTION_ACCOUNTS.find((candidate) => candidate.id === item.id)
+  return account
+    ? `${account.name} ${account.email} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}`
+    : `${item.name} ${item.detail ?? ""} ${item.id}`
+}
+
+function SubscriptionAccountOption({ item }: { item: EntityItem }) {
+  const account = SUBSCRIPTION_ACCOUNTS.find((candidate) => candidate.id === item.id)
+  if (account) return <NetworkAccountOption account={account} />
+  return (
+    <span className="flex min-w-0 flex-1 flex-col py-[2px]">
+      <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{item.name}</span>
+      {item.detail ? <span className="mt-[1px] truncate text-[11px] leading-[16px] text-[#6C7688]">{item.detail}</span> : null}
+    </span>
+  )
+}
 
 import { getFormTokens } from "./shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
@@ -410,7 +439,7 @@ function PaymentMethodsModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
   )
 }
 
-function CustomSelect({ label, value, onChange, options, buttonLabel, onButtonClick, buttonClassName }: {
+function CustomSelect({ label, value, onChange, options, buttonLabel, onButtonClick, buttonClassName, footerAction }: {
   label?: string
   value: string
   onChange: (value: string) => void
@@ -418,6 +447,10 @@ function CustomSelect({ label, value, onChange, options, buttonLabel, onButtonCl
   buttonLabel?: string
   onButtonClick?: () => void
   buttonClassName?: string
+  footerAction?: {
+    label: string
+    onClick: () => void
+  }
 }) {
   const { productFormStyle } = useProductFormStyle()
   const { inputFill } = useInputFill()
@@ -464,6 +497,20 @@ function CustomSelect({ label, value, onChange, options, buttonLabel, onButtonCl
                   {opt.label}
                 </button>
               ))}
+              {footerAction ? (
+                <div className="mt-[4px] border-t border-[#F0F3F7] pt-[4px]">
+                  <button
+                    type="button"
+                    className={`flex w-full items-center px-[10px] py-[6px] text-left text-[12px] font-[500] text-[#533AFD] transition-colors ${isRefresh ? "hover:bg-[#F6F9FC]" : "hover:bg-[#F5F6F8]"}`}
+                    onClick={() => {
+                      footerAction.onClick()
+                      setIsOpen(false)
+                    }}
+                  >
+                    {footerAction.label}
+                  </button>
+                </div>
+              ) : null}
             </div>
           )}
         </div>
@@ -797,7 +844,7 @@ function ItemCard({ item, onUpdate, onRemove, autoFocus, onAddObject }: {
 
 // ── Page: Subscription (main) ──────────────────────────────────────────
 
-function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropdownRef, topPadding = true, customerLabel = "Customer" }: {
+function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropdownRef, topPadding = true, customerLabel = "Account" }: {
   data: Record<string, any>
   onChange: (data: Record<string, any>) => void
   errorFields?: Set<string>
@@ -813,6 +860,9 @@ function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropd
   const isSail = productFormStyle === "sail"
   const items: SubscriptionItem[] = data.items ?? []
   const hasCustomer = !!(data.customerId && data.customerId !== "")
+  const selectedSubscriptionAccount = data.customerId && data.customerId !== "_new"
+    ? SUBSCRIPTION_ACCOUNTS.find((account) => account.id === data.customerId)
+    : undefined
   const [newItemId, setNewItemId] = useState<string | null>(null)
   const serviceDateClass = isSail
     ? "rounded-[6px] border border-[#D8DEE4] bg-white px-[10px] py-[4px] text-[14px] font-[400] leading-[20px] tracking-[-0.15px] text-[#353A44]"
@@ -860,29 +910,33 @@ function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropd
 
   return (
     <div className={`flex flex-col gap-[16px] ${topPadding ? "pt-[16px]" : ""}`}>
-      <EntityDropdown
-        label={customerLabel}
-        placeholder="Find or add a customer"
-        searchPlaceholder="Search customers..."
-        items={[...EXISTING_CUSTOMERS, ...(data._createdCustomers ?? [])]}
-        selectedId={data.customerId ?? ""}
-        selectedLabel={data.customerName}
-        selectedIsPlaceholder={data.customerId === "_new" && (!data.customerName || data.customerName === "New customer")}
-        onSelect={(id) => {
-          const allCustomers = [...EXISTING_CUSTOMERS, ...(data._createdCustomers ?? [])]
-          const customer = allCustomers.find((c) => c.id === id)
-          onChange({ customerId: id, customerName: customer?.name ?? "" })
-          setTimeout(() => itemsDropdownRef.current?.open(), 150)
-        }}
-        addNewLabel="+ New customer"
-        onAddNew={() => {
-          onAddObject?.("customer")
-          onChange({ customerId: "_new", customerName: "New customer" })
-        }}
-        onEdit={() => onAddObject?.("customer")}
-        hasError={errorFields?.has("customerId")}
-        errorMessage="Select a customer"
-      />
+      <div className="flex flex-col gap-[12px]">
+        <EntityDropdown
+          label={customerLabel}
+          placeholder="Find or add an account"
+          searchPlaceholder="Search by name, email, or account ID"
+          items={getSubscriptionAccountItems(data._createdCustomers ?? [])}
+          getSearchText={subscriptionAccountSearchText}
+          renderOption={(item) => <SubscriptionAccountOption item={item} />}
+          insetOptionHover
+          selectedId={data.customerId ?? ""}
+          selectedLabel={data.customerName}
+          selectedIsPlaceholder={data.customerId === "_new" && (!data.customerName || data.customerName === "New account")}
+          onSelect={(id) => {
+            const account = getSubscriptionAccountItems(data._createdCustomers ?? []).find((candidate) => candidate.id === id)
+            onChange({ customerId: id, customerName: account?.name ?? "" })
+            setTimeout(() => itemsDropdownRef.current?.open(), 150)
+          }}
+          addNewLabel="Create new account"
+          onAddNew={() => {
+            onAddObject?.("customer")
+            onChange({ customerId: "_new", customerName: "New account" })
+          }}
+          hasError={errorFields?.has("customerId")}
+          errorMessage="Select an account"
+        />
+        {selectedSubscriptionAccount ? <AccountSummaryCard account={selectedSubscriptionAccount} /> : null}
+      </div>
 
       {hasCustomer && (
         <>
@@ -1286,7 +1340,6 @@ function InvoiceOptionsPage({ data, onChange, onAddObject, flush = true }: {
   const tokens = getFormTokens(productFormStyle, { filled: inputFill })
   const set = (key: string, value: any) => onChange({ [key]: value })
   const customFieldRows: { name: string; value: string }[] = data.customFieldRows ?? [{ name: "", value: "" }]
-  const [showTemplateToast, setShowTemplateToast] = useState(false)
   const activeToggleRowClass = tokens.toggleRow
   const activeToggleBlockGapClass = isSail ? "gap-[16px]" : isRefresh ? "gap-[12px]" : "gap-[10px]"
   const activeToggleBlockSurfaceClass = isRefresh ? "bg-[#F6F9FC]" : "bg-[#F6F8FA]"
@@ -1313,18 +1366,18 @@ function InvoiceOptionsPage({ data, onChange, onAddObject, flush = true }: {
             <CustomSelect
               value={data.templateId ?? ""}
               onChange={(v) => set("templateId", v)}
-              options={TEMPLATE_OPTIONS}
-              buttonLabel="Manage"
-              onButtonClick={() => { setShowTemplateToast(true); setTimeout(() => setShowTemplateToast(false), 2000) }}
+              options={[
+                ...TEMPLATE_OPTIONS,
+                ...((data._createdTemplates ?? []) as { id: string; name: string }[]).map((template) => ({
+                  value: template.id,
+                  label: template.name,
+                })),
+              ]}
+              footerAction={{
+                label: "+ Create new template",
+                onClick: () => onAddObject?.("_invoiceTemplate"),
+              }}
             />
-            {showTemplateToast && (
-              <div className="mt-[6px] flex items-center gap-[6px] rounded-[6px] bg-[#F0EEFF] px-[10px] py-[6px]">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6L5 9L10 3" stroke="#533AFD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="text-[12px] font-[400] text-[#533AFD]">Opening template settings...</span>
-              </div>
-            )}
           </div>
         </Expandable>
       </div>
@@ -1459,7 +1512,7 @@ function SubscriptionComposeForm({ data, onChange, errorFields, onAddObject, ite
         onAddObject={onAddObject}
         itemsDropdownRef={itemsDropdownRef}
         topPadding={false}
-        customerLabel="Customer"
+        customerLabel="Account"
       />
       <BillingPage data={data} onChange={onChange} topPadding={false} />
 
@@ -1558,7 +1611,7 @@ export function SubscriptionForm({ data, onChange, errorFields, onAddObject }: S
           onAddObject={onAddObject}
           itemsDropdownRef={itemsDropdownRef}
           topPadding={false}
-          customerLabel="Customer"
+          customerLabel="Account"
         />
       </StandardSubscriptionSection>
       <StandardSubscriptionSection title="Billing and payments">

@@ -17,8 +17,8 @@ import { CouponForm } from "@/components/creation-workspace/forms/CouponForm"
 import { PriceForm } from "@/components/creation-workspace/forms/PriceForm"
 import { PricingPlanForm } from "@/components/creation-workspace/forms/PricingPlanForm"
 import { SubscriptionInvoicePreview } from "@/components/creation-workspace/SubscriptionInvoicePreview"
+import { InvoiceTemplatePreview } from "@/components/creation-workspace/InvoiceTemplatePreview"
 import { PricePreviewPanel } from "@/components/creation-workspace/PricePreviewPanel"
-import { InvoicePreview } from "@/components/creation-workspace/InvoicePreview"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { ProductFormStyleProvider, useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useNavStyle } from "@/components/creation-workspace/navStyle"
@@ -42,20 +42,19 @@ const subscriptionForms = {
   pricePreview: PricePreviewPanel,
 }
 
-const subscriptionPageTabs: { id: SubscriptionActivePage; label: string }[] = [
+const BASE_SUBSCRIPTION_TABS: { id: SubscriptionActivePage; label: string }[] = [
   { id: "subscription", label: "Subscription" },
-  { id: "billing", label: "Billing" },
-  { id: "options", label: "Options" },
-  { id: "invoice", label: "Invoice" },
 ]
 
 // Sidebar navigator for the subscription's sub-pages (used when Nav style = Sidebar)
 function SubscriptionPageNav({
   activePage,
   onSelectPage,
+  tabs,
 }: {
   activePage: SubscriptionActivePage
   onSelectPage: (page: SubscriptionActivePage) => void
+  tabs: { id: SubscriptionActivePage; label: string }[]
 }) {
   const { productFormStyle } = useProductFormStyle()
   const isRefreshNav = productFormStyle === "refresh"
@@ -66,7 +65,7 @@ function SubscriptionPageNav({
   const hoverBg = isRefreshNav ? "hover:bg-[#F1F6FB]" : "hover:bg-[#F4F7FA]"
   return (
     <div className="flex h-full w-[180px] flex-col gap-[2px] px-[8px] pt-[12px] pb-[8px]">
-      {subscriptionPageTabs.map((tab) => (
+      {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
@@ -97,16 +96,22 @@ export function SubscriptionCreationEditor({
   const [activePage, setActivePage] = useState<SubscriptionActivePage>("subscription")
   const pageDirection = useRef(1)
   const [showCustomerModal, setShowCustomerModal] = useState(false)
-  const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showPriceEditorModal, setShowPriceEditorModal] = useState(false)
   const [showCouponModal, setShowCouponModal] = useState(false)
   const [showProductModal, setShowProductModal] = useState(false)
   const [customerModalData, setCustomerModalData] = useState<Record<string, any>>({})
-  const [templateModalData, setTemplateModalData] = useState<Record<string, any>>({})
   const [couponModalData, setCouponModalData] = useState<Record<string, any>>({})
   const [productModalData, setProductModalData] = useState<Record<string, any>>({})
 
   const subscriptionObject = workflow.objects.find((o) => o.kind === "subscription") ?? workflow.activeObject
+  const showInvoiceTemplatePage = Boolean(
+    subscriptionObject?.data._showInvoiceTemplatePage
+    || (Array.isArray(subscriptionObject?.data._createdTemplates) && subscriptionObject.data._createdTemplates.length > 0)
+  )
+  const subscriptionPageTabs: { id: SubscriptionActivePage; label: string }[] = [
+    ...BASE_SUBSCRIPTION_TABS,
+    ...(showInvoiceTemplatePage ? [{ id: "invoice" as const, label: "Invoice template" }] : []),
+  ]
 
   const activeKind = workflow.activeObject?.kind
   const FormComponent = activeKind ? config.objectKinds[activeKind]?.formComponent : null
@@ -135,8 +140,14 @@ export function SubscriptionCreationEditor({
 
   const handleAddObject = (kind: string, existingId?: string, initialData?: Record<string, any>) => {
     if (kind === "_invoiceTemplate") {
-      setTemplateModalData({})
-      setShowTemplateModal(true)
+      const subObj = workflow.objects.find((o) => o.kind === "subscription")
+      if (subObj) {
+        workflow.updateObjectData(subObj.id, {
+          _showInvoiceTemplatePage: true,
+          invoiceTemplate: true,
+        })
+      }
+      setActivePage("invoice")
       return
     }
     if (kind === "_fullEditor") {
@@ -186,21 +197,11 @@ export function SubscriptionCreationEditor({
     if (subObj) {
       workflow.updateObjectData(subObj.id, {
         customerId: "_new",
-        customerName: customerModalData.name || "New customer",
+        customerName: customerModalData.name || "New account",
         _focusItemsAfterCustomerSave: true,
       })
     }
     setShowCustomerModal(false)
-  }
-
-  const handleTemplateSave = () => {
-    const subObj = workflow.objects.find((o) => o.kind === "subscription")
-    if (subObj) {
-      workflow.updateObjectData(subObj.id, {
-        template: templateModalData.name || "custom",
-      })
-    }
-    setShowTemplateModal(false)
   }
 
   const handleSelectPage = (nextPage: SubscriptionActivePage) => {
@@ -222,7 +223,14 @@ export function SubscriptionCreationEditor({
           onDismiss={workflow.clearValidationErrors}
         />
       )}
-      <SubscriptionInvoicePreview data={subscriptionObject?.data ?? {}} allObjects={workflow.objects} config={config} />
+      {activePage === "invoice" ? (
+        <InvoiceTemplatePreview
+          memo={subscriptionObject?.data.templateMemo as string | undefined}
+          footer={subscriptionObject?.data.templateFooter as string | undefined}
+        />
+      ) : (
+        <SubscriptionInvoicePreview data={subscriptionObject?.data ?? {}} allObjects={workflow.objects} config={config} />
+      )}
     </>
   )
 
@@ -234,8 +242,8 @@ export function SubscriptionCreationEditor({
         isOpen={isOpen}
         embedded={embedded}
         navigator={
-          navStyle === "sidebar" && activeKind === "subscription" ? (
-            <SubscriptionPageNav activePage={activePage} onSelectPage={handleSelectPage} />
+          navStyle === "sidebar" && activeKind === "subscription" && showInvoiceTemplatePage ? (
+            <SubscriptionPageNav activePage={activePage} onSelectPage={handleSelectPage} tabs={subscriptionPageTabs} />
           ) : undefined
         }
         header={
@@ -261,7 +269,7 @@ export function SubscriptionCreationEditor({
         editor={
           <>
             {/* Tab bar for subscription form pages */}
-            {navStyle === "tabs" && activeKind === "subscription" && (
+            {navStyle === "tabs" && activeKind === "subscription" && showInvoiceTemplatePage && (
               <div className={`-mx-[16px] -mt-[16px] grid grid-cols-4 border-b ${isRefresh ? "border-[#EAF0F6]" : "border-[#ECF1F6]"}`}>
                 {subscriptionPageTabs.map((tab) => (
                   <button
@@ -301,11 +309,28 @@ export function SubscriptionCreationEditor({
                     </p>
                   </div>
                 )}
-                {FormComponent && workflow.activeObject && (
+                {activeKind === "subscription" && activePage === "invoice" ? (
+                  <TemplateForm
+                    data={{
+                      name: subscriptionObject?.data.templateName ?? "",
+                      memo: subscriptionObject?.data.templateMemo ?? "",
+                      footer: subscriptionObject?.data.templateFooter ?? "",
+                    }}
+                    onChange={(patch) => {
+                      const subObj = workflow.objects.find((o) => o.kind === "subscription")
+                      if (!subObj) return
+                      workflow.updateObjectData(subObj.id, {
+                        ...("name" in patch ? { templateName: patch.name, template: patch.name } : {}),
+                        ...("memo" in patch ? { templateMemo: patch.memo } : {}),
+                        ...("footer" in patch ? { templateFooter: patch.footer } : {}),
+                      })
+                    }}
+                  />
+                ) : FormComponent && workflow.activeObject ? (
                   <FormComponent
                     data={{
                       ...workflow.activeObject.data,
-                      _activePage: activeKind === "subscription" && navStyle === "tabs" ? activePage : undefined,
+                      _activePage: activeKind === "subscription" && (navStyle === "tabs" || navStyle === "sidebar") && activePage !== "subscription" ? activePage : undefined,
                       _navStyle: navStyle,
                       _createdCustomers: workflow.objects
                         .filter((o) => o.kind === "customer" && o.data.name)
@@ -322,7 +347,7 @@ export function SubscriptionCreationEditor({
                     errorFields={activeErrorFields.size > 0 ? activeErrorFields : undefined}
                     onAddObject={handleAddObject}
                   />
-                )}
+                ) : null}
               </motion.div>
             </AnimatePresence>
           </>
@@ -330,18 +355,20 @@ export function SubscriptionCreationEditor({
         preview={previewPanel}
       />
 
-      {/* Customer creation modal (simple, 480px) */}
+      {/* Account creation modal (simple, 480px) */}
       <CreationModalShell
         isOpen={showCustomerModal}
         onClose={() => setShowCustomerModal(false)}
-        title="New customer"
-        primaryLabel="Save"
+        title="Create account"
+        subtitle="This account will be a customer."
+        primaryLabel="Create account"
         onPrimary={handleCustomerSave}
-        isPushed={showTemplateModal || showPriceEditorModal}
+        isPushed={showPriceEditorModal}
       >
         <ProductFormStyleProvider initial={productFormStyle}>
           <div className="overflow-y-auto px-[20px] py-[16px]">
             <CustomerForm
+              layout="compose"
               data={customerModalData}
               onChange={(data) => setCustomerModalData((prev) => ({ ...prev, ...data }))}
             />
@@ -356,7 +383,7 @@ export function SubscriptionCreationEditor({
         title="Create coupon"
         primaryLabel="Create coupon"
         onPrimary={() => setShowCouponModal(false)}
-        isPushed={showTemplateModal || showPriceEditorModal}
+        isPushed={showPriceEditorModal}
       >
         <ProductFormStyleProvider initial={productFormStyle}>
           <div className="overflow-y-auto px-[20px] py-[16px]">
@@ -402,7 +429,7 @@ export function SubscriptionCreationEditor({
           setProductModalData({})
           setShowProductModal(false)
         }}
-        isPushed={showTemplateModal || showPriceEditorModal}
+        isPushed={showPriceEditorModal}
       >
         <ProductFormStyleProvider initial={productFormStyle}>
           <div className="overflow-y-auto px-[20px] py-[16px]">
@@ -413,39 +440,6 @@ export function SubscriptionCreationEditor({
             />
           </div>
         </ProductFormStyleProvider>
-      </CreationModalShell>
-
-      {/* Invoice template creation modal (80% width) */}
-      <CreationModalShell
-        isOpen={showTemplateModal}
-        onClose={() => setShowTemplateModal(false)}
-        title="Create template"
-        primaryLabel="Create template"
-        onPrimary={handleTemplateSave}
-        modalWidth="w-[min(80vw,1280px)]"
-        maxHeight="max-h-[80vh]"
-      >
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto border-r border-[#ECF1F6] px-[24px] py-[20px]">
-            <TemplateForm
-              data={templateModalData}
-              onChange={(data) => setTemplateModalData((prev) => ({ ...prev, ...data }))}
-            />
-          </div>
-          <div className="flex w-[45%] flex-col overflow-y-auto bg-[#FAFBFC] p-[24px]">
-            <div className="mb-[16px]">
-              <p className="text-[14px] font-[600] leading-[20px] text-[#1A2C44]">Preview</p>
-              <p className="mt-[4px] text-[12px] leading-[16px] text-[#667691]">
-                Use an invoice that matches the template parameters to see a preview of this template.
-              </p>
-            </div>
-            <InvoicePreview
-              data={{ memo: templateModalData.memo, footer: templateModalData.footer }}
-              allObjects={[]}
-              config={config}
-            />
-          </div>
-        </div>
       </CreationModalShell>
 
       {/* Full product editor (80% modal) */}
