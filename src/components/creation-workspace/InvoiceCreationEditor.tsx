@@ -22,6 +22,7 @@ import { CreationModalShell } from "@/components/creation-workspace/CreationModa
 import { FullProductEditor } from "@/components/creation-workspace/FullProductEditor"
 import { ProductFormStyleProvider, useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { FocusedFieldProvider } from "@/components/product-catalog/FocusedFieldContext"
+import { NETWORK_ACCOUNTS } from "@/components/creation-workspace/account-configuration/model"
 
 type InvoiceCreationEditorProps = {
   isOpen: boolean
@@ -189,7 +190,7 @@ export function InvoiceCreationEditor({
       detail: email,
       country: String(customerModalData.accountCountry || customerModalData.country || ""),
       draft: customerModalData,
-      created: true,
+      created: !NETWORK_ACCOUNTS.some((account) => account.id === existingId),
     })
     setShowCustomerModal(false)
     setCustomerModalData({})

@@ -22,6 +22,7 @@ import { PricePreviewPanel } from "@/components/creation-workspace/PricePreviewP
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { ProductFormStyleProvider, useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useNavStyle } from "@/components/creation-workspace/navStyle"
+import { NETWORK_ACCOUNTS } from "@/components/creation-workspace/account-configuration/model"
 
 type SubscriptionCreationEditorProps = {
   isOpen: boolean
@@ -216,7 +217,7 @@ export function SubscriptionCreationEditor({
       detail: email,
       country: String(customerModalData.accountCountry || customerModalData.country || ""),
       draft: customerModalData,
-      created: true,
+      created: !NETWORK_ACCOUNTS.some((account) => account.id === existingId),
     })
     setShowCustomerModal(false)
     setCustomerModalData({})

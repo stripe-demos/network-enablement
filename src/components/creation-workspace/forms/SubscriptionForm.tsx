@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { EntityDropdown, type EntityDropdownHandle, type EntityItem } from "./EntityDropdown"
 import type { WorkflowObject } from "../useWorkflowState"
 import { AccountSummaryCard, NetworkAccountOption } from "../account-configuration/AccountConfigurationPrimitives"
-import { getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated, NETWORK_ACCOUNTS } from "../account-configuration/model"
+import { accountViewDraft, getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated, NETWORK_ACCOUNTS } from "../account-configuration/model"
 
 import { EXISTING_PRODUCTS } from "./shared/mockEntities"
 
@@ -938,20 +938,16 @@ function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropd
             onChange({ customerId: "_new", customerName: "New account" })
           }}
           editLabel="View account"
-          onEdit={(() => {
-            const created = (data._createdCustomers as { id: string; name: string; detail?: string; country?: string; draft?: Record<string, any> }[] | undefined)
+          onEdit={data.customerId && data.customerId !== "_new" ? () => {
+            const created = (data._createdCustomers as { id: string; name: string; detail?: string; country?: string; draft?: Record<string, unknown> }[] | undefined)
               ?.find((account) => account.id === data.customerId)
-            if (!created) return undefined
-            return () => onAddObject?.("customer", created.id, {
-              ...(created.draft ?? {}),
-              customerId: created.id,
-              name: created.name,
-              displayName: created.draft?.displayName ?? created.name,
-              accountEmail: created.draft?.accountEmail ?? created.detail,
-              email: created.draft?.email ?? created.detail,
-              accountCountry: created.draft?.accountCountry ?? created.country,
-            })
-          })()}
+            const network = SUBSCRIPTION_ACCOUNTS.find((account) => account.id === data.customerId)
+            const source = created ?? (network
+              ? { id: network.id, name: network.name, email: network.email, country: network.country }
+              : undefined)
+            if (!source) return
+            onAddObject?.("customer", source.id, accountViewDraft(source))
+          } : undefined}
           hasError={errorFields?.has("customerId")}
           errorMessage="Select an account"
         />
