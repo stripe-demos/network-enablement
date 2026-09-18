@@ -10,9 +10,8 @@ import { Checkbox } from "./shared/Checkbox"
 import type { CustomerFormLayout } from "@/components/creation-workspace/customerFormLayout"
 import { TrashIcon, LargeChevronIcon } from "@/components/ProductCatalogIcons"
 import { OptionalGroups, type OptionalGroup } from "./shared/ComposeGroup"
-import { EntityDropdown } from "./EntityDropdown"
 import { useAccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
-import { DuplicateAccountNudge, NetworkAccountOption, SelectControl } from "../account-configuration/AccountConfigurationPrimitives"
+import { DuplicateAccountNudge, SelectControl } from "../account-configuration/AccountConfigurationPrimitives"
 import { findMatchingNetworkAccount, getDisplayedNetworkAccount, NETWORK_ACCOUNTS, type NetworkAccount } from "../account-configuration/model"
 
 const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
@@ -691,40 +690,6 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     return (
       <div className="flex flex-col gap-[16px]">
         <div className="flex flex-col gap-[12px]">
-          <EntityDropdown
-            label="Account"
-            placeholder="Find or add an account"
-            searchPlaceholder="Search by name, email, or account ID"
-            items={COMPOSE_ACCOUNTS.map((account) => ({ id: account.id, name: account.name, detail: account.email }))}
-            getSearchText={(item) => {
-              const account = COMPOSE_ACCOUNTS.find((candidate) => candidate.id === item.id)
-              return account ? `${account.name} ${account.email} ${account.id}` : item.name
-            }}
-            renderOption={(item) => {
-              const account = COMPOSE_ACCOUNTS.find((candidate) => candidate.id === item.id)
-              return account ? <NetworkAccountOption account={account} /> : item.name
-            }}
-            insetOptionHover
-            selectedId={data.customerId && data.customerId !== "_new" ? data.customerId : ""}
-            selectedLabel={data.customerId && data.customerId !== "_new" ? data.name : "New account"}
-            selectedIsPlaceholder={!data.customerId || data.customerId === "_new"}
-            onSelect={(id) => {
-              const account = COMPOSE_ACCOUNTS.find((candidate) => candidate.id === id)
-              if (!account) return
-              const country = account.country === "UK" ? "United Kingdom" : account.country === "CA" ? "Canada" : "United States"
-              onChange({
-                customerId: account.id,
-                name: account.name,
-                displayName: account.name,
-                accountEmail: account.email,
-                email: account.email,
-                accountCountry: country,
-                country,
-              })
-            }}
-            addNewLabel="Create new account"
-            onAddNew={() => onChange({ customerId: "_new" })}
-          />
           <div className="flex flex-col gap-[6px]">
             <Field label="Account email">
               <input

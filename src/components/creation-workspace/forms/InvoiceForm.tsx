@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, type KeyboardEvent, type ReactNode } from 
 import { EntityDropdown, type EntityItem } from "./EntityDropdown"
 import type { WorkflowObject } from "../useWorkflowState"
 import { AccountSummaryCard, NetworkAccountOption } from "../account-configuration/AccountConfigurationPrimitives"
-import { getAccountRoles, getDisplayedNetworkAccount, NETWORK_ACCOUNTS } from "../account-configuration/model"
+import { getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated, NETWORK_ACCOUNTS } from "../account-configuration/model"
 
 import { EXISTING_PRODUCTS as EXISTING_ITEMS, CURRENCY_OPTIONS } from "./shared/mockEntities"
 
@@ -493,6 +493,11 @@ export function InvoiceForm({ data, onChange, errorFields, onAddObject }: Invoic
   const set = (key: string, value: unknown) => onChange({ [key]: value })
   const selectedInvoiceAccount = data.customerId && data.customerId !== "_new"
     ? INVOICE_ACCOUNTS.find((account) => account.id === data.customerId)
+      ?? (() => {
+        const created = (data._createdCustomers as { id: string; name: string; detail?: string; email?: string; country?: string }[] | undefined)
+          ?.find((account) => account.id === data.customerId)
+        return created ? networkAccountFromCreated(created) : undefined
+      })()
     : undefined
 
   const paymentMethods: string[] = data.paymentMethods ?? ["Card", "Klarna", "Link"]
@@ -746,6 +751,21 @@ export function InvoiceForm({ data, onChange, errorFields, onAddObject }: Invoic
               onAddObject?.("customer")
               onChange({ customerId: "_new", customerName: "New account" })
             }}
+            editLabel="View account"
+            onEdit={(() => {
+              const created = (data._createdCustomers as { id: string; name: string; detail?: string; country?: string; draft?: Record<string, any> }[] | undefined)
+                ?.find((account) => account.id === data.customerId)
+              if (!created) return undefined
+              return () => onAddObject?.("customer", created.id, {
+                ...(created.draft ?? {}),
+                customerId: created.id,
+                name: created.name,
+                displayName: created.draft?.displayName ?? created.name,
+                accountEmail: created.draft?.accountEmail ?? created.detail,
+                email: created.draft?.email ?? created.detail,
+                accountCountry: created.draft?.accountCountry ?? created.country,
+              })
+            })()}
             hasError={errorFields?.has("customerId")}
             errorMessage="Select an account"
             autoFocus={isRefresh}

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { EntityDropdown, type EntityDropdownHandle, type EntityItem } from "./EntityDropdown"
 import type { WorkflowObject } from "../useWorkflowState"
 import { AccountSummaryCard, NetworkAccountOption } from "../account-configuration/AccountConfigurationPrimitives"
-import { getAccountRoles, getDisplayedNetworkAccount, NETWORK_ACCOUNTS } from "../account-configuration/model"
+import { getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated, NETWORK_ACCOUNTS } from "../account-configuration/model"
 
 import { EXISTING_PRODUCTS } from "./shared/mockEntities"
 
@@ -862,6 +862,11 @@ function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropd
   const hasCustomer = !!(data.customerId && data.customerId !== "")
   const selectedSubscriptionAccount = data.customerId && data.customerId !== "_new"
     ? SUBSCRIPTION_ACCOUNTS.find((account) => account.id === data.customerId)
+      ?? (() => {
+        const created = (data._createdCustomers as { id: string; name: string; detail?: string; email?: string; country?: string }[] | undefined)
+          ?.find((account) => account.id === data.customerId)
+        return created ? networkAccountFromCreated(created) : undefined
+      })()
     : undefined
   const [newItemId, setNewItemId] = useState<string | null>(null)
   const serviceDateClass = isSail
@@ -932,6 +937,21 @@ function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropd
             onAddObject?.("customer")
             onChange({ customerId: "_new", customerName: "New account" })
           }}
+          editLabel="View account"
+          onEdit={(() => {
+            const created = (data._createdCustomers as { id: string; name: string; detail?: string; country?: string; draft?: Record<string, any> }[] | undefined)
+              ?.find((account) => account.id === data.customerId)
+            if (!created) return undefined
+            return () => onAddObject?.("customer", created.id, {
+              ...(created.draft ?? {}),
+              customerId: created.id,
+              name: created.name,
+              displayName: created.draft?.displayName ?? created.name,
+              accountEmail: created.draft?.accountEmail ?? created.detail,
+              email: created.draft?.email ?? created.detail,
+              accountCountry: created.draft?.accountCountry ?? created.country,
+            })
+          })()}
           hasError={errorFields?.has("customerId")}
           errorMessage="Select an account"
         />

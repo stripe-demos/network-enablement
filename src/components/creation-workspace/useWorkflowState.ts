@@ -197,7 +197,11 @@ export function useWorkflowState(config: WorkflowConfig): WorkflowState {
         prev.map((o) => {
           if (o.id !== id) return o
           const merged = { ...o.data, ...data }
-          const nameField = merged.name || merged.customerName || merged.productName
+          const nameField = o.kind === "customer"
+            ? merged.name || merged.customerName
+            : o.kind === "product"
+              ? merged.name || merged.productName
+              : merged.name
           const priceLabel = o.kind === "price" ? derivePriceLabel(merged) : null
           const resolvedLabel = priceLabel || (nameField && nameField.trim() ? nameField.trim() : null)
           return {

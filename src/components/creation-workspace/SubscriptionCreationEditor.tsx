@@ -164,17 +164,10 @@ export function SubscriptionCreationEditor({
       setShowProductModal(true)
       return
     }
-    if (kind === "customer" && !existingId) {
-      setCustomerModalData({})
+    if (kind === "customer") {
+      const existing = existingId ? workflow.objects.find((o) => o.id === existingId) : undefined
+      setCustomerModalData(initialData ?? existing?.data ?? {})
       setShowCustomerModal(true)
-      return
-    }
-    if (kind === "customer" && existingId) {
-      const existing = workflow.objects.find((o) => o.id === existingId)
-      if (existing) {
-        setCustomerModalData(existing.data)
-        setShowCustomerModal(true)
-      }
       return
     }
     if (existingId) {
@@ -185,32 +178,52 @@ export function SubscriptionCreationEditor({
     if (initialData) workflow.updateObjectData(id, initialData)
   }
 
+  const applyAccountToSubscription = (account: { id: string; name: string; detail?: string; country?: string; draft?: Record<string, any>; created?: boolean }) => {
+    if (!subscriptionObject) return
+    const created = Array.isArray(subscriptionObject.data._createdCustomers)
+      ? [...subscriptionObject.data._createdCustomers]
+      : []
+    if (account.created) {
+      const entry = {
+        id: account.id,
+        name: account.name,
+        detail: account.detail ?? "",
+        country: account.country,
+        draft: { ...(account.draft ?? {}), customerId: account.id, name: account.name },
+      }
+      const index = created.findIndex((candidate: { id: string }) => candidate.id === account.id)
+      if (index >= 0) created[index] = entry
+      else created.push(entry)
+    }
+    workflow.updateObjectData(subscriptionObject.id, {
+      customerId: account.id,
+      customerName: account.name,
+      _createdCustomers: created,
+      _focusItemsAfterCustomerSave: true,
+    })
+    workflow.setActiveObject(subscriptionObject.id)
+  }
+
   const handleCustomerSave = () => {
-    const existingCustomer = workflow.objects.find((o) => o.kind === "customer")
-    if (existingCustomer) {
-      workflow.updateObjectData(existingCustomer.id, customerModalData)
-    } else {
-      const id = workflow.addObject("customer")
-      workflow.updateObjectData(id, customerModalData)
-    }
-    const subObj = workflow.objects.find((o) => o.kind === "subscription")
-    if (subObj) {
-      workflow.updateObjectData(subObj.id, {
-        customerId: "_new",
-        customerName: customerModalData.name || "New account",
-        _focusItemsAfterCustomerSave: true,
-      })
-    }
+    const name = String(customerModalData.name || customerModalData.displayName || "New account")
+    const email = String(customerModalData.accountEmail || customerModalData.email || "")
+    const existingId = customerModalData.customerId && customerModalData.customerId !== "_new"
+      ? String(customerModalData.customerId)
+      : undefined
+    applyAccountToSubscription({
+      id: existingId ?? `acct_${Date.now()}`,
+      name,
+      detail: email,
+      country: String(customerModalData.accountCountry || customerModalData.country || ""),
+      draft: customerModalData,
+      created: true,
+    })
     setShowCustomerModal(false)
+    setCustomerModalData({})
   }
 
   const handleUseExistingAccount = (account: { id: string; name: string }) => {
-    if (subscriptionObject) {
-      workflow.updateObjectData(subscriptionObject.id, {
-        customerId: account.id,
-        customerName: account.name,
-      })
-    }
+    applyAccountToSubscription(account)
     setShowCustomerModal(false)
     setCustomerModalData({})
   }
@@ -266,7 +279,7 @@ export function SubscriptionCreationEditor({
             discardLabel={config.discardLabel}
             onAddObject={(kind) => handleAddObject(kind)}
             addOptions={workflow.availableAddOptions()}
-            tabs={workflow.objects.map((obj) => ({
+            tabs={workflow.objects.filter((obj) => obj.kind !== "customer").map((obj) => ({
               id: obj.id,
               kind: obj.kind,
               label: config.objectKinds[obj.kind]?.label ?? obj.kind,
@@ -343,9 +356,12 @@ export function SubscriptionCreationEditor({
                       ...workflow.activeObject.data,
                       _activePage: activeKind === "subscription" && (navStyle === "tabs" || navStyle === "sidebar") && activePage !== "subscription" ? activePage : undefined,
                       _navStyle: navStyle,
-                      _createdCustomers: workflow.objects
-                        .filter((o) => o.kind === "customer" && o.data.name)
-                        .map((o) => ({ id: o.id, name: o.data.name as string, detail: (o.data.email as string) || "" })),
+                      _createdCustomers: [
+                        ...(Array.isArray(workflow.activeObject.data._createdCustomers) ? workflow.activeObject.data._createdCustomers : []),
+                        ...workflow.objects
+                          .filter((o) => o.kind === "customer" && o.data.name)
+                          .map((o) => ({ id: o.id, name: o.data.name as string, detail: (o.data.email as string) || "" })),
+                      ],
                       _createdProducts: workflow.objects
                         .filter((o) => o.kind === "product" && o.data.name)
                         .map((o) => ({ id: o.id, name: o.data.name as string, detail: o.data.unitPrice ? `$${o.data.unitPrice}` : "" })),

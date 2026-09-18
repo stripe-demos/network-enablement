@@ -125,8 +125,8 @@ export function InvoiceCreationEditor({
       setShowCouponModal(true)
       return
     }
-    if (kind === "customer" && !existingId) {
-      setCustomerModalData({})
+    if (kind === "customer") {
+      setCustomerModalData(initialData ?? {})
       setShowCustomerModal(true)
       return
     }
@@ -152,20 +152,51 @@ export function InvoiceCreationEditor({
     setCouponModalData({})
   }
 
+  const applyAccountToInvoice = (account: { id: string; name: string; detail?: string; country?: string; draft?: Record<string, any>; created?: boolean }) => {
+    if (!invoiceObject) return
+    const created = Array.isArray(invoiceObject.data._createdCustomers)
+      ? [...invoiceObject.data._createdCustomers]
+      : []
+    if (account.created) {
+      const entry = {
+        id: account.id,
+        name: account.name,
+        detail: account.detail ?? "",
+        country: account.country,
+        draft: { ...(account.draft ?? {}), customerId: account.id, name: account.name },
+      }
+      const index = created.findIndex((candidate: { id: string }) => candidate.id === account.id)
+      if (index >= 0) created[index] = entry
+      else created.push(entry)
+    }
+    workflow.updateObjectData(invoiceObject.id, {
+      customerId: account.id,
+      customerName: account.name,
+      _createdCustomers: created,
+    })
+    workflow.setActiveObject(invoiceObject.id)
+  }
+
   const handleCreateCustomer = () => {
-    const id = workflow.addObject("customer")
-    workflow.updateObjectData(id, customerModalData)
+    const name = String(customerModalData.name || customerModalData.displayName || "New account")
+    const email = String(customerModalData.accountEmail || customerModalData.email || "")
+    const existingId = customerModalData.customerId && customerModalData.customerId !== "_new"
+      ? String(customerModalData.customerId)
+      : undefined
+    applyAccountToInvoice({
+      id: existingId ?? `acct_${Date.now()}`,
+      name,
+      detail: email,
+      country: String(customerModalData.accountCountry || customerModalData.country || ""),
+      draft: customerModalData,
+      created: true,
+    })
     setShowCustomerModal(false)
     setCustomerModalData({})
   }
 
   const handleUseExistingAccount = (account: { id: string; name: string }) => {
-    if (invoiceObject) {
-      workflow.updateObjectData(invoiceObject.id, {
-        customerId: account.id,
-        customerName: account.name,
-      })
-    }
+    applyAccountToInvoice(account)
     setShowCustomerModal(false)
     setCustomerModalData({})
   }
@@ -201,7 +232,7 @@ export function InvoiceCreationEditor({
           discardLabel={config.discardLabel}
           onAddObject={(kind) => handleAddObject(kind)}
           addOptions={workflow.availableAddOptions()}
-          tabs={workflow.objects.map((obj) => ({
+          tabs={workflow.objects.filter((obj) => obj.kind !== "customer").map((obj) => ({
             id: obj.id,
             kind: obj.kind,
             label: config.objectKinds[obj.kind]?.label ?? obj.kind,
@@ -222,20 +253,19 @@ export function InvoiceCreationEditor({
             exit={{ opacity: 0, x: -12, transition: { duration: 0.1 } }}
             transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.8 }}
           >
-            <div className="mb-[16px] flex min-w-0 items-center justify-between">
-              <p className={isRefresh ? "truncate text-[17px] font-[675] leading-[24px] tracking-[-0.18px] text-[#142234]" : "truncate text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#1A2C44]"}>
-                {isRefresh && workflow.activeObject?.kind === "invoice" ? "Invoice details" : workflow.activeObject?.label ?? "Invoice"}
-              </p>
-            </div>
             {FormComponent && workflow.activeObject && (
               <FormComponent
                 data={{
                   ...workflow.activeObject.data,
-                  _createdCustomers: syntheticCustomer
-                    ? [{ id: syntheticCustomer.id, name: syntheticCustomer.label, detail: syntheticCustomer.data.email ?? "" }]
-                    : workflow.objects
-                        .filter((o) => o.kind === "customer" && o.data.name)
-                        .map((o) => ({ id: o.id, name: o.data.name as string, detail: (o.data.email as string) || "" })),
+                  _createdCustomers: [
+                    ...(syntheticCustomer
+                      ? [{ id: syntheticCustomer.id, name: syntheticCustomer.label, detail: syntheticCustomer.data.email ?? "" }]
+                      : []),
+                    ...(Array.isArray(workflow.activeObject.data._createdCustomers) ? workflow.activeObject.data._createdCustomers : []),
+                    ...workflow.objects
+                      .filter((o) => o.kind === "customer" && o.data.name)
+                      .map((o) => ({ id: o.id, name: o.data.name as string, detail: (o.data.email as string) || "" })),
+                  ],
                   _createdProducts: workflow.objects
                     .filter((o) => o.kind === "product" && o.data.name)
                     .map((o) => ({ id: o.id, name: o.data.name as string, detail: o.data.unitPrice ? `$${o.data.unitPrice}` : "" })),

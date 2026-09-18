@@ -40,8 +40,9 @@ type EntityDropdownProps = {
   /** Optional create action shown below the results. */
   addNewLabel?: string
   onAddNew?: () => void
-  /** Called when the user clicks "Edit" next to the label (only shown when an item is selected) */
+  /** Called when the user clicks the action next to the label (only shown when an item is selected) */
   onEdit?: () => void
+  editLabel?: string
   hasError?: boolean
   errorMessage?: string
   highlight?: boolean
@@ -73,6 +74,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   addNewLabel,
   onAddNew,
   onEdit,
+  editLabel = "Edit",
   hasError,
   errorMessage,
   highlight,
@@ -258,7 +260,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
               onClick={onEdit}
             >
               <span className="text-[#9CA3B0]">·</span>
-              Edit
+              {editLabel}
             </button>
           )}
         </div>

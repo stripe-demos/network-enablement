@@ -212,6 +212,29 @@ export const NETWORK_ACCOUNTS: NetworkAccount[] = [
   { id: "acct_cameron", name: "Cameron Ellis", email: "cameron.ellis@example.com", configurations: ["customer"], additionalRoles: ["Money manager"], country: "US", initials: "CE" },
 ]
 
+export function networkAccountFromCreated(account: {
+  id: string
+  name: string
+  detail?: string
+  email?: string
+  country?: string
+}): NetworkAccount {
+  const name = account.name.trim() || "New account"
+  const country = account.country === "United Kingdom" || account.country === "UK"
+    ? "UK"
+    : account.country === "Canada" || account.country === "CA"
+      ? "CA"
+      : "US"
+  return {
+    id: account.id,
+    name,
+    email: (account.email || account.detail || "").trim(),
+    configurations: ["customer"],
+    country,
+    initials: initialsFromName(name) || "NA",
+  }
+}
+
 export function getDisplayedNetworkAccount(account: NetworkAccount, userPath?: UserPath): NetworkAccount {
   if (userPath !== "direct") return account
   const name = account.directName ?? account.name
