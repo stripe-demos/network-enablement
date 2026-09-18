@@ -235,33 +235,6 @@ export function networkAccountFromCreated(account: {
   }
 }
 
-export function accountViewDraft(account: {
-  id: string
-  name: string
-  email?: string
-  detail?: string
-  country?: string
-  draft?: Record<string, unknown>
-}): Record<string, unknown> {
-  const country = account.country === "UK" || account.country === "United Kingdom"
-    ? "United Kingdom"
-    : account.country === "CA" || account.country === "Canada"
-      ? "Canada"
-      : account.country === "US" || account.country === "United States"
-        ? "United States"
-        : account.country ?? ""
-  return {
-    ...(account.draft ?? {}),
-    customerId: account.id,
-    name: account.name,
-    displayName: (account.draft?.displayName as string | undefined) ?? account.name,
-    accountEmail: (account.draft?.accountEmail as string | undefined) ?? account.email ?? account.detail ?? "",
-    email: (account.draft?.email as string | undefined) ?? account.email ?? account.detail ?? "",
-    accountCountry: (account.draft?.accountCountry as string | undefined) ?? country,
-    country: (account.draft?.country as string | undefined) ?? country,
-  }
-}
-
 export function getDisplayedNetworkAccount(account: NetworkAccount, userPath?: UserPath): NetworkAccount {
   if (userPath !== "direct") return account
   const name = account.directName ?? account.name

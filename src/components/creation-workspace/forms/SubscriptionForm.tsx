@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { EntityDropdown, type EntityDropdownHandle, type EntityItem } from "./EntityDropdown"
 import type { WorkflowObject } from "../useWorkflowState"
 import { AccountSummaryCard, NetworkAccountOption } from "../account-configuration/AccountConfigurationPrimitives"
-import { accountViewDraft, getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated, NETWORK_ACCOUNTS } from "../account-configuration/model"
+import { getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated, NETWORK_ACCOUNTS } from "../account-configuration/model"
 
 import { EXISTING_PRODUCTS } from "./shared/mockEntities"
 
@@ -937,17 +937,7 @@ function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropd
             onAddObject?.("customer")
             onChange({ customerId: "_new", customerName: "New account" })
           }}
-          editLabel="View account"
-          onEdit={data.customerId && data.customerId !== "_new" ? () => {
-            const created = (data._createdCustomers as { id: string; name: string; detail?: string; country?: string; draft?: Record<string, unknown> }[] | undefined)
-              ?.find((account) => account.id === data.customerId)
-            const network = SUBSCRIPTION_ACCOUNTS.find((account) => account.id === data.customerId)
-            const source = created ?? (network
-              ? { id: network.id, name: network.name, email: network.email, country: network.country }
-              : undefined)
-            if (!source) return
-            onAddObject?.("customer", source.id, accountViewDraft(source))
-          } : undefined}
+          editLabel={data.customerId && data.customerId !== "_new" ? "View account" : undefined}
           hasError={errorFields?.has("customerId")}
           errorMessage="Select an account"
         />

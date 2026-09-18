@@ -40,7 +40,7 @@ type EntityDropdownProps = {
   /** Optional create action shown below the results. */
   addNewLabel?: string
   onAddNew?: () => void
-  /** Called when the user clicks the action next to the label (only shown when an item is selected) */
+  /** Called when the user clicks the action next to the label. Omit to keep link-like copy only. */
   onEdit?: () => void
   editLabel?: string
   hasError?: boolean
@@ -74,7 +74,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   addNewLabel,
   onAddNew,
   onEdit,
-  editLabel = "Edit",
+  editLabel,
   hasError,
   errorMessage,
   highlight,
@@ -253,16 +253,19 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
       {label && !useFloatingLabel && (
         <div className="flex items-center gap-[6px]">
           <label className={labelClassName ?? tokens.labelClass}>{label}</label>
-          {hasSelection && onEdit && (
-            <button
-              type="button"
+          {hasSelection && (onEdit || editLabel) ? (
+            <a
+              href="#"
               className="flex items-center gap-[4px] text-[11px] font-[500] text-[#533AFD] transition-colors hover:text-[#4730E0]"
-              onClick={onEdit}
+              onClick={(event) => {
+                event.preventDefault()
+                onEdit?.()
+              }}
             >
               <span className="text-[#9CA3B0]">·</span>
-              {editLabel}
-            </button>
-          )}
+              {editLabel ?? "Edit"}
+            </a>
+          ) : null}
         </div>
       )}
       <div className={`relative ${highlightClass}`}>
