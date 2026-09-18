@@ -165,15 +165,40 @@ function WireframeChrome({ children }: { children: ReactNode }) {
   )
 }
 
-function ExampleChip({ label, onClick }: { label: string; onClick: () => void }) {
+function ExampleChip({
+  label,
+  onClick,
+  disabled = false,
+  tooltip,
+}: {
+  label: string
+  onClick?: () => void
+  disabled?: boolean
+  tooltip?: string
+}) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center rounded-full border border-[#D5DEE7] bg-white px-[16px] pt-[7px] pb-[8px] text-[15px] font-[500] leading-[16px] text-[#3F5064] transition-colors hover:border-[#C1CCD7] hover:bg-[#F6F8FA] hover:text-[#142234]"
-    >
-      {label}
-    </button>
+    <span className="group relative inline-flex">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={disabled ? undefined : onClick}
+        className={`inline-flex items-center rounded-full border px-[16px] pt-[7px] pb-[8px] text-[15px] font-[500] leading-[16px] transition-colors ${
+          disabled
+            ? "cursor-not-allowed border-[#E4EAEF] bg-[#F7F9FB] text-[#9AA8B5]"
+            : "border-[#D5DEE7] bg-white text-[#3F5064] hover:border-[#C1CCD7] hover:bg-[#F6F8FA] hover:text-[#142234]"
+        }`}
+      >
+        {label}
+      </button>
+      {tooltip ? (
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-[6px] bg-[#142234] px-[8px] py-[5px] text-[12px] font-[500] leading-[16px] text-white opacity-0 shadow-[0_4px_12px_rgba(20,34,52,0.18)] transition-opacity group-hover:opacity-100"
+        >
+          {tooltip}
+        </span>
+      ) : null}
+    </span>
   )
 }
 
@@ -290,6 +315,7 @@ function StandardDocs() {
               <ExampleChip label="Account creation" onClick={() => openDemo("account")} />
               <ExampleChip label="Invoice" onClick={() => openDemo("invoice")} />
               <ExampleChip label="Subscription" onClick={() => openDemo("subscription")} />
+              <ExampleChip label="Send money" disabled tooltip="Work in progress" />
             </div>
           </div>
 
