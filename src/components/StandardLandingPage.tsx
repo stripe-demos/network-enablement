@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { AccountConfigurationDemo } from "@/components/AccountConfigurationDemo"
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
 import { InvoiceCreationEditor } from "@/components/creation-workspace/InvoiceCreationEditor"
+import { SendMoneyCreationEditor } from "@/components/creation-workspace/SendMoneyCreationEditor"
 import { SubscriptionCreationEditor } from "@/components/creation-workspace/SubscriptionCreationEditor"
 import { InputFillProvider } from "@/components/creation-workspace/inputFill"
 import { LayoutSplitProvider } from "@/components/creation-workspace/layoutSplit"
@@ -25,12 +26,13 @@ const COMPONENT_COLORS: Record<string, string> = {
 
 const STANDARD_BLOCKS = ["Title and actions", "Form", "Preview"] as const
 
-type DemoKey = "invoice" | "subscription" | "account"
+type DemoKey = "invoice" | "subscription" | "account" | "send"
 
 const DEMO_HASH: Record<DemoKey, string> = {
   invoice: "invoice",
   subscription: "subscription",
   account: "account-creation",
+  send: "send-money",
 }
 
 function demoFromHash(hash: string): DemoKey | null {
@@ -42,7 +44,7 @@ function demoFromHash(hash: string): DemoKey | null {
 function demoFromHistoryState(state: unknown): DemoKey | null {
   if (!state || typeof state !== "object" || !("demo" in state)) return null
   const demo = (state as { demo?: unknown }).demo
-  return demo === "invoice" || demo === "subscription" || demo === "account" ? demo : null
+  return demo === "invoice" || demo === "subscription" || demo === "account" || demo === "send" ? demo : null
 }
 
 function FieldWire({
@@ -335,7 +337,7 @@ function StandardDocs() {
               <ExampleChip label="Account creation" href={`#${DEMO_HASH.account}`} onClick={() => openDemo("account")} />
               <ExampleChip label="Invoice" href={`#${DEMO_HASH.invoice}`} onClick={() => openDemo("invoice")} />
               <ExampleChip label="Subscription" href={`#${DEMO_HASH.subscription}`} onClick={() => openDemo("subscription")} />
-              <ExampleChip label="Send money" disabled tooltip="Work in progress" />
+              <ExampleChip label="Send money" href={`#${DEMO_HASH.send}`} onClick={() => openDemo("send")} />
             </div>
           </div>
 
@@ -428,6 +430,18 @@ function StandardDocs() {
               exampleLabel="Account creation"
               onExit={goToPreviousPage}
             />
+          </motion.div>
+        ) : null}
+
+        {activeDemo === "send" ? (
+          <motion.div key="send-demo" className="example-ui fixed inset-0 z-40" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+            <ListPageDemo flow="payouts" exampleLabel="Send money" ctaLabel="Send money" onExit={goToPreviousPage}>
+              {({ isOpen, onClose }) => (
+                <FlowProviders>
+                  <SendMoneyCreationEditor isOpen={isOpen} onClose={onClose} />
+                </FlowProviders>
+              )}
+            </ListPageDemo>
           </motion.div>
         ) : null}
       </AnimatePresence>

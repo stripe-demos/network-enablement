@@ -17,7 +17,7 @@ export default function useMicAnalyser(
 ) {
   const onFrameRef = useRef(onFrame);
   onFrameRef.current = onFrame;
-  const errorRef = useRef(null);
+  const errorRef = useRef<unknown>(null);
   const barsRef = useRef(new Float32Array(BAR_COUNT));
   const capture = options?.capture !== false
 
@@ -25,16 +25,16 @@ export default function useMicAnalyser(
     if (!active) return undefined;
 
     let cancelled = false;
-    let raf = null;
-    let stream = null;
-    let ctx = null;
+    let raf: number | null = null;
+    let stream: MediaStream | null = null;
+    let ctx: AudioContext | null = null;
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
     // Fallback: a speech-like envelope when there's no usable mic.
     const runSimulated = () => {
       const start = performance.now();
-      const loop = (now) => {
+      const loop = (now: number) => {
         if (cancelled) return;
         const t = (now - start) / 1000;
         const raw =

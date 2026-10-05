@@ -180,10 +180,10 @@ export function AccountApiPreview({
     const next = new Set(collectJsonPaths(payload))
     addedPaths.current = previousPaths.current
       ? collapseToSectionRoots([...next].filter((path) => !previousPaths.current?.has(path)))
-      : new Set()
+      : new Set<string>()
     const newlyRemoved = previousPaths.current
       ? collapseToSectionRoots([...previousPaths.current].filter((path) => !next.has(path)))
-      : new Set()
+      : new Set<string>()
     const leaving = new Set(
       [...view.leaving, ...newlyRemoved].filter((path) => !next.has(path)),
     )

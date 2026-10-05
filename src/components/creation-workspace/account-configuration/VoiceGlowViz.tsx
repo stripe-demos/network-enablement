@@ -60,7 +60,7 @@ const lobeBg = (color: string, at = "100% 100%") =>
 //   - a soft pink band at `bandY` (% from the top) that drifts along the edge
 //   - a tall, narrow ellipse: the trail proper, fading out about halfway up
 //   - a wide, short ellipse filling the elbow so the two arms merge smoothly
-const trailBg = (bandY = 70) =>
+const trailBg = (bandY: number | string = 70) =>
   `radial-gradient(ellipse 14% 12% at 100% ${bandY}%, ${PINK}bb 0%, ${PINK}00 100%), ` +
   `radial-gradient(ellipse 16% 58% at 100% 100%, ${PURPLE}ff 0%, ${ORANGE}cc 18%, ${PINK}99 42%, ${PINK}44 70%, ${PINK}00 100%), ` +
   `radial-gradient(ellipse 42% 30% at 100% 100%, ${PURPLE}cc 0%, ${ORANGE}88 40%, ${PINK}00 100%)`;

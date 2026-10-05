@@ -25,6 +25,7 @@ const FLOW_CONTEXT: Record<string, FlowContext> = {
   "buy-button": { title: "Payment links", columns: 4, navActive: 4 },
   invoices: { title: "Invoices", columns: 4, navActive: 4 },
   subscriptions: { title: "Subscriptions", columns: 4, navActive: 4 },
+  payouts: { title: "Payouts", columns: 4, navActive: 4 },
 }
 const DEFAULT_CONTEXT: FlowContext = { title: "Overview", columns: 4, navActive: 0 }
 
