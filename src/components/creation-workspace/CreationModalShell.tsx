@@ -12,6 +12,7 @@ type CreationModalShellProps = {
   subtitle?: string
   primaryLabel?: string
   onPrimary?: () => void
+  primaryDisabled?: boolean
   modalWidth?: string
   maxHeight?: string
   isPushed?: boolean
@@ -33,6 +34,7 @@ export function CreationModalShell({
   subtitle,
   primaryLabel = "Create",
   onPrimary,
+  primaryDisabled,
   modalWidth = "w-[480px]",
   maxHeight = "max-h-[80vh]",
   isPushed,
@@ -59,8 +61,11 @@ export function CreationModalShell({
       </button>
       <button
         type="button"
-        className={tokens.primaryButtonClass}
-        onClick={onPrimary ?? onClose}
+        disabled={primaryDisabled}
+        className={primaryDisabled
+          ? `${tokens.primaryButtonClass} cursor-not-allowed opacity-45`
+          : tokens.primaryButtonClass}
+        onClick={primaryDisabled ? undefined : (onPrimary ?? onClose)}
       >
         {primaryLabel}
       </button>

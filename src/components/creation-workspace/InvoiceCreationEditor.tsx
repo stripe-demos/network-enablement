@@ -9,7 +9,7 @@ import { ValidationPanel } from "@/components/creation-workspace/ValidationPanel
 import { useWorkflowState, type WorkflowObject } from "@/components/creation-workspace/useWorkflowState"
 import { createInvoiceWorkflowConfig, getPrimaryLabel } from "@/components/creation-workspace/workflowConfig"
 import { InvoiceForm } from "@/components/creation-workspace/forms/InvoiceForm"
-import { CustomerForm } from "@/components/creation-workspace/forms/CustomerForm"
+import { CustomerForm, isComposeAccountReady } from "@/components/creation-workspace/forms/CustomerForm"
 import { ProductForm } from "@/components/creation-workspace/forms/ProductForm"
 import { CouponForm } from "@/components/creation-workspace/forms/CouponForm"
 import { MeterForm } from "@/components/creation-workspace/forms/MeterForm"
@@ -179,6 +179,7 @@ export function InvoiceCreationEditor({
   }
 
   const handleCreateCustomer = () => {
+    if (!isComposeAccountReady(customerModalData)) return
     const name = String(customerModalData.name || customerModalData.displayName || "New account")
     const email = String(customerModalData.accountEmail || customerModalData.email || "")
     const existingId = customerModalData.customerId && customerModalData.customerId !== "_new"
@@ -331,6 +332,7 @@ export function InvoiceCreationEditor({
       title="Create account"
       subtitle="This account will be a customer."
       primaryLabel="Create account"
+      primaryDisabled={!isComposeAccountReady(customerModalData)}
       onPrimary={handleCreateCustomer}
     >
       <ProductFormStyleProvider initial={productFormStyle}>

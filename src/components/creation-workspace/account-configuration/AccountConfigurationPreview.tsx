@@ -206,9 +206,11 @@ function PreviewModeFrame({
   const isApi = mode === "api"
 
   return (
-    <div className={`rounded-[14px] ${showShadow || isApi ? "shadow-[0_14px_38px_rgba(20,34,52,0.10)]" : ""}`}>
+    <div className={`overflow-hidden rounded-[14px] border transition-colors duration-300 ${
+      isApi ? "border-[#16324F]" : "border-[#EBEEF1]"
+    } ${showShadow || isApi ? "shadow-[0_14px_38px_rgba(20,34,52,0.10)]" : ""}`}>
       <motion.div
-        className="relative overflow-hidden rounded-[14px]"
+        className="relative overflow-hidden"
         initial={false}
         animate={{ height: height || "auto" }}
         transition={reduceMotion || !animateHeight
@@ -225,14 +227,14 @@ function PreviewModeFrame({
         }}
       >
         <div
-          className="absolute inset-x-0 top-0 min-h-full w-full rounded-[14px] border border-[#EBEEF1] bg-white transition-opacity duration-300 ease-out motion-reduce:transition-none"
+          className="absolute inset-x-0 top-0 min-h-full w-full bg-white transition-opacity duration-300 ease-out motion-reduce:transition-none"
           style={{ opacity: isApi ? 0 : 1, pointerEvents: isApi ? "none" : "auto" }}
           aria-hidden={isApi}
         >
           <div ref={dashboardRef}>{dashboard}</div>
         </div>
         <div
-          className="absolute inset-x-0 top-0 min-h-full w-full rounded-[14px] border border-[#16324F] bg-[#0A2540] transition-opacity duration-300 ease-out motion-reduce:transition-none"
+          className="absolute inset-x-0 top-0 min-h-full w-full bg-[#0A2540] transition-opacity duration-300 ease-out motion-reduce:transition-none"
           style={{ opacity: isApi ? 1 : 0, pointerEvents: isApi ? "auto" : "none" }}
           aria-hidden={!isApi}
         >
@@ -309,12 +311,9 @@ export function AccountConfigurationPreview({
   }, [existingKey, previewAccountKey])
 
   return (
-    <div className="relative w-full max-w-[540px]" data-configuration-preview data-preview-mode={previewMode}>
-      {SHOW_API_PREVIEW && !showEmpty ? (
-        <div className="mb-[10px] flex justify-center">
-          <PreviewModeToggle value={previewMode} onChange={setPreviewMode} />
-        </div>
-      ) : null}
+    <div className="relative flex h-full w-full flex-col" data-configuration-preview data-preview-mode={previewMode}>
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <div className="w-full max-w-[540px]">
       {showEmpty ? (
         <EmptyAccountPreview />
       ) : (
@@ -401,6 +400,13 @@ export function AccountConfigurationPreview({
           )}
         />
       )}
+        </div>
+      </div>
+      {SHOW_API_PREVIEW && !showEmpty ? (
+        <div className="flex shrink-0 justify-center">
+          <PreviewModeToggle value={previewMode} onChange={setPreviewMode} />
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -377,3 +377,39 @@ export function recommendConfigurationsFromDescription(description: string, user
   if (matched.length > 0) return matched
   return userPath === "direct" ? ["customer"] : ["merchant"]
 }
+
+const CONFIGURATION_WHAT: Record<ConfigurationKind, string> = {
+  customer: "This account will make payments to you.",
+  merchant: "This account will accept payments from its customers.",
+  recipient: "This account will receive funds from you.",
+}
+
+function quoteFromDescription(description: string, pattern?: RegExp) {
+  const text = description.trim().replace(/\s+/g, " ")
+  if (!text) return ""
+  if (pattern) {
+    const sentence = text.split(/(?<=[.!?])\s+/).find((part) => pattern.test(part))
+    const snippet = (sentence ?? text.match(pattern)?.[0] ?? text).trim()
+    const clipped = snippet.length > 140 ? `${snippet.slice(0, 137).trim()}…` : snippet
+    return clipped.replace(/^["“]+|["”]+$/g, "").replace(/[.!?]+$/g, "")
+  }
+  return text.length > 140 ? `${text.slice(0, 137).trim()}…` : text
+}
+
+export function explainRecommendedConfigurations(
+  description: string,
+  recommended: ConfigurationKind[],
+) {
+  const text = description.trim()
+  return recommended.flatMap((id) => {
+    const option = CONFIGURATION_OPTIONS.find((candidate) => candidate.id === id)
+    if (!option) return []
+    const hint = CONFIGURATION_HINTS.find((candidate) => candidate.id === id)
+    const matched = Boolean(hint && hint.pattern.test(text))
+    const quote = quoteFromDescription(text, matched ? hint?.pattern : undefined)
+    const body = matched && quote
+      ? `${CONFIGURATION_WHAT[id]} You mentioned “${quote}.”`
+      : CONFIGURATION_WHAT[id]
+    return [{ id, title: option.title, body }]
+  })
+}

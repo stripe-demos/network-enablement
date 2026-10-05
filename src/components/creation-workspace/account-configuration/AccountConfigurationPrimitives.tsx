@@ -109,9 +109,9 @@ export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
 }
 
 const COUNTRY_BADGE_SIZE = {
-  sm: { width: 10, height: 10, flagClass: "h-[10px] w-[10px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
-  md: { width: 16, height: 16, flagClass: "h-[16px] w-[16px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[10px] text-[#1A2C44]" },
-  default: { width: 14, height: 14, flagClass: "h-[14px] w-[14px]", gap: "gap-[4px] rounded-[6px] px-[6px] py-[4px]", label: "text-[12px] font-[600] leading-[16px] text-[#1A2C44]" },
+  sm: { width: 10, height: 10, gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
+  md: { width: 12, height: 12, gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
+  default: { width: 14, height: 14, gap: "gap-[4px]", label: "text-[12px] font-[600] leading-[16px] text-[#1A2C44]" },
 } as const
 
 export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" | "md" }) {
@@ -123,7 +123,14 @@ export function CountryBadge({ country, size = "default" }: { country: string; s
   return (
     <span className={`flex shrink-0 items-center ${badge.gap}`}>
       {flagSrc ? (
-        <Image src={flagSrc} alt="" width={badge.width} height={badge.height} className={badge.flagClass} />
+        <Image
+          src={flagSrc}
+          alt=""
+          width={badge.width}
+          height={badge.height}
+          className="shrink-0"
+          style={{ width: badge.width, height: badge.height }}
+        />
       ) : null}
       <span className={badge.label}>{countryCode || "—"}</span>
     </span>
@@ -190,7 +197,7 @@ export function DuplicateAccountNudge({
     >
       <div className="p-[8px]">
         <AccountSummaryCard account={account} subtitle={account.id} />
-        <p className="px-[8px] pb-[4px] pt-[8px] text-[12px] leading-[16px] text-[#3C4F69]">
+        <p className="px-[8px] pb-[4px] pt-[12px] text-[12px] leading-[16px] text-[#3C4F69]">
           {description}
         </p>
       </div>

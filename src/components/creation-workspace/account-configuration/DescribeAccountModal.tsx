@@ -3,12 +3,11 @@
 import { useEffect, useRef, useState } from "react"
 
 import { CreationModalShell } from "@/components/creation-workspace/CreationModalShell"
-import { Checkbox } from "@/components/creation-workspace/forms/shared/Checkbox"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 
 import {
-  getConfigurationOptions,
+  explainRecommendedConfigurations,
   recommendConfigurationsFromDescription,
   type ConfigurationKind,
   type UserPath,
@@ -36,6 +35,7 @@ export function DescribeAccountModal({
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const thinkTimer = useRef<number | null>(null)
   const spokenBaseRef = useRef("")
   const [description, setDescription] = useState("")
@@ -46,6 +46,7 @@ export function DescribeAccountModal({
   const [picked, setPicked] = useState<ConfigurationKind[]>([])
   const [isRecording, setIsRecording] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
+  const [bodyHeight, setBodyHeight] = useState<number>()
 
   useEffect(() => {
     if (!isOpen) {
@@ -58,6 +59,7 @@ export function DescribeAccountModal({
       setPicked([])
       setIsRecording(false)
       setVoiceError(null)
+      setBodyHeight(undefined)
       spokenBaseRef.current = ""
     }
   }, [isOpen])
@@ -108,16 +110,15 @@ export function DescribeAccountModal({
     setIsRecording(true)
   }
 
-  const options = getConfigurationOptions(userPath).filter((option) => recommended.includes(option.id))
+  const explanations = explainRecommendedConfigurations(description, recommended)
   const canContinue = description.trim().length > 0 && status !== "thinking"
   const canApply = step === "recommend" && picked.length > 0
 
-  const toggle = (id: ConfigurationKind) => {
-    setPicked((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
-  }
-
   const continueFromDescription = () => {
     if (!canContinue) return
+    const nextHeight = bodyRef.current?.offsetHeight
+    if (nextHeight) setBodyHeight(nextHeight)
+    setIsRecording(false)
     setStatus("thinking")
     if (thinkTimer.current) window.clearTimeout(thinkTimer.current)
     thinkTimer.current = window.setTimeout(() => {
@@ -127,11 +128,11 @@ export function DescribeAccountModal({
       setPicked(next)
       setStatus("ready")
       setStep("recommend")
-    }, 350)
+    }, 900)
   }
 
   const apply = () => {
-    if (!canApply) return
+    if (step !== "recommend" || picked.length === 0) return
     onApply(Array.from(new Set([...selected, ...picked])))
     onClose()
   }
@@ -143,7 +144,7 @@ export function DescribeAccountModal({
         onClick: apply,
       }
     : {
-        label: status === "thinking" ? "Finding…" : "Continue",
+        label: status === "thinking" ? "Analyzing" : "Continue",
         disabled: !canContinue,
         onClick: continueFromDescription,
       }
@@ -154,7 +155,7 @@ export function DescribeAccountModal({
       onClose={onClose}
       title={step === "recommend" ? "Recommended configurations" : "Tell us about this account"}
       subtitle={step === "recommend"
-        ? "Select what this account should be able to do, then apply them to the form."
+        ? "Based on your description, here’s what we recommend."
         : "Describe what they do, then continue to see recommended configurations."}
       modalWidth="w-[560px]"
       footer={
@@ -172,17 +173,23 @@ export function DescribeAccountModal({
             {step === "recommend" ? "Back" : "Close"}
           </button>
           <button
+            key={step}
             type="button"
             disabled={primary.disabled}
             className={primary.disabled ? `${tokens.primaryButtonClass} cursor-not-allowed opacity-45` : tokens.primaryButtonClass}
             onClick={primary.onClick}
           >
+            {status === "thinking" && step === "describe" ? <ButtonSpinner /> : null}
             {primary.label}
           </button>
         </div>
       }
     >
-      <div className="flex min-h-0 flex-col gap-[16px] overflow-y-auto px-[20px] py-[16px]">
+      <div
+        ref={bodyRef}
+        className="flex min-h-0 flex-col gap-[16px] overflow-y-auto px-[20px] py-[16px]"
+        style={bodyHeight ? { height: bodyHeight } : undefined}
+      >
         {step === "describe" ? (
         <div>
           <div className={`relative isolate overflow-hidden rounded-[12px] bg-white ${isRecording ? "border border-transparent" : "border border-[#E6EAF0]"}`}>
@@ -276,43 +283,33 @@ export function DescribeAccountModal({
               {description.length.toLocaleString()}/{DESCRIPTION_LIMIT.toLocaleString()}
             </span>
           </div>
-          {isRecording && !voiceError ? (
-            <p className="mt-[8px] text-[11px] leading-[16px] text-[#6C7688]">Listening… speak to describe this account.</p>
-          ) : null}
           {voiceError ? (
             <p className="mt-[8px] text-[11px] leading-[16px] text-[#C45500]">{voiceError}</p>
           ) : null}
         </div>
-        ) : options.length > 0 ? (
-          <div className="flex flex-col gap-[8px]">
-            <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">Recommended</p>
-            <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
-              {options.map((option) => {
-                const checked = picked.includes(option.id)
-                return (
-                  <div
-                    key={option.id}
-                    className={`flex min-h-[48px] items-center gap-[9px] px-[11px] py-[9px] ${checked ? "bg-[#F8F7FF]" : "hover:bg-[#F8FAFB]"}`}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      label={checked ? `Remove ${option.title} recommendation` : `Keep ${option.title} recommendation`}
-                      onChange={() => toggle(option.id)}
-                    />
-                    <button type="button" className="flex min-w-0 flex-1 items-center justify-between gap-[12px] text-left" onClick={() => toggle(option.id)}>
-                      <span className={`text-[12px] font-[600] leading-[16px] ${checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
-                      <span className="shrink-0 whitespace-nowrap text-right text-[11px] leading-[16px] text-[#6C7688]">{option.relationship}</span>
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+        ) : explanations.length > 0 ? (
+          <div className="flex flex-col gap-[16px]">
+            {explanations.map((item) => (
+              <div key={item.id}>
+                <p className="text-[13px] font-[650] leading-[18px] text-[#1A2C44]">{item.title}</p>
+                <p className="mt-[4px] text-[12px] leading-[18px] text-[#596171]">{item.body}</p>
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-[12px] leading-[18px] text-[#6C7688]">No new configurations to add for this account.</p>
         )}
       </div>
     </CreationModalShell>
+  )
+}
+
+function ButtonSpinner() {
+  return (
+    <svg className="mr-[6px] animate-spin" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" />
+      <path d="M10.5 6a4.5 4.5 0 0 0-4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
   )
 }
 

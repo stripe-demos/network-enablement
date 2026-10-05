@@ -170,7 +170,7 @@ export function SimpleCreationHeader({
   const submitButton = (
     <button
       type="button"
-      disabled={Boolean(submitDisabled && !hasSubmitTooltip)}
+      disabled={Boolean(submitDisabled)}
       aria-disabled={submitDisabled || undefined}
       aria-describedby={hasSubmitTooltip ? submitTooltipId : undefined}
       className={`${submitDisabled

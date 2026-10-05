@@ -379,7 +379,9 @@ function AccountSelector({
             <button
               type="button"
               disabled={!isNewAccountIdentityValid(details)}
-              className={isNewAccountIdentityValid(details) ? tokens.primaryButtonClass : `${tokens.primaryButtonClass} cursor-not-allowed opacity-45`}
+              className={isNewAccountIdentityValid(details)
+                ? tokens.primaryButtonClass
+                : `${tokens.primaryButtonClass} cursor-not-allowed opacity-45`}
               onClick={() => {
                 if (!isNewAccountIdentityValid(details)) return
                 onChooseNew()

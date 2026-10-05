@@ -11,7 +11,7 @@ import { FullProductEditor } from "@/components/creation-workspace/FullProductEd
 import { useWorkflowState } from "@/components/creation-workspace/useWorkflowState"
 import { createSubscriptionWorkflowConfig, getPrimaryLabel } from "@/components/creation-workspace/workflowConfig"
 import { SubscriptionForm, type SubscriptionActivePage } from "@/components/creation-workspace/forms/SubscriptionForm"
-import { CustomerForm } from "@/components/creation-workspace/forms/CustomerForm"
+import { CustomerForm, isComposeAccountReady } from "@/components/creation-workspace/forms/CustomerForm"
 import { ProductForm } from "@/components/creation-workspace/forms/ProductForm"
 import { CouponForm } from "@/components/creation-workspace/forms/CouponForm"
 import { PriceForm } from "@/components/creation-workspace/forms/PriceForm"
@@ -206,6 +206,7 @@ export function SubscriptionCreationEditor({
   }
 
   const handleCustomerSave = () => {
+    if (!isComposeAccountReady(customerModalData)) return
     const name = String(customerModalData.name || customerModalData.displayName || "New account")
     const email = String(customerModalData.accountEmail || customerModalData.email || "")
     const existingId = customerModalData.customerId && customerModalData.customerId !== "_new"
@@ -390,6 +391,7 @@ export function SubscriptionCreationEditor({
         title="Create account"
         subtitle="This account will be a customer."
         primaryLabel="Create account"
+        primaryDisabled={!isComposeAccountReady(customerModalData)}
         onPrimary={handleCustomerSave}
         isPushed={showPriceEditorModal}
       >

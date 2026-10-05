@@ -227,3 +227,50 @@ export function collapseToSectionRoots(added: string[]): Set<string> {
   }
   return roots
 }
+
+function isCoveredJsonPath(path: string, roots: Set<string>) {
+  return [...roots].some((root) => (
+    path === root || path.startsWith(`${root}.`) || path.startsWith(`${root}[`)
+  ))
+}
+
+export function mergeDisplayPayload(
+  current: unknown,
+  previous: unknown,
+  path: string,
+  leavingRoots: Set<string>,
+): unknown {
+  if (current === undefined) {
+    return isCoveredJsonPath(path, leavingRoots) ? previous : undefined
+  }
+  if (
+    previous === undefined
+    || current === null
+    || previous === null
+    || typeof current !== "object"
+    || typeof previous !== "object"
+    || Array.isArray(current)
+    || Array.isArray(previous)
+  ) {
+    return current
+  }
+
+  const currentObj = current as Record<string, unknown>
+  const previousObj = previous as Record<string, unknown>
+  const keys: string[] = []
+  for (const key of Object.keys(previousObj)) {
+    const childPath = path ? `${path}.${key}` : key
+    if (key in currentObj || isCoveredJsonPath(childPath, leavingRoots)) keys.push(key)
+  }
+  for (const key of Object.keys(currentObj)) {
+    if (!keys.includes(key)) keys.push(key)
+  }
+
+  const result: Record<string, unknown> = {}
+  for (const key of keys) {
+    const childPath = path ? `${path}.${key}` : key
+    const merged = mergeDisplayPayload(currentObj[key], previousObj[key], childPath, leavingRoots)
+    if (merged !== undefined || key in currentObj) result[key] = merged
+  }
+  return result
+}

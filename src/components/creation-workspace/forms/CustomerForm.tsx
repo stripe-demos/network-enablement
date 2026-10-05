@@ -12,10 +12,20 @@ import { TrashIcon, LargeChevronIcon } from "@/components/ProductCatalogIcons"
 import { OptionalGroups, type OptionalGroup } from "./shared/ComposeGroup"
 import { useAccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
 import { DuplicateAccountNudge, SelectControl } from "../account-configuration/AccountConfigurationPrimitives"
-import { findMatchingNetworkAccount, getDisplayedNetworkAccount, NETWORK_ACCOUNTS, type NetworkAccount } from "../account-configuration/model"
+import { EMAIL_PATTERN, findMatchingNetworkAccount, getDisplayedNetworkAccount, NETWORK_ACCOUNTS, type NetworkAccount } from "../account-configuration/model"
 
 const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
 const COMPOSE_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
+
+export function isComposeAccountReady(data: Record<string, unknown>) {
+  const accountType = data.accountType === "Individual" ? "Individual" : "Company"
+  const hasName = accountType === "Company"
+    ? Boolean(String(data.registeredName ?? "").trim())
+    : Boolean(String(data.firstName ?? "").trim() && String(data.lastName ?? "").trim())
+  const email = String(data.accountEmail ?? data.email ?? "").trim()
+  const country = String(data.accountCountry ?? data.country ?? "").trim()
+  return hasName && EMAIL_PATTERN.test(email) && Boolean(country)
+}
 
 type CustomerFormProps = {
   data: Record<string, any>
@@ -714,7 +724,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
             {matchingAccount && dismissedMatchId !== matchingAccount.id && data.customerId !== matchingAccount.id ? (
               <DuplicateAccountNudge
                 account={matchingAccount}
-                description="This email matches an existing account in your Network. Continue with it to add configurations instead of creating a duplicate."
+                description="This email matches an existing account in your Network. Continue with it instead of creating a duplicate."
                 onUseExisting={() => applyExistingAccount(matchingAccount)}
                 onDismiss={() => setDismissedMatchId(matchingAccount.id)}
               />
@@ -785,7 +795,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
           <span className="text-[12px] font-[600] leading-[16px] tracking-[-0.024px] text-[#1A2C44]">
             More settings
           </span>
-          <LargeChevronIcon rotated={showMoreSettings} />
+          <LargeChevronIcon rotated={showMoreSettings} size="sm" />
         </button>
         <div
           id="account-more-settings"

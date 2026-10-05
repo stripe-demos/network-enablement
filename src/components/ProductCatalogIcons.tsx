@@ -44,12 +44,12 @@ export function PhotoIcon({ size = 20, className }: { size?: number; className?:
   )
 }
 
-export function LargeChevronIcon({ rotated = false }: { rotated?: boolean } = {}) {
+export function LargeChevronIcon({ rotated = false, size = "default" }: { rotated?: boolean; size?: "default" | "sm" } = {}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="12"
-      height="7"
+      width={size === "sm" ? 8 : 12}
+      height={size === "sm" ? 5 : 7}
       fill="none"
       viewBox="0 0 12 7"
       className={rotated ? "rotate-180 transition-transform" : "transition-transform"}

@@ -237,7 +237,7 @@ function OptionalGroupsRows({ groups, hideHeader = false }: { groups: OptionalGr
     ? "text-[14px] font-[600] leading-[20px]"
     : isRefresh
       ? "text-[13px] font-[575] leading-[20px]"
-      : "text-[12px] font-[600] leading-[16px]"
+      : "text-[11px] font-[600] leading-[16px]"
   const [open, setOpen] = useState<string | null>(null)
   // Once an opened row's expand animation settles, stop clipping it so a dropdown/menu
   // revealed inside (e.g. the product picker) can overflow the row instead of being cut off.
