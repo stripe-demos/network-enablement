@@ -5,16 +5,16 @@ import type { ProductFormStyle } from "@/components/creation-workspace/productFo
 export const labelClass = "text-[12px] font-[400] leading-[16px] text-[#273951]"
 
 export const inputClass =
-  "h-[30px] w-full rounded-[6px] border border-[#D8DEE4] bg-white px-3 text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44] placeholder:text-[#6C7688] outline-none hover:border-[#B6C0CD] focus:shadow-[0_0_0_1.5px_#A0D0F7] focus:border-[#A0D0F7] transition-all"
+  "h-[30px] w-full rounded-[6px] border border-[#E3E8EF] bg-white px-3 text-[12px] font-[400] leading-[16px] tracking-[-0.024px] text-[#353A44] placeholder:text-[#6C7688] not-placeholder-shown:font-[500] outline-none hover:border-[#B6C0CD] focus:shadow-[0_0_0_1.5px_#A0D0F7] focus:border-[#A0D0F7] transition-all"
 
 export const textareaClass =
-  "min-h-[80px] w-full resize-none rounded-[6px] border border-[#D8DEE4] bg-white px-3 py-[8px] text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44] placeholder:text-[#6C7688] outline-none hover:border-[#B6C0CD] focus:shadow-[0_0_0_1.5px_#A0D0F7] focus:border-[#A0D0F7] transition-all"
+  "min-h-[80px] w-full resize-none rounded-[6px] border border-[#E3E8EF] bg-white px-3 py-[8px] text-[12px] font-[400] leading-[16px] tracking-[-0.024px] text-[#353A44] placeholder:text-[#6C7688] not-placeholder-shown:font-[500] outline-none hover:border-[#B6C0CD] focus:shadow-[0_0_0_1.5px_#A0D0F7] focus:border-[#A0D0F7] transition-all"
 
 export const selectClass =
-  "h-[30px] w-full appearance-none rounded-[6px] border border-[#D8DEE4] bg-white px-[10px] pr-[28px] text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44] outline-none hover:border-[#B6C0CD] focus:shadow-[0_0_0_1.5px_#A0D0F7] focus:border-[#A0D0F7] transition-all"
+  "h-[30px] w-full appearance-none rounded-[6px] border border-[#E3E8EF] bg-white px-[10px] pr-[28px] text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44] outline-none hover:border-[#B6C0CD] focus:shadow-[0_0_0_1.5px_#A0D0F7] focus:border-[#A0D0F7] transition-all"
 
 const errorInputCurrent =
-  "h-[30px] w-full rounded-[6px] border border-[#DF1B41] bg-[#FFF5F5] px-3 text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44] placeholder:text-[#6C7688] outline-none focus:border-[#DF1B41] focus:shadow-[0_0_0_1.5px_rgba(223,27,65,0.2)] transition-all"
+  "h-[30px] w-full rounded-[6px] border border-[#DF1B41] bg-[#FFF5F5] px-3 text-[12px] font-[400] leading-[16px] tracking-[-0.024px] text-[#353A44] placeholder:text-[#6C7688] not-placeholder-shown:font-[500] outline-none focus:border-[#DF1B41] focus:shadow-[0_0_0_1.5px_rgba(223,27,65,0.2)] transition-all"
 
 const helperCurrent = "text-[12px] font-[400] leading-[16px] text-[#596171]"
 

@@ -283,7 +283,7 @@ export function SimpleCreationHeader({
         {hasSubmitTooltip ? (
           <span className="t-tt-wrap">
             {submitButton}
-            <span id={submitTooltipId} role="tooltip" data-side="bottom-right" className="t-tt">
+            <span id={submitTooltipId} role="tooltip" data-side="bottom-right" className="t-tt text-[12px] font-[400] leading-[16px] tracking-[-0.024px]">
               {submitDisabledReason}
             </span>
           </span>

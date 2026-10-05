@@ -1,0 +1,12 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="16" height="12" transform="translate(0 2)" fill="white"/>
+  <path d="M14 14H2C0.89543 14 0 13.1046 0 12V4C0 2.89543 0.895431 2 2 2H14C15.1046 2 16 2.89543 16 4V12C16 13.1046 15.1046 14 14 14Z" fill="#012169"/>
+  <path d="M0 4.4L5.2 7.4L0 10.4V4.4Z" fill="#F6F9FC"/>
+  <path d="M0 5.1L4 7.4L0 9.7V5.1Z" fill="#E25950"/>
+  <path d="M5.2 2H7.6V14H5.2V2Z" fill="#F6F9FC"/>
+  <path d="M0 6.7H8V9.1H0V6.7Z" fill="#F6F9FC"/>
+  <path d="M5.7 2H7.1V14H5.7V2Z" fill="#E25950"/>
+  <path d="M0 7.2H8V8.6H0V7.2Z" fill="#E25950"/>
+  <circle cx="11.6" cy="9.4" r="1" fill="#F6F9FC"/>
+  <circle cx="11.6" cy="9.4" r="0.55" fill="#E25950"/>
+</svg>

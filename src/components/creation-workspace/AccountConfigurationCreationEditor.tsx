@@ -223,7 +223,7 @@ export function AccountConfigurationCreationEditor({
         />
       }
       preview={
-        <div className="relative flex h-full min-h-[420px] w-full items-center justify-center px-[24px] py-[56px]">
+        <div className="relative flex h-full min-h-0 w-full items-center justify-center overflow-hidden px-[24px] py-[32px]">
           <AccountConfigurationPreview source={source} selectedAccount={selectedAccount} configurations={configurations} details={details} userPath={userPath} />
         </div>
       }

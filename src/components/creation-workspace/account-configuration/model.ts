@@ -360,3 +360,20 @@ export function isNewAccountIdentityValid(details: AccountDetailsDraft) {
     : Boolean(details.firstName.trim() && details.lastName.trim())
   return hasName && EMAIL_PATTERN.test(details.accountEmail.trim()) && Boolean(details.country)
 }
+
+const CONFIGURATION_HINTS: { id: ConfigurationKind; pattern: RegExp }[] = [
+  { id: "customer", pattern: /\b(customers?|buyers?|subscribers?|invoices?|billed|billing|pays? (you|us|me)|makes payments?|purchas)/i },
+  { id: "merchant", pattern: /\b(merchants?|sells?|selling|sellers?|store|shop|checkout|accepts? (payments?|cards?)|charge customers?|process(es|ing)? payments?|marketplace|saas)\b/i },
+  { id: "recipient", pattern: /\b(recipients?|payouts?|get paid|receives? (funds?|money|payouts?|transfers?)|freelancers?|contractors?|vendors?|creators?|affiliates?|connected accounts?|transfers?)\b/i },
+]
+
+export function recommendConfigurationsFromDescription(description: string, userPath?: UserPath): ConfigurationKind[] {
+  const text = description.trim()
+  if (!text) return []
+  const available = new Set(getConfigurationOptions(userPath).map((option) => option.id))
+  const matched = CONFIGURATION_HINTS
+    .filter(({ id, pattern }) => available.has(id) && pattern.test(text))
+    .map(({ id }) => id)
+  if (matched.length > 0) return matched
+  return userPath === "direct" ? ["customer"] : ["merchant"]
+}

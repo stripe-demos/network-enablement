@@ -6,6 +6,7 @@ import type { WorkflowObject } from "../useWorkflowState"
 import { AccountSummaryCard, NetworkAccountOption } from "../account-configuration/AccountConfigurationPrimitives"
 import { getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated, NETWORK_ACCOUNTS } from "../account-configuration/model"
 
+import { CurrencyFlag, hasCurrencyFlag } from "@/components/CurrencyFlag"
 import { EXISTING_PRODUCTS as EXISTING_ITEMS, CURRENCY_OPTIONS } from "./shared/mockEntities"
 
 const INVOICE_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
@@ -151,8 +152,7 @@ function CustomSelect({ label, value, onChange, options, prefix }: {
           onKeyDown={handleKeyDown}
         >
           <span className="flex items-center gap-[6px]">
-            {prefix && <span>{prefix}</span>}
-            {selected?.prefix && <span>{selected.prefix}</span>}
+            {selected && hasCurrencyFlag(selected.value) ? <CurrencyFlag currency={selected.value} size={16} /> : null}
             {selected?.label ?? value}
           </span>
           <ChevronIcon className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -177,8 +177,10 @@ function CustomSelect({ label, value, onChange, options, prefix }: {
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => chooseOption(opt.value)}
               >
-                {opt.prefix && <span>{opt.prefix}</span>}
-                {opt.label}
+                <span className="flex items-center gap-[6px]">
+                  {hasCurrencyFlag(opt.value) ? <CurrencyFlag currency={opt.value} size={16} /> : null}
+                  {opt.label}
+                </span>
                 {opt.value === value && (
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="ml-auto shrink-0">
                     <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#533AFD" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>

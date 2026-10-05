@@ -167,29 +167,41 @@ function WireframeChrome({ children }: { children: ReactNode }) {
 
 function ExampleChip({
   label,
+  href,
   onClick,
   disabled = false,
   tooltip,
 }: {
   label: string
+  href?: string
   onClick?: () => void
   disabled?: boolean
   tooltip?: string
 }) {
+  const className = `relative z-10 inline-flex items-center rounded-full border px-[16px] pt-[7px] pb-[8px] text-[15px] font-[500] leading-[16px] transition-colors ${
+    disabled
+      ? "cursor-not-allowed border-[#E4EAEF] bg-[#F7F9FB] text-[#9AA8B5]"
+      : "cursor-pointer border-[#D5DEE7] bg-white text-[#3F5064] hover:border-[#C1CCD7] hover:bg-[#F6F8FA] hover:text-[#142234]"
+  }`
+
   return (
-    <span className="group relative inline-flex">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={disabled ? undefined : onClick}
-        className={`inline-flex items-center rounded-full border px-[16px] pt-[7px] pb-[8px] text-[15px] font-[500] leading-[16px] transition-colors ${
-          disabled
-            ? "cursor-not-allowed border-[#E4EAEF] bg-[#F7F9FB] text-[#9AA8B5]"
-            : "border-[#D5DEE7] bg-white text-[#3F5064] hover:border-[#C1CCD7] hover:bg-[#F6F8FA] hover:text-[#142234]"
-        }`}
-      >
-        {label}
-      </button>
+    <span className="group relative z-10 inline-flex">
+      {disabled || !href ? (
+        <button type="button" disabled={disabled} className={className}>
+          {label}
+        </button>
+      ) : (
+        <a
+          href={href}
+          className={className}
+          onClick={(event) => {
+            event.preventDefault()
+            onClick?.()
+          }}
+        >
+          {label}
+        </a>
+      )}
       {tooltip ? (
         <span
           role="tooltip"
@@ -270,22 +282,30 @@ function StandardDocs() {
   const [activeDemo, setActiveDemo] = useState<DemoKey | null>(null)
 
   useEffect(() => {
-    const fromHash = demoFromHash(window.location.hash)
-    if (fromHash) {
-      setActiveDemo(fromHash)
-      window.history.replaceState({ demo: fromHash }, "", `#${DEMO_HASH[fromHash]}`)
+    const applyFromLocation = (state?: unknown) => {
+      setActiveDemo(demoFromHistoryState(state) ?? demoFromHash(window.location.hash))
     }
 
-    const onPopState = (event: PopStateEvent) => {
-      setActiveDemo(demoFromHistoryState(event.state))
-    }
+    applyFromLocation(window.history.state)
+
+    const onPopState = (event: PopStateEvent) => applyFromLocation(event.state)
+    const onHashChange = () => applyFromLocation()
     window.addEventListener("popstate", onPopState)
-    return () => window.removeEventListener("popstate", onPopState)
+    window.addEventListener("hashchange", onHashChange)
+    return () => {
+      window.removeEventListener("popstate", onPopState)
+      window.removeEventListener("hashchange", onHashChange)
+    }
   }, [])
 
   const openDemo = (key: DemoKey) => {
     setActiveDemo(key)
-    window.history.pushState({ demo: key }, "", `#${DEMO_HASH[key]}`)
+    const url = `#${DEMO_HASH[key]}`
+    try {
+      window.history.pushState({ demo: key }, "", url)
+    } catch {
+      window.location.hash = DEMO_HASH[key]
+    }
   }
 
   const goToPreviousPage = () => {
@@ -311,10 +331,10 @@ function StandardDocs() {
             <p className="doc-lead mt-6 max-w-[640px] text-[20px] !font-[450] leading-[1.55] tracking-[-0.01em] !text-[#3F5064]">
               Object creation flows in the new Network world.
             </p>
-            <div className="mt-6 flex flex-wrap items-center gap-2.5">
-              <ExampleChip label="Account creation" onClick={() => openDemo("account")} />
-              <ExampleChip label="Invoice" onClick={() => openDemo("invoice")} />
-              <ExampleChip label="Subscription" onClick={() => openDemo("subscription")} />
+            <div className="relative z-10 mt-6 flex flex-wrap items-center gap-2.5">
+              <ExampleChip label="Account creation" href={`#${DEMO_HASH.account}`} onClick={() => openDemo("account")} />
+              <ExampleChip label="Invoice" href={`#${DEMO_HASH.invoice}`} onClick={() => openDemo("invoice")} />
+              <ExampleChip label="Subscription" href={`#${DEMO_HASH.subscription}`} onClick={() => openDemo("subscription")} />
               <ExampleChip label="Send money" disabled tooltip="Work in progress" />
             </div>
           </div>
@@ -376,7 +396,7 @@ function StandardDocs() {
 
       <AnimatePresence>
         {activeDemo === "invoice" ? (
-          <motion.div key="invoice-demo" className="example-ui" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+          <motion.div key="invoice-demo" className="example-ui fixed inset-0 z-40" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
             <ListPageDemo flow="invoices" exampleLabel="Invoice" ctaLabel="Create invoice" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -388,7 +408,7 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "subscription" ? (
-          <motion.div key="subscription-demo" className="example-ui" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+          <motion.div key="subscription-demo" className="example-ui fixed inset-0 z-40" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
             <ListPageDemo flow="subscriptions" exampleLabel="Subscription" ctaLabel="Create subscription" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -402,7 +422,7 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "account" ? (
-          <motion.div key="account-demo" className="example-ui" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+          <motion.div key="account-demo" className="example-ui fixed inset-0 z-40 overflow-auto" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
             <AccountConfigurationDemo
               patternLabel="Creation flows"
               exampleLabel="Account creation"

@@ -1,6 +1,14 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M2 0H14C15.1046 0 16 0.895431 16 2V10C16 11.1046 15.1046 12 14 12H2C0.895431 12 0 11.1046 0 10V2C0 0.895431 0.895431 0 2 0Z" fill="#FFFFFF"/>
-  <path d="M2 0H4V12H2C0.895431 12 0 11.1046 0 10V2C0 0.895431 0.895431 0 2 0Z" fill="#FF0000"/>
-  <path d="M12 0H14C15.1046 0 16 0.895431 16 2V10C16 11.1046 15.1046 12 14 12H12V0Z" fill="#FF0000"/>
-  <path d="M8 2.2L8.55 4.05H10.5L8.95 5.2L9.5 7.05L8 5.9L6.5 7.05L7.05 5.2L5.5 4.05H7.45L8 2.2Z" fill="#FF0000"/>
+<svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="ca-flag">
+      <rect width="16" height="12" rx="2"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#ca-flag)">
+    <rect width="16" height="12" fill="#FFFFFF"/>
+    <rect width="4" height="12" fill="#FF0000"/>
+    <rect x="12" width="4" height="12" fill="#FF0000"/>
+    <path fill="#FF0000" d="M8 1.75l.32 1.58 1.12-1.18.28.55-.55 1.28 1.42-.42.12.58-1.22.72 1.38.58-.42.5-1.32-.18.42 1.22-.68.08-.62-1.15-.22 1.92h-.14l-.22-1.92-.62 1.15-.68-.08.42-1.22-1.32.18-.42-.5 1.38-.58-1.22-.72.12-.58 1.42.42-.55-1.28.28-.55 1.12 1.18z"/>
+    <path fill="#FF0000" d="M7.76 8.2h.48v2.05c0 .18-.1.32-.24.32s-.24-.14-.24-.32z"/>
+  </g>
 </svg>

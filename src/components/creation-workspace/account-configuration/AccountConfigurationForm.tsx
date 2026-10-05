@@ -15,6 +15,7 @@ import { useAccountConflictNudgeMode } from "@/components/creation-workspace/acc
 import type { AccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
 import type { AccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
 
+import { DescribeAccountModal } from "./DescribeAccountModal"
 import {
   AccountSummaryCard,
   DuplicateAccountNudge,
@@ -220,12 +221,13 @@ function AccountIdentityFields({
         ) : null}
       </div>
       <div className="flex flex-col gap-[4px]">
-        <span className={tokens.labelClass}>Account type</span>
+        <span className={tokens.labelClass}>Type</span>
         <SegmentedControl
           value={details.type}
           options={ACCOUNT_TYPE_OPTIONS}
           onChange={(type) => onChange({ type })}
           variantOverride="segmented"
+          buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
         />
       </div>
       {details.type === "Company" ? (
@@ -444,11 +446,13 @@ function ConfigurationPicker({
   selected,
   existing,
   userPath,
+  source,
   onChange,
 }: {
   selected: ConfigurationKind[]
   existing: ConfigurationKind[]
   userPath?: UserPath
+  source: AccountSource
   onChange: (next: ConfigurationKind[]) => void
 }) {
   const { productFormStyle } = useProductFormStyle()
@@ -456,6 +460,7 @@ function ConfigurationPicker({
   const options = getConfigurationOptions(userPath)
   const existingOptions = options.filter((option) => existing.includes(option.id))
   const addableOptions = options.filter((option) => !existing.includes(option.id))
+  const [describeOpen, setDescribeOpen] = useState(false)
   const toggle = (option: ConfigurationOption) => {
     onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])
   }
@@ -464,13 +469,20 @@ function ConfigurationPicker({
     <section className="flex flex-col gap-[12px]" data-configuration-picker>
       <div>
         <h3 className={tokens.sectionTitle}>Configurations</h3>
-        <p className="mt-[3px] text-[11px] leading-[16px] text-[#596171]">Specify what you want this account to do.</p>
+        {source === "new" ? (
+          <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">
+            Not sure what to pick?{" "}
+            <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={() => setDescribeOpen(true)}>
+              Tell us about this account
+            </button>.
+          </p>
+        ) : null}
       </div>
       {existingOptions.length > 0 ? (
         <div className="flex flex-col gap-[8px]">
           <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">On this account</p>
           <HoverTip text="You can deactivate capabilities from this account’s page.">
-            <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white">
+            <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
               {existingOptions.map((option) => (
                 <ConfigurationRow key={option.id} option={option} checked locked />
               ))}
@@ -483,7 +495,7 @@ function ConfigurationPicker({
           {existingOptions.length > 0 ? (
             <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">Add</p>
           ) : null}
-          <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white">
+          <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
             {addableOptions.map((option) => (
               <ConfigurationRow
                 key={option.id}
@@ -495,6 +507,14 @@ function ConfigurationPicker({
           </div>
         </div>
       ) : null}
+      <DescribeAccountModal
+        isOpen={describeOpen}
+        userPath={userPath}
+        existing={existing}
+        selected={selected}
+        onClose={() => setDescribeOpen(false)}
+        onApply={onChange}
+      />
     </section>
   )
 }
@@ -663,7 +683,7 @@ function PayoutInformationSection({
     <section className="flex flex-col gap-[12px]" data-payout-information>
       <div>
         <h3 className={tokens.sectionTitle}>Payout methods</h3>
-        <p className="mt-[3px] text-[11px] leading-[16px] text-[#596171]">Select where funds should be deposited.</p>
+        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Select where funds should be deposited.</p>
       </div>
       <div className="flex flex-col gap-[7px]">
         {payoutMethods.map((method) => {
@@ -676,10 +696,10 @@ function PayoutInformationSection({
             <div
               className={`overflow-hidden rounded-[8px] border ${
                 locked
-                  ? "border-[#D4DEE9] bg-white opacity-55"
+                  ? "border-[#E3E8EF] bg-white opacity-55"
                   : checked
                     ? "border-[#C8C0FF] bg-[#F8F7FF]"
-                    : "border-[#D4DEE9] bg-white"
+                    : "border-[#E3E8EF] bg-white"
               }`}
             >
               <div className="flex min-h-[58px] items-start">
@@ -698,7 +718,7 @@ function PayoutInformationSection({
                       <span className={`block text-[12px] font-[600] leading-[16px] ${checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
                         {method.label}
                       </span>
-                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">
+                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#6C7688]">
                         {payoutMethodSummary(method.id, methodDetails, method.description)}
                       </span>
                     </span>
@@ -733,7 +753,7 @@ function PayoutInformationSection({
                       <span className={`block text-[12px] font-[600] leading-[16px] ${locked ? "text-[#1A2C44]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
                         {method.label}
                       </span>
-                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">
+                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#6C7688]">
                         {payoutMethodSummary(method.id, methodDetails, method.description)}
                       </span>
                     </span>
@@ -774,7 +794,7 @@ function PayoutInformationSection({
         })}
       </div>
       {needsPayoutEmail ? (
-        <p className="flex items-start gap-[6px] text-[11px] leading-[16px] text-[#596171]">
+        <p className="flex items-start gap-[6px] text-[11px] leading-[16px] text-[#6C7688]">
           <svg className="mt-[2px] shrink-0 text-[#818DA0]" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
             <circle cx="6" cy="3.75" r="0.7" fill="currentColor" />
@@ -799,7 +819,7 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
       <div className="flex flex-col gap-[7px]">
         <ReviewRow title="Billing details" summary={details.useAccountEmailForBilling ? "Same as account email" : details.billingEmail || "Not added"} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
           <div className="flex flex-col gap-[12px]">
-            <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#596171]">Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
+            <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#6C7688]">Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
             {!details.useAccountEmailForBilling ? <Field label="Billing email"><input type="email" className={tokens.inputClass} placeholder={details.accountEmail || "billing@example.com"} value={details.billingEmail} onChange={(event) => onChange({ billingEmail: event.target.value })} /></Field> : null}
             <Field label="Billing country"><SelectControl className={tokens.selectClass} value={details.billingCountry || details.country} onChange={(billingCountry) => onChange({ billingCountry })}><option value="">Select a country</option><option>United Kingdom</option><option>United States</option><option>Canada</option></SelectControl></Field>
           </div>
@@ -874,7 +894,7 @@ function CapabilitiesEditor({
 
   return (
     <div className="flex flex-col gap-[12px]">
-      <p className="text-[11px] leading-[16px] text-[#596171]">Select which capabilities to request for this account.</p>
+      <p className="text-[11px] leading-[16px] text-[#6C7688]">Select which capabilities to request for this account.</p>
       <input
         className={tokens.inputClass}
         placeholder="Search capabilities"
@@ -1043,7 +1063,7 @@ function MoreDetailsSection({ configurations, details, onChange }: { configurati
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className={expanded ? "overflow-visible" : "overflow-hidden"}
       >
-        <div className="flex flex-col gap-[12px] pt-[12px]">
+        <div className="flex flex-col gap-[7px] pt-[12px]">
           {showProperties ? (
             <ReviewRow title="Account properties" summary={traitSummary} open={openRow === "properties"} onToggle={() => setOpenRow(openRow === "properties" ? null : "properties")}>
               {propertiesEditor}
@@ -1063,7 +1083,7 @@ function OnboardingSection({ details, onChange }: { details: AccountDetailsDraft
 
   return (
     <section className="flex flex-col gap-[9px]" data-onboarding-placement="pre-save">
-      <div><h3 className={tokens.labelClass}>After creation</h3><p className="mt-[3px] text-[11px] leading-[16px] text-[#596171]">Choose how the account will finish providing any remaining information.</p></div>
+      <div><h3 className={tokens.labelClass}>After creation</h3><p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Choose how the account will finish providing any remaining information.</p></div>
       <SegmentedControl
         value={details.onboardingAction}
         options={ONBOARDING_ACTION_OPTIONS}
@@ -1073,11 +1093,11 @@ function OnboardingSection({ details, onChange }: { details: AccountDetailsDraft
       />
       {details.onboardingAction === "send-email" ? (
         <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] p-[11px]">
-          <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#596171]">Send the secure onboarding link after creation.</p></div><Toggle checked={details.useAccountEmailForOnboarding} label="Use account email for onboarding" onChange={(useAccountEmailForOnboarding) => onChange({ useAccountEmailForOnboarding })} /></div>
+          <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#6C7688]">Send the secure onboarding link after creation.</p></div><Toggle checked={details.useAccountEmailForOnboarding} label="Use account email for onboarding" onChange={(useAccountEmailForOnboarding) => onChange({ useAccountEmailForOnboarding })} /></div>
           {!details.useAccountEmailForOnboarding ? <div className="mt-[10px]"><Field label="Onboarding email"><input type="email" className={tokens.inputClass} placeholder="account@example.com" value={details.onboardingEmail} onChange={(event) => onChange({ onboardingEmail: event.target.value })} aria-invalid={details.onboardingEmail.length > 0 && !EMAIL_PATTERN.test(details.onboardingEmail)} /></Field></div> : null}
         </div>
       ) : (
-        <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] px-[11px] py-[10px]"><p className="text-[11px] leading-[16px] text-[#596171]">The secure link will be copied after the account is created.</p><p className="mt-[4px] truncate font-mono text-[10px] text-[#818DA0]">{ACCOUNT_ONBOARDING_LINK}</p></div>
+        <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] px-[11px] py-[10px]"><p className="text-[11px] leading-[16px] text-[#6C7688]">The secure link will be copied after the account is created.</p><p className="mt-[4px] truncate font-mono text-[10px] text-[#818DA0]">{ACCOUNT_ONBOARDING_LINK}</p></div>
       )}
     </section>
   )
@@ -1135,6 +1155,7 @@ export function AccountConfigurationForm({
           selected={configurations}
           existing={existingConfigurations}
           userPath={userPath}
+          source={source}
           onChange={onConfigurationsChange}
         />
       ) : null}

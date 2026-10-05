@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { createPortal } from "react-dom"
+import { CurrencyFlag, hasCurrencyFlag } from "@/components/CurrencyFlag"
 import { getFormTokens } from "./formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
@@ -97,7 +98,10 @@ export function CustomSelect({ label, value, onChange, options, description, doc
           className={buttonClassName ?? `flex w-full items-center justify-between rounded-[6px] ${tokens.inputClass} ${floatingControlClass}`}
           onClick={openDropdown}
         >
-          <span>{selected?.prefix ? `${selected.prefix} ${selected.label}` : (selected?.label ?? value)}</span>
+          <span className="flex items-center gap-[6px]">
+            {selected && hasCurrencyFlag(selected.value) ? <CurrencyFlag currency={selected.value} size={16} /> : selected?.prefix ? <span>{selected.prefix}</span> : null}
+            {selected?.label ?? value}
+          </span>
           {chevronIcon ?? (isRefresh ? <UnfoldIcon /> : <ChevronIcon className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />)}
         </button>
 
@@ -116,7 +120,10 @@ export function CustomSelect({ label, value, onChange, options, description, doc
                 className={`flex w-full items-center justify-between px-[10px] py-[6px] text-left ${dropdownOptionClassName ?? "text-[12px]"} transition-colors ${isRefresh ? "hover:bg-[#F6F9FC]" : "hover:bg-[#F5F6F8]"} ${opt.value === value ? `font-[500] ${isRefresh ? "text-[#142234]" : "text-[#1A2C44]"}` : `font-[400] ${isRefresh ? "text-[#142234]" : "text-[#353A44]"}`}`}
                 onClick={() => { onChange(opt.value); setIsOpen(false) }}
               >
-                <span>{opt.prefix ? `${opt.prefix} ${opt.label}` : opt.label}</span>
+                <span className="flex items-center gap-[6px]">
+                  {hasCurrencyFlag(opt.value) ? <CurrencyFlag currency={opt.value} size={16} /> : opt.prefix ? <span>{opt.prefix}</span> : null}
+                  {opt.label}
+                </span>
                 {opt.value === value && (
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
                     <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#533AFD" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>

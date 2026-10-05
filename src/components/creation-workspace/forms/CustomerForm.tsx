@@ -727,6 +727,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
               options={ACCOUNT_TYPE_OPTIONS}
               onChange={(type) => syncIdentity({ accountType: type })}
               variantOverride="segmented"
+              buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
             />
           </div>
           {accountType === "Company" ? (

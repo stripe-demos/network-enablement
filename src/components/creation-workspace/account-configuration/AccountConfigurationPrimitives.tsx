@@ -5,6 +5,7 @@ import { useLayoutEffect, useRef, type ReactNode } from "react"
 
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
+import { cn } from "@/lib/utils"
 
 import { type NetworkAccount } from "./model"
 
@@ -37,7 +38,7 @@ export function SelectControl({
     <div className="relative">
       <select
         aria-label={ariaLabel}
-        className={className}
+        className={cn(className, !value && "font-[400] text-[#6C7688]")}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         data-styled-select
@@ -58,6 +59,14 @@ export function SelectControl({
   )
 }
 
+function AvatarInitials({ initials }: { initials: string }) {
+  return (
+    <span className="absolute inset-0 grid place-items-center leading-none">
+      <span className="translate-y-[0.1em]">{initials}</span>
+    </span>
+  )
+}
+
 export function AccountAvatar({ account, size = 40 }: { account: Pick<NetworkAccount, "name" | "initials" | "hasBrandIcon">; size?: 40 | 44 }) {
   if (account.hasBrandIcon) {
     return (
@@ -74,17 +83,17 @@ export function AccountAvatar({ account, size = 40 }: { account: Pick<NetworkAcc
   return (
     <span
       data-account-avatar="initials"
-      className={`${size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[15px] font-[500]" : "h-[40px] w-[40px] rounded-[6px] text-[12px] font-[650]"} flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] text-[#2C219E]`}
+      className={`${size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[14px] font-[650]" : "h-[40px] w-[40px] rounded-[6px] text-[12px] font-[650]"} relative flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E]`}
     >
-      {account.initials}
+      <AvatarInitials initials={account.initials} />
     </span>
   )
 }
 
 const COUNTRY_FLAG_SRC: Record<string, string> = {
-  UK: "/flag-gb.svg",
-  US: "/flag-us.svg",
-  CA: "/flag-ca.svg",
+  UK: "/flags/gb.svg",
+  US: "/flags/us.svg",
+  CA: "/flags/ca.svg",
 }
 
 export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
@@ -100,9 +109,9 @@ export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
 }
 
 const COUNTRY_BADGE_SIZE = {
-  sm: { width: 12, height: 9, flagClass: "h-[9px] w-[12px] overflow-hidden rounded-[2px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
-  md: { width: 14, height: 10, flagClass: "h-[10px] w-[14px] overflow-hidden rounded-[2px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[10px] text-[#1A2C44]" },
-  default: { width: 16, height: 12, flagClass: "h-[12px] w-[16px] overflow-hidden rounded-[2px]", gap: "gap-[4px] rounded-[6px] px-[6px] py-[4px]", label: "text-[12px] font-[600] leading-[16px] text-[#1A2C44]" },
+  sm: { width: 10, height: 10, flagClass: "h-[10px] w-[10px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
+  md: { width: 16, height: 16, flagClass: "h-[16px] w-[16px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[10px] text-[#1A2C44]" },
+  default: { width: 14, height: 14, flagClass: "h-[14px] w-[14px]", gap: "gap-[4px] rounded-[6px] px-[6px] py-[4px]", label: "text-[12px] font-[600] leading-[16px] text-[#1A2C44]" },
 } as const
 
 export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" | "md" }) {
@@ -143,8 +152,8 @@ export function AccountSummaryCard({
           className="h-[32px] w-[32px] shrink-0 rounded-[6px]"
         />
       ) : (
-        <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] text-[12px] font-[650] text-[#2C219E]">
-          {account.initials}
+        <span className="relative flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] text-[12px] font-[650] leading-none text-[#2C219E]">
+          <AvatarInitials initials={account.initials} />
         </span>
       )}
       <div className="flex min-w-0 flex-1 flex-col justify-center leading-[16px]">
@@ -273,37 +282,25 @@ export function ReviewRow({
   const header = (
     <>
       <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-[600] leading-[18px] tracking-[-0.08px] text-[#1A2C44]">{title}</span>
-        <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">{summary}</span>
+        <span className="block text-[12px] font-[600] leading-[16px] text-[#1A2C44]">{title}</span>
+        <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#6C7688]">{summary}</span>
       </span>
     </>
   )
 
   return (
-    <div ref={cardRef} className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white [overflow-anchor:none]">
-      {open ? (
-        <div className="flex min-h-[58px] w-full items-center gap-[12px] p-[12px] [overflow-anchor:auto]">
-          {header}
-          <button
-            type="button"
-            className="text-[11px] font-[600] leading-[16px] text-[#533AFD] outline-none hover:text-[#4730E0]"
-            aria-expanded
-            onClick={onToggle}
-          >
-            {openLabel}
-          </button>
-        </div>
-      ) : (
+    <div ref={cardRef} className="overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white [overflow-anchor:none]">
+      <div className="flex min-h-[58px] w-full items-center gap-[12px] p-[12px] [overflow-anchor:auto]">
+        {header}
         <button
           type="button"
-          className="flex min-h-[58px] w-full items-center gap-[12px] p-[12px] text-left outline-none [overflow-anchor:auto] hover:bg-[#F8FAFB]"
-          aria-expanded={false}
+          className="shrink-0 rounded-[6px] px-[8px] py-[4px] text-[11px] font-[600] leading-[16px] text-[#533AFD] outline-none transition-colors hover:bg-[#F4F4FE]"
+          aria-expanded={open}
           onClick={onToggle}
         >
-          {header}
-          <span className="text-[11px] font-[600] leading-[16px] text-[#533AFD]">{closedLabel}</span>
+          {open ? openLabel : closedLabel}
         </button>
-      )}
+      </div>
       <div
         className="grid [overflow-anchor:none] transition-[grid-template-rows] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
