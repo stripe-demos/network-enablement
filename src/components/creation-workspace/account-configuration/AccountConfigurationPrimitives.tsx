@@ -1,8 +1,7 @@
 'use client'
 
-import { motion } from "framer-motion"
 import Image from "next/image"
-import type { ReactNode } from "react"
+import { useLayoutEffect, useRef, type ReactNode } from "react"
 
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
@@ -75,7 +74,7 @@ export function AccountAvatar({ account, size = 40 }: { account: Pick<NetworkAcc
   return (
     <span
       data-account-avatar="initials"
-      className={`${size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[13px]" : "h-[40px] w-[40px] rounded-[6px] text-[12px]"} flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] font-[650] text-[#2C219E]`}
+      className={`${size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[15px] font-[500]" : "h-[40px] w-[40px] rounded-[6px] text-[12px] font-[650]"} flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] text-[#2C219E]`}
     >
       {account.initials}
     </span>
@@ -90,24 +89,20 @@ const COUNTRY_FLAG_SRC: Record<string, string> = {
 
 export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
   return (
-    <span className="flex min-w-0 flex-1 flex-col py-[2px]">
-      <span className="flex min-w-0 items-center justify-between gap-[10px]">
+    <span className="flex min-w-0 flex-1 items-center justify-between gap-[10px] py-[2px]">
+      <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{account.name}</span>
-        <CountryBadge country={account.country} size="sm" />
+        <span className="mt-[1px] truncate text-[11px] leading-[16px] text-[#6C7688]">{account.email}</span>
       </span>
-      <span className="mt-[1px] flex min-w-0 items-center overflow-hidden text-[11px] leading-[16px] text-[#6C7688]">
-        <span className="min-w-0 truncate">{account.email}</span>
-        <span className="shrink-0 px-[4px]">·</span>
-        <span className="shrink-0">{account.id}</span>
-      </span>
+      <CountryBadge country={account.country} size="sm" />
     </span>
   )
 }
 
 const COUNTRY_BADGE_SIZE = {
-  sm: { width: 12, height: 9, flagClass: "h-[9px] w-[12px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
-  md: { width: 14, height: 10, flagClass: "h-[10px] w-[14px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
-  default: { width: 16, height: 12, flagClass: "h-[12px] w-[16px]", gap: "gap-[4px] rounded-[6px] px-[6px] py-[4px]", label: "text-[11px] font-[600] leading-[16px] text-[#1A2C44]" },
+  sm: { width: 12, height: 9, flagClass: "h-[9px] w-[12px] overflow-hidden rounded-[2px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
+  md: { width: 14, height: 10, flagClass: "h-[10px] w-[14px] overflow-hidden rounded-[2px]", gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[10px] text-[#1A2C44]" },
+  default: { width: 16, height: 12, flagClass: "h-[12px] w-[16px] overflow-hidden rounded-[2px]", gap: "gap-[4px] rounded-[6px] px-[6px] py-[4px]", label: "text-[12px] font-[600] leading-[16px] text-[#1A2C44]" },
 } as const
 
 export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" | "md" }) {
@@ -130,21 +125,31 @@ export function AccountSummaryCard({
   account,
   actionLabel,
   onAction,
+  subtitle,
 }: {
   account: NetworkAccount
   actionLabel?: string
   onAction?: () => void
+  subtitle?: string
 }) {
   return (
-    <div data-account-summary-card className="flex items-start gap-[10px] rounded-[8px] bg-[#F4F7FA] p-[10px]">
-      <AccountAvatar account={account} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <p className="truncate text-[13px] font-[600] leading-[18px] tracking-[-0.08px] text-[#1A2C44]">{account.name}</p>
-        <p className="mt-[1px] flex min-w-0 items-center overflow-hidden text-[11px] font-[400] leading-[16px] text-[#596171]">
-          <span className="min-w-0 truncate">{account.email}</span>
-          <span className="shrink-0 px-[4px]">·</span>
-          <span className="shrink-0">{account.id}</span>
-        </p>
+    <div data-account-summary-card className="flex items-center gap-[10px] rounded-[8px] bg-[#F6F8FA] p-[10px]">
+      {account.hasBrandIcon ? (
+        <Image
+          src="/unified-account-icon.png"
+          alt=""
+          width={32}
+          height={32}
+          className="h-[32px] w-[32px] shrink-0 rounded-[6px]"
+        />
+      ) : (
+        <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] text-[12px] font-[650] text-[#2C219E]">
+          {account.initials}
+        </span>
+      )}
+      <div className="flex min-w-0 flex-1 flex-col justify-center leading-[16px]">
+        <p className="truncate text-[13px] font-[600] leading-[16px] tracking-[-0.08px] text-[#1A2C44]">{account.name}</p>
+        <p className="truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]">{subtitle ?? account.email}</p>
       </div>
       <CountryBadge country={account.country} size="md" />
       {actionLabel && onAction ? (
@@ -160,7 +165,7 @@ export function DuplicateAccountNudge({
   account,
   onUseExisting,
   onDismiss,
-  description = "This email matches an existing account in your network. Continue with it to add configurations instead of creating a duplicate account.",
+  description = "This email matches an existing account in your Network. Continue with it to add configurations instead of creating a duplicate.",
 }: {
   account: NetworkAccount
   onUseExisting: () => void
@@ -175,7 +180,7 @@ export function DuplicateAccountNudge({
       aria-label="Existing account found"
     >
       <div className="p-[8px]">
-        <AccountSummaryCard account={account} />
+        <AccountSummaryCard account={account} subtitle={account.id} />
         <p className="px-[8px] pb-[4px] pt-[8px] text-[12px] leading-[16px] text-[#3C4F69]">
           {description}
         </p>
@@ -216,6 +221,16 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
   )
 }
 
+function getScrollParent(node: HTMLElement | null) {
+  let current = node?.parentElement
+  while (current) {
+    const overflowY = getComputedStyle(current).overflowY
+    if (overflowY === "auto" || overflowY === "scroll") return current
+    current = current.parentElement
+  }
+  return document.scrollingElement as HTMLElement | null
+}
+
 export function ReviewRow({
   title,
   summary,
@@ -233,28 +248,70 @@ export function ReviewRow({
   openLabel?: string
   children: ReactNode
 }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const wasOpen = useRef(open)
+
+  useLayoutEffect(() => {
+    const card = cardRef.current
+    const collapsing = wasOpen.current && !open
+    wasOpen.current = open
+    if (!collapsing || !card) return
+
+    const parent = getScrollParent(card)
+    if (!parent) return
+    const keepTop = card.getBoundingClientRect().top
+    const started = performance.now()
+
+    const pin = (now: number) => {
+      const nextTop = card.getBoundingClientRect().top
+      if (nextTop !== keepTop) parent.scrollTop += nextTop - keepTop
+      if (now - started < 420) requestAnimationFrame(pin)
+    }
+    requestAnimationFrame(pin)
+  }, [open])
+
+  const header = (
+    <>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-[600] leading-[18px] tracking-[-0.08px] text-[#1A2C44]">{title}</span>
+        <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">{summary}</span>
+      </span>
+    </>
+  )
+
   return (
-    <div className={`rounded-[8px] border border-[#D4DEE9] bg-white ${open ? "overflow-visible" : "overflow-hidden"}`}>
-      <button
-        type="button"
-        className="flex min-h-[58px] w-full items-center gap-[12px] p-[12px] text-left transition-colors hover:bg-[#F8FAFB]"
-        aria-expanded={open}
-        onClick={onToggle}
+    <div ref={cardRef} className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white [overflow-anchor:none]">
+      {open ? (
+        <div className="flex min-h-[58px] w-full items-center gap-[12px] p-[12px] [overflow-anchor:auto]">
+          {header}
+          <button
+            type="button"
+            className="text-[11px] font-[600] leading-[16px] text-[#533AFD] outline-none hover:text-[#4730E0]"
+            aria-expanded
+            onClick={onToggle}
+          >
+            {openLabel}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="flex min-h-[58px] w-full items-center gap-[12px] p-[12px] text-left outline-none [overflow-anchor:auto] hover:bg-[#F8FAFB]"
+          aria-expanded={false}
+          onClick={onToggle}
+        >
+          {header}
+          <span className="text-[11px] font-[600] leading-[16px] text-[#533AFD]">{closedLabel}</span>
+        </button>
+      )}
+      <div
+        className="grid [overflow-anchor:none] transition-[grid-template-rows] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
       >
-        <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-[600] leading-[18px] tracking-[-0.08px] text-[#1A2C44]">{title}</span>
-          <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">{summary}</span>
-        </span>
-        <span className="text-[11px] font-[600] leading-[16px] text-[#533AFD]">{open ? openLabel : closedLabel}</span>
-      </button>
-      <motion.div
-        initial={false}
-        animate={open ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className={open ? "overflow-visible" : "overflow-hidden"}
-      >
-        <div className="border-t border-[#ECF1F6] bg-[#F8FAFB] p-[12px]">{children}</div>
-      </motion.div>
+        <div className="min-h-0 overflow-hidden">
+          <div className="border-t border-[#ECF1F6] bg-[#F8FAFB] p-[12px]">{children}</div>
+        </div>
+      </div>
     </div>
   )
 }

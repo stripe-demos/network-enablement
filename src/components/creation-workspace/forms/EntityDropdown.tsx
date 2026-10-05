@@ -95,7 +95,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   const { inputFill } = useInputFill()
   const tokens = getFormTokens(productFormStyle, { filled: inputFill })
   const isRefresh = productFormStyle === "refresh"
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(Boolean(initialOpen))
   const initialOpenRef = useRef(initialOpen)
   const [search, setSearch] = useState("")
   const containerRef = useRef<HTMLDivElement>(null)

@@ -51,8 +51,8 @@ function SuccessMark({ size = "md" }: { size?: "sm" | "md" }) {
 
   return (
     <span className="t-success-check" data-state={state} aria-hidden="true">
-      <span className={`flex items-center justify-center rounded-full bg-[#675DFF] text-white ${isSmall ? "h-[36px] w-[36px] shadow-[0_0_0_6px_rgba(103,93,255,0.10)]" : "h-[56px] w-[56px] shadow-[0_0_0_7px_rgba(103,93,255,0.10)]"}`}>
-        <svg width={isSmall ? 16 : 24} height={isSmall ? 13 : 19} viewBox="0 0 30 24" fill="none"><path ref={pathRef} d="M3 12.5l7.5 7L27 3" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <span className={`flex items-center justify-center rounded-full bg-[#675DFF] text-white ${isSmall ? "h-[36px] w-[36px] shadow-[0_0_0_6px_rgba(103,93,255,0.10)]" : "h-[50px] w-[50px] shadow-[0_0_0_6px_rgba(103,93,255,0.10)]"}`}>
+        <svg width={isSmall ? 16 : 21} height={isSmall ? 13 : 17} viewBox="0 0 30 24" fill="none"><path ref={pathRef} d="M3 12.5l7.5 7L27 3" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </span>
     </span>
   )
@@ -169,60 +169,49 @@ function PreviewSuccessLayout({
   viewAccountClassName: string
 }) {
   return (
-    <div className="flex min-h-[min(600px,calc(100vh-96px))] w-[min(1080px,calc(100vw-96px))] flex-col" data-account-success-page>
-      <div className="flex h-[52px] shrink-0 items-center justify-end px-[16px]">
-        <CloseButton onClose={onClose} />
-      </div>
-      <div className="flex min-h-0 flex-1">
-        <div className="flex w-[440px] shrink-0 flex-col justify-center px-[48px] py-[32px]">
-          <DirectSuccessCheck />
-          <motion.h2
-            className="mt-[16px] text-[26px] font-[650] leading-[32px] tracking-[-0.35px] text-[#1A2C44]"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18, duration: 0.35, ease: successEase }}
-          >
-            {title}
-          </motion.h2>
-          <motion.p
-            className="mt-[10px] max-w-[400px] text-[14px] leading-[22px] text-[#596171]"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.26, duration: 0.35, ease: successEase }}
-          >
-            {description}
-          </motion.p>
-          {actions ? (
-            <motion.div
-              className="mt-[20px] flex flex-wrap items-center gap-[8px]"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.34, duration: 0.35, ease: successEase }}
-            >
-              {actions}
-            </motion.div>
-          ) : null}
-        </div>
-        <div className="flex min-w-0 flex-1 items-center justify-center bg-[#F6F9FC] px-[56px] py-[40px]">
+    <div className="relative flex min-h-[min(600px,calc(100vh-96px))] w-[min(1080px,calc(100vw-96px))] bg-white" data-account-success-page>
+      <div className="flex w-[440px] shrink-0 flex-col justify-center px-[48px] py-[32px]">
+        <DirectSuccessCheck />
+        <motion.h2
+          className="mt-[16px] text-[26px] font-[650] leading-[32px] tracking-[-0.35px] text-[#1A2C44]"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18, duration: 0.35, ease: successEase }}
+        >
+          {title}
+        </motion.h2>
+        <motion.p
+          className="mt-[10px] max-w-[400px] text-[14px] leading-[22px] text-[#596171]"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.26, duration: 0.35, ease: successEase }}
+        >
+          {description}
+        </motion.p>
+        {actions ? (
           <motion.div
-            className="w-full max-w-[440px]"
-            initial={{ opacity: 0, y: 18, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.22, duration: 0.5, ease: successEase }}
+            className="mt-[20px] flex flex-wrap items-center gap-[8px]"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.34, duration: 0.35, ease: successEase }}
           >
-            {preview}
+            {actions}
           </motion.div>
-        </div>
+        ) : null}
       </div>
-      {footer || onViewAccount ? (
-        <div className="flex h-[64px] shrink-0 items-center justify-end gap-[8px] border-t border-[#EEF2F6] px-[24px]">
-          {footer ?? (
-            <button type="button" className={viewAccountClassName} onClick={onViewAccount}>
-              View account
-            </button>
-          )}
+      <div className="relative flex min-w-0 flex-1 items-center justify-center bg-[#F6F9FC] px-[56px] py-[40px]">
+        <div className="absolute right-[16px] top-[16px] z-10">
+          <CloseButton onClose={onClose} />
         </div>
-      ) : null}
+        <motion.div
+          className="w-full max-w-[440px]"
+          initial={{ opacity: 0, y: 18, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.22, duration: 0.5, ease: successEase }}
+        >
+          {preview}
+        </motion.div>
+      </div>
     </div>
   )
 }
@@ -282,19 +271,11 @@ function EmailPreviewShell({
   return (
     <div className="w-full max-w-[440px]" data-email-preview>
       <div className="overflow-hidden rounded-[12px] border border-[#E3E8EF] bg-white shadow-[0_18px_40px_rgba(20,34,52,0.10)]">
-        <div className="flex items-center gap-[8px] border-b border-[#F0F3F7] bg-[#F8FAFB] px-[14px] py-[10px]">
-          <span className="flex gap-[5px]" aria-hidden="true">
-            <span className="h-[8px] w-[8px] rounded-full bg-[#E3E8EF]" />
-            <span className="h-[8px] w-[8px] rounded-full bg-[#E3E8EF]" />
-            <span className="h-[8px] w-[8px] rounded-full bg-[#E3E8EF]" />
-          </span>
-          <span className="min-w-0 truncate text-[11px] font-[600] leading-[14px] text-[#818DA0]">Inbox · Preview only</span>
-        </div>
-        <div className="flex items-start gap-[10px] border-b border-[#F0F3F7] px-[24px] py-[16px]">
-          <span className="mt-[1px] flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#675DFF] text-[11px] font-[700] text-white">S</span>
+        <div className="flex items-center gap-[12px] border-b border-[#F0F3F7] px-[24px] py-[16px]">
+          <span className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#6C7688] text-[13px] font-[700] text-white">S</span>
           <div className="min-w-0 text-[12px] leading-[18px] text-[#596171]">
-            <p><span className="text-[#818DA0]">From</span> Stripe</p>
-            <p><span className="text-[#818DA0]">Subject</span> {subject}</p>
+            <p><span className="text-[#818DA0]">From:</span> Stripe</p>
+            <p><span className="text-[#818DA0]">Subject:</span> {subject}</p>
           </div>
         </div>
         <div className="px-[24px] pb-[28px] pt-[20px]">{children}</div>
@@ -326,10 +307,10 @@ function PayoutDetailsEmailPreview({
           ))}
         </ul>
       </div>
-      <div className="mt-[24px] flex h-[40px] items-center justify-center rounded-[6px] bg-[#1A2C44] text-[13px] font-[600] text-white">
+      <div className="mt-[24px] flex h-[40px] items-center justify-center rounded-[8px] border border-[#D4DEE9] bg-[#F4F6F8] text-[13px] font-[600] text-[#6C7688]">
         Add payout details
       </div>
-      <p className="mt-[12px] text-center text-[11px] leading-[16px] text-[#818DA0]">This link will expire 3 days after it’s sent.</p>
+      <p className="mt-[12px] text-center text-[11px] leading-[16px] text-[#818DA0]">This link will expire in 3 days.</p>
     </EmailPreviewShell>
   )
 }
@@ -341,10 +322,10 @@ function OnboardingEmailPreview({ to }: { to: string }) {
       <p className="mt-[10px] text-[13px] leading-[20px] text-[#596171]">
         Use the link below to provide any remaining information so this account can start using Stripe.
       </p>
-      <div className="mt-[36px] flex h-[40px] items-center justify-center rounded-[6px] bg-[#1A2C44] text-[13px] font-[600] text-white">
+      <div className="mt-[36px] flex h-[40px] items-center justify-center rounded-[8px] border border-[#D4DEE9] bg-[#F4F6F8] text-[13px] font-[600] text-[#6C7688]">
         Continue setup
       </div>
-      <p className="mt-[16px] text-center text-[11px] leading-[16px] text-[#818DA0]">This link will expire 7 days after it’s sent.</p>
+      <p className="mt-[16px] text-center text-[11px] leading-[16px] text-[#818DA0]">This link will expire in 7 days.</p>
     </EmailPreviewShell>
   )
 }

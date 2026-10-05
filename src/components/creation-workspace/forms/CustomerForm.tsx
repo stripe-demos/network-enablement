@@ -690,6 +690,14 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     return (
       <div className="flex flex-col gap-[16px]">
         <div className="flex flex-col gap-[12px]">
+          <Field label="Display name">
+            <input
+              className={tokens.inputClass}
+              placeholder="Shown on this account"
+              value={displayName}
+              onChange={(e) => syncIdentity({ displayName: e.target.value })}
+            />
+          </Field>
           <div className="flex flex-col gap-[6px]">
             <Field label="Account email">
               <input
@@ -706,20 +714,12 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
             {matchingAccount && dismissedMatchId !== matchingAccount.id && data.customerId !== matchingAccount.id ? (
               <DuplicateAccountNudge
                 account={matchingAccount}
-                description="This email matches an existing account in your network. Continue with it instead of creating a duplicate account."
+                description="This email matches an existing account in your Network. Continue with it to add configurations instead of creating a duplicate."
                 onUseExisting={() => applyExistingAccount(matchingAccount)}
                 onDismiss={() => setDismissedMatchId(matchingAccount.id)}
               />
             ) : null}
           </div>
-          <Field label="Display name">
-            <input
-              className={tokens.inputClass}
-              placeholder="Shown on this account"
-              value={displayName}
-              onChange={(e) => syncIdentity({ displayName: e.target.value })}
-            />
-          </Field>
           <div className="flex flex-col gap-[4px]">
             <span className={tokens.labelClass}>Account type</span>
             <SegmentedControl

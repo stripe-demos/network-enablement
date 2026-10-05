@@ -6,7 +6,7 @@ import { createPortal } from "react-dom"
 
 import { SegmentedControl } from "@/components/SegmentedControl"
 import { CreationModalShell } from "@/components/creation-workspace/CreationModalShell"
-import { EntityDropdown, type EntityDropdownHandle } from "@/components/creation-workspace/forms/EntityDropdown"
+import { EntityDropdown } from "@/components/creation-workspace/forms/EntityDropdown"
 import { Checkbox } from "@/components/creation-workspace/forms/shared/Checkbox"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
@@ -191,10 +191,18 @@ function AccountIdentityFields({
 
   return (
     <div className="flex flex-col gap-[12px]" data-new-account-fields>
+      <Field label="Display name">
+        <input
+          ref={firstInputRef}
+          className={tokens.inputClass}
+          placeholder="Shown on this account"
+          value={details.displayName ?? ""}
+          onChange={(event) => onChange({ displayName: event.target.value })}
+        />
+      </Field>
       <div className="flex flex-col gap-[6px]">
         <Field label="Account email">
           <input
-            ref={firstInputRef}
             type="email"
             className={tokens.inputClass}
             placeholder="email@example.com"
@@ -211,14 +219,6 @@ function AccountIdentityFields({
           />
         ) : null}
       </div>
-      <Field label="Display name">
-        <input
-          className={tokens.inputClass}
-          placeholder="Shown on this account"
-          value={details.displayName ?? ""}
-          onChange={(event) => onChange({ displayName: event.target.value })}
-        />
-      </Field>
       <div className="flex flex-col gap-[4px]">
         <span className={tokens.labelClass}>Account type</span>
         <SegmentedControl
@@ -288,7 +288,6 @@ function AccountSelector({
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
 }) {
   const [newAccountModalOpen, setNewAccountModalOpen] = useState(false)
-  const accountPickerRef = useRef<EntityDropdownHandle>(null)
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
   const draftName = getDraftName(details)
@@ -297,11 +296,6 @@ function AccountSelector({
     ? getNetworkAccounts(userPath).find((account) => account.id === selectedAccountId)
     : undefined
 
-  useEffect(() => {
-    const openTimer = window.setTimeout(() => accountPickerRef.current?.open(), 250)
-    return () => window.clearTimeout(openTimer)
-  }, [])
-
   const selectExisting = (id: string) => {
     const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
     if (account) onSelectExisting(account)
@@ -309,10 +303,10 @@ function AccountSelector({
 
   const accountPicker = (
     <EntityDropdown
-      ref={accountPickerRef}
       label="Account"
       placeholder="Find or add an account"
       searchPlaceholder="Search by name, email, or account ID"
+      initialOpen
       items={getNetworkAccountItems(userPath)}
       getSearchText={getNetworkAccountSearchText(userPath)}
       renderOption={(item) => <AccountPickerOption id={item.id} userPath={userPath} />}
@@ -638,7 +632,8 @@ function PayoutInformationSection({
           }
         : {}),
     })
-    if (!checked && openMethod === method) setOpenMethod(null)
+    if (checked && method !== "stripe-balance") setOpenMethod(method)
+    else if (!checked && openMethod === method) setOpenMethod(null)
   }
 
   const toggleEditor = (method: PayoutMethod) => {
@@ -674,13 +669,12 @@ function PayoutInformationSection({
         {payoutMethods.map((method) => {
           const checked = details.payoutMethods.includes(method.id)
           const methodDetails = details.payoutMethodDetails[method.id]
-          const hasDetails = Boolean(methodDetails.primary || methodDetails.secondary)
           const canAddDetails = method.id !== "stripe-balance"
           const locked = method.id === "stripe-balance" && !merchantSelected
           const open = openMethod === method.id
           const card = (
             <div
-              className={`rounded-[8px] border ${open ? "overflow-visible" : "overflow-hidden"} ${
+              className={`overflow-hidden rounded-[8px] border ${
                 locked
                   ? "border-[#D4DEE9] bg-white opacity-55"
                   : checked
@@ -688,32 +682,71 @@ function PayoutInformationSection({
                     : "border-[#D4DEE9] bg-white"
               }`}
             >
-              <div className="flex min-h-[58px] items-start gap-[8px] p-[12px]">
-                <Checkbox
-                  checked={checked}
-                  label={method.label}
-                  className={`mt-[2px] ${locked ? "pointer-events-none" : ""}`}
-                  onChange={(next) => {
-                    if (locked) return
-                    toggleMethod(method.id, next)
-                  }}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className={`block text-[12px] font-[600] leading-[16px] ${locked ? "text-[#1A2C44]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
-                    {method.label}
-                  </span>
-                  <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">
-                    {payoutMethodSummary(method.id, methodDetails, method.description)}
-                  </span>
-                </span>
+              <div className="flex min-h-[58px] items-start">
+                {open ? (
+                  <div className="flex min-w-0 flex-1 items-start gap-[8px] p-[12px]">
+                    <Checkbox
+                      checked={checked}
+                      label={method.label}
+                      className="mt-[2px]"
+                      onChange={(next) => {
+                        if (locked) return
+                        toggleMethod(method.id, next)
+                      }}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-[12px] font-[600] leading-[16px] ${checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
+                        {method.label}
+                      </span>
+                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">
+                        {payoutMethodSummary(method.id, methodDetails, method.description)}
+                      </span>
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    role="button"
+                    tabIndex={locked ? -1 : 0}
+                    aria-pressed={checked}
+                    aria-label={method.label}
+                    className={`flex min-w-0 flex-1 items-start gap-[8px] p-[12px] text-left outline-none ${locked ? "cursor-default" : "cursor-pointer"}`}
+                    onClick={() => {
+                      if (locked) return
+                      toggleMethod(method.id, !checked)
+                    }}
+                    onKeyDown={(event) => {
+                      if (locked) return
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault()
+                        toggleMethod(method.id, !checked)
+                      }
+                    }}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      label={method.label}
+                      decorative
+                      className="mt-[2px]"
+                      onChange={() => {}}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-[12px] font-[600] leading-[16px] ${locked ? "text-[#1A2C44]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
+                        {method.label}
+                      </span>
+                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#596171]">
+                        {payoutMethodSummary(method.id, methodDetails, method.description)}
+                      </span>
+                    </span>
+                  </div>
+                )}
                 {canAddDetails && checked ? (
                   <button
                     type="button"
-                    className="shrink-0 text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]"
+                    className="shrink-0 py-[12px] pr-[12px] text-[11px] font-[600] leading-[16px] text-[#533AFD] outline-none hover:text-[#4730E0]"
                     aria-expanded={open}
                     onClick={() => toggleEditor(method.id)}
                   >
-                    {open ? "Done" : hasDetails ? "Edit" : "Add"}
+                    {open ? "Done" : "Edit"}
                   </button>
                 ) : null}
               </div>
@@ -722,7 +755,7 @@ function PayoutInformationSection({
                   initial={false}
                   animate={open ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className={open ? "overflow-visible" : "overflow-hidden"}
+                  className="overflow-hidden"
                 >
                   <div className="border-t border-[#ECF1F6] bg-[#F8FAFB] p-[12px]">
                     <PayoutMethodFields method={method.id} details={methodDetails} onChange={(patch) => updatePayoutMethod(method.id, patch)} />
@@ -747,7 +780,7 @@ function PayoutInformationSection({
             <circle cx="6" cy="3.75" r="0.7" fill="currentColor" />
             <path d="M6 5.5v3.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
-          If you don’t have payout details, you can choose to have Stripe collect them by email after the account is created.
+          Don’t have payout details? You can have Stripe collect them by email after account creation.
         </p>
       ) : null}
     </section>
@@ -763,19 +796,21 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
   return (
     <section className="flex flex-col gap-[12px]">
       <h3 className={tokens.sectionTitle}>Billing and shipping</h3>
-      <ReviewRow title="Billing details" summary={details.useAccountEmailForBilling ? "Same as account email" : details.billingEmail || "Not added"} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
-        <div className="flex flex-col gap-[12px]">
-          <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#596171]">Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
-          {!details.useAccountEmailForBilling ? <Field label="Billing email"><input type="email" className={tokens.inputClass} placeholder={details.accountEmail || "billing@example.com"} value={details.billingEmail} onChange={(event) => onChange({ billingEmail: event.target.value })} /></Field> : null}
-          <Field label="Billing country"><SelectControl className={tokens.selectClass} value={details.billingCountry || details.country} onChange={(billingCountry) => onChange({ billingCountry })}><option value="">Select a country</option><option>United Kingdom</option><option>United States</option><option>Canada</option></SelectControl></Field>
-        </div>
-      </ReviewRow>
-      <ReviewRow title="Tax information" summary={details.taxId ? `Tax ID · ${details.taxId}` : "Not added"} open={openRow === "tax"} onToggle={() => setOpenRow(openRow === "tax" ? null : "tax")}>
-        <Field label="Tax ID"><input className={tokens.inputClass} placeholder="GB123456789" value={details.taxId} onChange={(event) => onChange({ taxId: event.target.value })} /></Field>
-      </ReviewRow>
-      <ReviewRow title="Shipping details" summary={details.shippingAddress || "Not added"} open={openRow === "shipping"} onToggle={() => setOpenRow(openRow === "shipping" ? null : "shipping")}>
-        <Field label="Shipping address"><textarea className={tokens.textareaClass} placeholder="Street, city, region, postal code" value={details.shippingAddress} onChange={(event) => onChange({ shippingAddress: event.target.value })} /></Field>
-      </ReviewRow>
+      <div className="flex flex-col gap-[7px]">
+        <ReviewRow title="Billing details" summary={details.useAccountEmailForBilling ? "Same as account email" : details.billingEmail || "Not added"} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
+          <div className="flex flex-col gap-[12px]">
+            <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#596171]">Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
+            {!details.useAccountEmailForBilling ? <Field label="Billing email"><input type="email" className={tokens.inputClass} placeholder={details.accountEmail || "billing@example.com"} value={details.billingEmail} onChange={(event) => onChange({ billingEmail: event.target.value })} /></Field> : null}
+            <Field label="Billing country"><SelectControl className={tokens.selectClass} value={details.billingCountry || details.country} onChange={(billingCountry) => onChange({ billingCountry })}><option value="">Select a country</option><option>United Kingdom</option><option>United States</option><option>Canada</option></SelectControl></Field>
+          </div>
+        </ReviewRow>
+        <ReviewRow title="Tax information" summary={details.taxId ? `Tax ID · ${details.taxId}` : "Not added"} open={openRow === "tax"} onToggle={() => setOpenRow(openRow === "tax" ? null : "tax")}>
+          <Field label="Tax ID"><input className={tokens.inputClass} placeholder="GB123456789" value={details.taxId} onChange={(event) => onChange({ taxId: event.target.value })} /></Field>
+        </ReviewRow>
+        <ReviewRow title="Shipping details" summary={details.shippingAddress || "Not added"} open={openRow === "shipping"} onToggle={() => setOpenRow(openRow === "shipping" ? null : "shipping")}>
+          <Field label="Shipping address"><textarea className={tokens.textareaClass} placeholder="Street, city, region, postal code" value={details.shippingAddress} onChange={(event) => onChange({ shippingAddress: event.target.value })} /></Field>
+        </ReviewRow>
+      </div>
     </section>
   )
 }
