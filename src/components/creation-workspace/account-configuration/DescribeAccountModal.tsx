@@ -121,7 +121,7 @@ export function DescribeAccountModal({
     setIsRecording(true)
   }
 
-  const explanations = explainRecommendedConfigurations(description, recommended)
+  const explanations = explainRecommendedConfigurations(recommended)
   const canContinue = description.trim().length > 0 && status !== "thinking"
   const canApply = step === "recommend" && picked.length > 0
 

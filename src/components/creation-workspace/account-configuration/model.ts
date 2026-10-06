@@ -91,6 +91,7 @@ export type ConfigurationOption = {
   id: ConfigurationKind
   title: string
   relationship: string
+  description: string
   capabilities: string[]
 }
 
@@ -104,18 +105,21 @@ export const CONFIGURATION_OPTIONS: ConfigurationOption[] = [
     id: "customer",
     title: "Customer",
     relationship: "Makes payments to you",
+    description: "This account will be able to make single or recurring payments to you, for example paying a monthly subscription.",
     capabilities: [],
   },
   {
     id: "merchant",
     title: "Merchant",
     relationship: "Accepts customer payments",
+    description: "This account will be able to sell products and services and accept payments from their customers, for example a Shopify merchant who accepts card payments from shoppers on their own storefront.",
     capabilities: ["Card payments"],
   },
   {
     id: "recipient",
     title: "Recipient",
     relationship: "Receives funds from you",
+    description: "This account will receive funds from you.",
     capabilities: ["Transfers", "Payouts"],
   },
 ]
@@ -361,55 +365,18 @@ export function isNewAccountIdentityValid(details: AccountDetailsDraft) {
   return hasName && EMAIL_PATTERN.test(details.accountEmail.trim()) && Boolean(details.country)
 }
 
-const CONFIGURATION_HINTS: { id: ConfigurationKind; pattern: RegExp }[] = [
-  { id: "customer", pattern: /\b(customers?|buyers?|subscribers?|invoices?|billed|billing|pays? (you|us|me)|makes payments?|purchas)/i },
-  { id: "merchant", pattern: /\b(merchants?|sells?|selling|sellers?|store|shop|checkout|accepts? (payments?|cards?)|charge customers?|process(es|ing)? payments?|marketplace|saas)\b/i },
-  { id: "recipient", pattern: /\b(recipients?|payouts?|get paid|receives? (funds?|money|payouts?|transfers?)|freelancers?|contractors?|vendors?|creators?|affiliates?|connected accounts?|transfers?)\b/i },
-]
-
 export function recommendConfigurationsFromDescription(description: string, userPath?: UserPath): ConfigurationKind[] {
   const text = description.trim()
   if (!text) return []
   const available = new Set(getConfigurationOptions(userPath).map((option) => option.id))
-  const matched = CONFIGURATION_HINTS
-    .filter(({ id, pattern }) => available.has(id) && pattern.test(text))
-    .map(({ id }) => id)
-  if (matched.length > 0) return matched
-  return userPath === "direct" ? ["customer"] : ["merchant"]
+  const recommended: ConfigurationKind[] = userPath === "direct" ? ["customer"] : ["merchant", "customer"]
+  return recommended.filter((id) => available.has(id))
 }
 
-const CONFIGURATION_WHAT: Record<ConfigurationKind, string> = {
-  customer: "This account will make payments to you.",
-  merchant: "This account will accept payments from its customers.",
-  recipient: "This account will receive funds from you.",
-}
-
-function quoteFromDescription(description: string, pattern?: RegExp) {
-  const text = description.trim().replace(/\s+/g, " ")
-  if (!text) return ""
-  if (pattern) {
-    const sentence = text.split(/(?<=[.!?])\s+/).find((part) => pattern.test(part))
-    const snippet = (sentence ?? text.match(pattern)?.[0] ?? text).trim()
-    const clipped = snippet.length > 140 ? `${snippet.slice(0, 137).trim()}…` : snippet
-    return clipped.replace(/^["“]+|["”]+$/g, "").replace(/[.!?]+$/g, "")
-  }
-  return text.length > 140 ? `${text.slice(0, 137).trim()}…` : text
-}
-
-export function explainRecommendedConfigurations(
-  description: string,
-  recommended: ConfigurationKind[],
-) {
-  const text = description.trim()
+export function explainRecommendedConfigurations(recommended: ConfigurationKind[]) {
   return recommended.flatMap((id) => {
     const option = CONFIGURATION_OPTIONS.find((candidate) => candidate.id === id)
     if (!option) return []
-    const hint = CONFIGURATION_HINTS.find((candidate) => candidate.id === id)
-    const matched = Boolean(hint && hint.pattern.test(text))
-    const quote = quoteFromDescription(text, matched ? hint?.pattern : undefined)
-    const body = matched && quote
-      ? `${CONFIGURATION_WHAT[id]} You mentioned “${quote}.”`
-      : CONFIGURATION_WHAT[id]
-    return [{ id, title: option.title, body }]
+    return [{ id, title: option.title, body: option.description }]
   })
 }

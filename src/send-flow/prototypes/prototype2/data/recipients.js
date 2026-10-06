@@ -266,7 +266,10 @@ export function isPayable(r) {
 
 const PAYABLE_TYPES = ENTITY_TYPES.filter((t) => PAYABLE_ENTITY_IDS.has(t.id));
 
-export const ENTITY_FILTERS = [{ id: null, label: 'All' }, ...PAYABLE_TYPES];
+export const ENTITY_FILTERS = [
+  { id: null, label: 'All' },
+  ...PAYABLE_TYPES.filter((type) => type.id !== 'recipient'),
+];
 
 /**
  * The identifier shown as the secondary line in search results.
