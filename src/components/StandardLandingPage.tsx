@@ -1,18 +1,23 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
+import dynamic from "next/dynamic"
 import { AnimatePresence, motion } from "framer-motion"
 
 import { AccountConfigurationDemo } from "@/components/AccountConfigurationDemo"
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
 import { InvoiceCreationEditor } from "@/components/creation-workspace/InvoiceCreationEditor"
-import { SendMoneyCreationEditor } from "@/components/creation-workspace/SendMoneyCreationEditor"
-import { SubscriptionCreationEditor } from "@/components/creation-workspace/SubscriptionCreationEditor"
 import { InputFillProvider } from "@/components/creation-workspace/inputFill"
 import { LayoutSplitProvider } from "@/components/creation-workspace/layoutSplit"
 import { NavStyleProvider } from "@/components/creation-workspace/navStyle"
 import { ProductFormStyleProvider } from "@/components/creation-workspace/productFormStyle"
 import { SegmentedStyleProvider } from "@/components/creation-workspace/segmentedStyle"
+import { SubscriptionCreationEditor } from "@/components/creation-workspace/SubscriptionCreationEditor"
+
+const SendMoneyCreationEditor = dynamic(
+  () => import("@/components/creation-workspace/SendMoneyCreationEditor").then((mod) => ({ default: mod.SendMoneyCreationEditor })),
+  { ssr: false },
+)
 
 const TYPE = {
   pageTitle: "doc-title text-[72px] font-[440] leading-[1.0] tracking-[-0.038em] text-[#142234]",
@@ -169,7 +174,6 @@ function WireframeChrome({ children }: { children: ReactNode }) {
 
 function ExampleChip({
   label,
-  href,
   onClick,
   disabled = false,
   tooltip,
@@ -187,23 +191,18 @@ function ExampleChip({
   }`
 
   return (
-    <span className="group relative z-10 inline-flex">
-      {disabled || !href ? (
-        <button type="button" disabled={disabled} className={className}>
-          {label}
-        </button>
-      ) : (
-        <a
-          href={href}
-          className={className}
-          onClick={(event) => {
-            event.preventDefault()
-            onClick?.()
-          }}
-        >
-          {label}
-        </a>
-      )}
+    <span className="group relative inline-flex">
+      <button
+        type="button"
+        disabled={disabled}
+        className={className}
+        onClick={() => {
+          if (disabled) return
+          onClick?.()
+        }}
+      >
+        {label}
+      </button>
       {tooltip ? (
         <span
           role="tooltip"
@@ -333,7 +332,7 @@ function StandardDocs() {
             <p className="doc-lead mt-6 max-w-[640px] text-[20px] !font-[450] leading-[1.55] tracking-[-0.01em] !text-[#3F5064]">
               Object creation flows in the new Network world.
             </p>
-            <div className="relative z-10 mt-6 flex flex-wrap items-center gap-2.5">
+            <div className="mt-6 flex flex-wrap items-center gap-2.5">
               <ExampleChip label="Account creation" href={`#${DEMO_HASH.account}`} onClick={() => openDemo("account")} />
               <ExampleChip label="Invoice" href={`#${DEMO_HASH.invoice}`} onClick={() => openDemo("invoice")} />
               <ExampleChip label="Subscription" href={`#${DEMO_HASH.subscription}`} onClick={() => openDemo("subscription")} />
@@ -398,7 +397,7 @@ function StandardDocs() {
 
       <AnimatePresence>
         {activeDemo === "invoice" ? (
-          <motion.div key="invoice-demo" className="example-ui fixed inset-0 z-40" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+          <motion.div key="invoice-demo" className="example-ui fixed inset-0 z-[80]" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
             <ListPageDemo flow="invoices" exampleLabel="Invoice" ctaLabel="Create invoice" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -410,7 +409,7 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "subscription" ? (
-          <motion.div key="subscription-demo" className="example-ui fixed inset-0 z-40" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+          <motion.div key="subscription-demo" className="example-ui fixed inset-0 z-[80]" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
             <ListPageDemo flow="subscriptions" exampleLabel="Subscription" ctaLabel="Create subscription" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -424,7 +423,7 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "account" ? (
-          <motion.div key="account-demo" className="example-ui fixed inset-0 z-40 overflow-auto" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+          <motion.div key="account-demo" className="example-ui fixed inset-0 z-[80] overflow-auto" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
             <AccountConfigurationDemo
               patternLabel="Creation flows"
               exampleLabel="Account creation"
@@ -434,7 +433,7 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "send" ? (
-          <motion.div key="send-demo" className="example-ui fixed inset-0 z-40" exit={{ opacity: 0, transition: { duration: 0.28 } }}>
+          <motion.div key="send-demo" className="example-ui fixed inset-0 z-[80]" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
             <ListPageDemo flow="payouts" exampleLabel="Send money" ctaLabel="Send money" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>

@@ -1,5 +1,6 @@
 /* Send-flow-MMUI tokens. Imported from globals.css so Tailwind 4 merges
-   these @theme / @utility blocks with the app entry. Do not reset --text-*. */
+   these @theme / @utility blocks with the app entry. Do not reset --text-*.
+   theme.css is imported from globals.css (all @imports must stay at the top). */
 
 @theme {
   --color-neutral-0: #ffffff;
@@ -85,8 +86,6 @@
   --color-badge-info-border: #E2FBFE;
   --color-badge-info-text: #045AD0;
 }
-
-@import "./prototypes/prototype2/theme.css";
 
 @utility text-label-large {
   font-weight: 400;

@@ -51,7 +51,7 @@ export default function RecipientStep() {
     if (searching) {
       const { saved, discoverable } = searchGrouped(all, search, filterChip);
       return [
-        { id: 'saved', label: 'In your Network', rows: saved },
+        { id: 'saved', label: 'Your Network', rows: saved },
         {
           id: 'discoverable',
           label: 'Stripe profiles',
