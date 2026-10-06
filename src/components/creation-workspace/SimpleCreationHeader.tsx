@@ -174,11 +174,7 @@ export function SimpleCreationHeader({
       aria-disabled={submitDisabled || undefined}
       aria-describedby={hasSubmitTooltip ? submitTooltipId : undefined}
       className={`${submitDisabled
-        ? isRefresh
-          ? "flex items-center gap-[6px] rounded-full bg-[#F1F6FB] px-[12px] py-[6px] text-[13px] font-[500] leading-[20px] tracking-[-0.065px] text-[#9CA3B0] cursor-not-allowed"
-          : isSail
-            ? "flex h-[28px] items-center whitespace-nowrap rounded-[6px] border border-[#D4DEE9] bg-[#F5F6F8] px-[8px] text-[14px] font-[600] leading-[20px] tracking-[-0.15px] text-[#9CA3B0] cursor-not-allowed"
-            : "flex h-[26px] items-center whitespace-nowrap rounded-[6px] border border-[#D4DEE9] bg-[#F5F6F8] px-[8px] text-[12px] font-[600] leading-[16px] tracking-[-0.024px] text-[#9CA3B0] cursor-not-allowed"
+        ? `${primaryButtonClass} cursor-not-allowed opacity-45`
         : primaryButtonClass
       } ${hasSubmitTooltip ? "t-tt-trigger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#675DFF]/30" : ""}`}
       onClick={submitDisabled ? undefined : onSubmit}

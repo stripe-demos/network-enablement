@@ -1,0 +1,711 @@
+/* ---------------------------------------------------------------------------
+   prototype2 — MM Flows send sheet
+   Design source: Figma zFxwLo0kgHg1YuHVOOX7lB, page 1:25
+
+   Two mechanisms live in this file, and the difference matters:
+
+   1. @theme — declares NEW token names so Tailwind generates utilities
+      (bg-panel, text-ink, rounded-sheet). Tailwind 4 only merges @theme
+      blocks within the same CSS entry, which is why index.css @imports this
+      file rather than App.jsx importing it.
+
+   2. .sail-2 — OVERRIDES the value of tokens that already exist and are
+      shared with prototype1. These must NOT go in @theme or prototype1's
+      buttons change colour too. Same mechanism as the .dark block in
+      index.css.
+
+   Values are chosen by painted pixel, not by token generation. The file
+   carries two generations of Sail tokens which disagree — the frames paint
+   #F4F7FA panels (TitleCase gen) and #1A2C44 body text (lowercase gen). So
+   aliases point at whichever existing scale value matches the render.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  /* Surfaces */
+  --color-canvas: var(--color-neutral-0);      /* #FFFFFF — sheet background */
+  --color-panel: var(--color-neutral-25);      /* #F4F7FA — grouped cards, selected rows, right pane */
+  /* One step deeper than --color-panel, for a mark that sits ON a panel fill: an
+     avatar tile or country pill inside a panel row. Both are #F4F7FA by default,
+     which on a #F4F7FA row disappears entirely — the reference bumps them to
+     #ECF1F6 (SendDialog.tsx:541, 549) and also uses it as the hover fill on a
+     transparent list row. */
+  --color-panel-deep: var(--color-neutral-50); /* #ECF1F6 */
+  /* A panel that belongs to a brand-flagged message — the Confirmation of Payee
+     blocker. Lighter than action-tint (#EFECFC), which is a fill for brand
+     elements; this one has body copy on it and has to stay a background. */
+  --color-panel-brand: #F7F5FD;
+  --color-hairline: var(--color-neutral-100);  /* #D4DEE9 — 1px dividers and card borders */
+  /* Backdrop behind the sheet. Translucent, matching the reference dialog
+     (rgba(192,200,210,0.7)) rather than the flat #C0C8D2 this used to paint.
+     Nothing is drawn behind the sheet here, so it composites over the white page
+     — which is exactly what the reference composites over too. */
+  --color-scrim: rgba(192, 200, 210, 0.7);
+
+  /* Ink — named "ink" rather than "text" to avoid text-text-* utilities */
+  --color-ink: var(--color-neutral-900);       /* #1A2C44 — headings and primary rows */
+  --color-ink-muted: var(--color-neutral-700); /* #3C4F69 — secondary rows, meta */
+  --color-ink-faint: #6C7688;                  /* tertiary, matches --color-icon-subdued */
+  --color-ink-subtle: #7D8BA4;                 /* the sign/space in an amount field (429:223844) */
+  /* An amount field with nothing in it — the sign, symbol, zero and currency code
+     as one quiet run. Its own token because the two neighbouring values are both
+     wrong for it: ink-subtle (#7D8BA4) is the FILLED sign, so an empty field
+     painted with it outweighs a live one, and hairline (#D4DEE9) is border ink and
+     reads as switched off rather than as waiting for input. */
+  /* One step darker than it was (neutral-200, #BAC8DA), which sat close enough to the
+     hairline that an empty amount field read as switched off. Still a step lighter than
+     ink-subtle (#7D8BA4), the FILLED sign — so empty and filled stay distinguishable. */
+  --color-ink-placeholder: var(--color-neutral-300); /* #95A4BA */
+
+  /* Action */
+  --color-action: var(--color-brand-500);      /* #675DFF — primary button, success mark */
+  --color-action-link: var(--color-brand-600); /* #533AFD — links, active stepper dot */
+  --color-action-tint: var(--color-brand-50);  /* #EFECFC — success halo, subtle brand fills */
+
+  /* Radii */
+  --radius-control: 6px;                       /* inputs, buttons, badges, chips */
+  --radius-card: 8px;                          /* grouped cards, list rows */
+  --radius-large: 12px;                        /* email preview card */
+  --radius-sheet: 12px;                        /* the task sheet itself — reference dialog radius */
+
+  /* Shadow/Overlay/Default — two stacked drops, straight from the Figma effect */
+  --shadow-sheet: 0 5px 15px 0 #0000001F, 0 15px 35px 0 #30313D14;
+  /* Same overlay, plus a hairline ring — used by popovers/dropdowns */
+  --shadow-popover: 0 0 0 1px #D4DEE9, 0 5px 15px 0 #0000001F, 0 15px 35px 0 #30313D14;
+  /* Selected chip inside a segmented track — a slight lift, not a border */
+  --shadow-chip: 0 1px 2px 0 #0000000f, 0 0 0 1px #10111a0d;
+  /* A small soft drop for a card that sits on the panel — the email preview.
+     Deliberately not --shadow-chip, which bundles its own hairline ring. */
+  --shadow-card: 0 2px 6px 0 #0A21561F;
+  /* _top-shadow/form-accent/light/default — the lift on a checked checkbox */
+  --shadow-check: 0 1px 1px 0 #0A215629;
+  /* Scroll cue above the sheet footer. A radial pool rather than a box-shadow:
+     edge to edge, it draws a hard line across the sheet and reads as a divider. */
+  --gradient-scroll-cue: radial-gradient(
+    58% 100% at 50% 100%,
+    #0A215617 0%,
+    #0A21560B 48%,
+    transparent 80%
+  );
+  /* --keyline-focus, the 4px halo on a focused form control. The reference paints
+     rgba(8,142,249,0.36) — hue/blue/400 at 36% (SendDialog.tsx:478). */
+  --shadow-focus: 0 0 0 4px #088EF95C;
+  /* Form control rings, resting and focused. The reference does NOT swap the
+     border out on focus: it keeps the 1px hairline and adds the halo outside it.
+     The old `focus:shadow-[0_0_0_2px_var(--color-action)]` replaced the hairline
+     with a 2px purple ring, so a field changed colour AND weight on focus. */
+  --shadow-form: 0 0 0 1px var(--color-border);
+  --shadow-form-focus: 0 0 0 1px var(--color-border), 0 0 0 4px #088EF95C;
+}
+
+/* Scoped overrides of tokens shared with prototype1.
+   The designs paint the primary action #675DFF (brand-500); index.css ships
+   #533afd (brand-600) globally. Overriding here lets Button.jsx be reused
+   unforked. */
+.sail-2 {
+  --color-button-primary-bg: var(--color-brand-500);
+  --color-button-primary-border: var(--color-brand-500);
+  --color-button-primary-border-hover: var(--color-brand-600);
+  --color-button-primary-pressed: var(--color-brand-600);
+  --color-border: #D8DEE4;
+}
+
+.sail-2 input:not([type="checkbox"]):not([type="radio"]),
+.sail-2 textarea,
+.sail-2 select {
+  border: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Type — Sail's typographic scale, verbatim from 501:28628.
+
+   index.css sets `--text-*: initial`, which deletes Tailwind's text-sm/base/lg
+   entirely — any such class silently does nothing. Everything goes through the
+   @utility classes below, and nothing in this prototype should set a font size
+   or weight any other way.
+
+   NO letter-spacing here, deliberately. The Figma styles carry tracking (+0.30
+   to +0.41 on the Display faces, -0.15 to -0.48 on the Text faces), but 501:28628
+   says why: "the text in figma has some tracking (letter spacing) adjustments, to
+   match what SF does in the browser automatically. That tracking will not be
+   necessary when your engineers are implementing."
+
+   index.css renders -apple-system, so the browser IS applying SF's own optical
+   tracking. Copying Figma's numbers on top double-applied it — label text came out
+   too tight, headings too loose. Sizes, weights and line heights are the spec;
+   tracking is a Figma artefact.
+
+   "subdued" is the Regular-weight variant of a display or heading style;
+   "emphasized" is the Semibold variant of a body or label style. Sail offers one
+   or the other, never both for the same family.
+
+   Code/* (Menlo) is omitted — nothing in this flow sets monospace type. Names are
+   prefixed `sail-` so prototype1's own text utilities are untouched.
+
+   Unused utilities cost nothing: Tailwind only emits the ones referenced.
+   --------------------------------------------------------------------------- */
+
+@utility text-sail-display-xlarge {
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 64px;
+}
+
+@utility text-sail-display-xlarge-subdued {
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 64px;
+}
+
+@utility text-sail-display-large {
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 56px;
+}
+
+@utility text-sail-display-large-subdued {
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 56px;
+}
+
+@utility text-sail-display-medium {
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 48px;
+}
+
+@utility text-sail-display-medium-subdued {
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 48px;
+}
+
+@utility text-sail-display-small {
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 40px;
+}
+
+@utility text-sail-display-small-subdued {
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 40px;
+}
+
+@utility text-sail-heading-xlarge {
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 36px;
+}
+
+@utility text-sail-heading-xlarge-subdued {
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 36px;
+}
+
+@utility text-sail-heading-large {
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+@utility text-sail-heading-large-subdued {
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+@utility text-sail-heading-medium {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+@utility text-sail-heading-medium-subdued {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+@utility text-sail-heading-small {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-sail-heading-small-subdued {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-sail-heading-xsmall {
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+@utility text-sail-heading-xsmall-subdued {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+@utility text-sail-body-large {
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+@utility text-sail-body-large-emphasized {
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+@utility text-sail-body-medium {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-sail-body-medium-emphasized {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-sail-body-small {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-sail-body-small-emphasized {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-sail-label-large {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-sail-label-large-emphasized {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-sail-label-medium {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-sail-label-medium-emphasized {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-sail-label-small {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@utility text-sail-label-small-emphasized {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion — the MMUI prototype's dialog vocabulary, verbatim.
+
+   Source: mmui-prototype/src/app/globals.css (fadeIn/fadeOut, scaleIn/scaleOut,
+   slideInFromRight/Left, subflowEnter/Exit, mainScaleDown/Up) and DESIGN.md
+   § Transitions & Interactions, which fixes the durations and easings.
+
+   Three gestures, each with a distinct job:
+
+   1. The sheet: scrim fades over 200ms, panel scales up from 0.95 over 300ms.
+   2. Main-flow steps move HORIZONTALLY — in from the right going forward, in
+      from the left coming back. Entrance only, deliberately: the reference
+      unmounts the outgoing step rather than animating it out, which is what
+      makes Back feel immediate rather than laggy.
+   3. Crossing a sub-flow boundary is a depth change, not a sideways one. The
+      trunk scales back to 0.97 and fades while the sub-flow rises 12px into
+      place; the reverse on the way out. This one DOES have an exit phase, so
+      the two halves read as one movement in and out of the stack.
+   --------------------------------------------------------------------------- */
+
+/* --- The sheet ------------------------------------------------------------- */
+
+@keyframes sail-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sail-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes sail-panel-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sail-panel-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+.sail-2 .sail-overlay-in {
+  animation: sail-overlay-in var(--sail-overlay-in-ms) ease-out forwards;
+}
+
+.sail-2 .sail-overlay-out {
+  animation: sail-overlay-out var(--sail-overlay-out-ms) ease-in forwards;
+}
+
+/* The entrance easing is the reference's own curve, not a named ease: it leaves
+   almost immediately and settles slowly, so the panel arrives rather than
+   springs. */
+.sail-2 .sail-panel-in {
+  animation: sail-panel-in var(--sail-panel-in-ms) cubic-bezier(0, 0.09, 0.4, 1) forwards;
+}
+
+.sail-2 .sail-panel-out {
+  animation: sail-panel-out var(--sail-panel-out-ms) ease-in forwards;
+}
+
+/* --- Main-flow steps: left and right -------------------------------------- */
+
+@keyframes sail-step-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes sail-step-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.sail-2 .sail-step-in-right {
+  animation: sail-step-in-right var(--sail-step-in-ms) ease-out forwards;
+}
+
+.sail-2 .sail-step-in-left {
+  animation: sail-step-in-left var(--sail-step-in-ms) ease-out forwards;
+}
+
+/* --- Sub-flow boundary: depth -------------------------------------------- */
+
+/* The sub-flow rises into place over the trunk it interrupted. */
+@keyframes sail-subflow-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sail-subflow-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(12px); }
+}
+
+/* The trunk recedes rather than leaving — it's still where you'll come back to. */
+@keyframes sail-main-scale-down {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.97); }
+}
+
+@keyframes sail-main-scale-up {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.sail-2 .sail-subflow-enter {
+  animation: sail-subflow-enter var(--sail-subflow-in-ms) ease-out forwards;
+}
+
+.sail-2 .sail-subflow-exit {
+  animation: sail-subflow-exit var(--sail-subflow-out-ms) ease-in forwards;
+  pointer-events: none;
+}
+
+.sail-2 .sail-main-scale-down {
+  animation: sail-main-scale-down var(--sail-subflow-out-ms) ease-in forwards;
+  pointer-events: none;
+}
+
+.sail-2 .sail-main-scale-up {
+  animation: sail-main-scale-up var(--sail-subflow-in-ms) ease-out forwards;
+}
+
+/* The breadcrumb that appears with a sub-flow slides in with it. */
+@keyframes sail-breadcrumb-slide {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.sail-2 .sail-breadcrumb-slide {
+  animation: sail-breadcrumb-slide 300ms ease-out;
+}
+
+/* Menus fade and drift the same way, just quicker and over a shorter distance. */
+@keyframes sail-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sail-pop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* NOT scoped to .sail-2: popover panels render in a portal on <body>, so a
+   descendant selector would never match them. Their duration variables live on
+   :root for the same reason. */
+.sail-pop-in {
+  animation: sail-pop-in var(--sail-pop-in-ms, 140ms) cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+.sail-pop-out {
+  animation: sail-pop-out var(--sail-pop-out-ms, 100ms) cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+:root {
+  --sail-pop-in-ms: 140ms;
+  --sail-pop-out-ms: 100ms;
+}
+
+/* Step and sheet transitions stay scoped — they render inside the prototype root.
+   Every number here is the reference's; SendSheet and TaskSheet read the same
+   values in JS, so a duration only ever changes in one place. */
+.sail-2 {
+  /* Main-flow steps: entrance only, so there is no out duration. */
+  --sail-step-in-ms: 300ms;
+  /* Sub-flow: a 300ms recede, then a 400ms rise. */
+  --sail-subflow-out-ms: 300ms;
+  --sail-subflow-in-ms: 400ms;
+  /* The sheet. */
+  --sail-overlay-in-ms: 200ms;
+  --sail-overlay-out-ms: 200ms;
+  --sail-panel-in-ms: 300ms;
+  --sail-panel-out-ms: 200ms;
+}
+
+/* ---------------------------------------------------------------------------
+   Success mark: the disc pops in, the halo expands and fades behind it, and a
+   ring of confetti shoots outward.
+
+   Each confetti piece travels along its own axis, set per-element as --sail-dx
+   and --sail-dy so one keyframe rule serves every piece. Distance/rotation are
+   in the custom properties, not the keyframes, so the burst can be re-aimed
+   without touching the CSS.
+   --------------------------------------------------------------------------- */
+@keyframes sail-mark-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sail-halo-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  50% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* The check is drawn after the disc has landed, so it reads as a confirmation
+   rather than as part of the same shape. */
+@keyframes sail-check-in {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sail-confetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+  }
+  15% { opacity: 1; }
+  70% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--sail-dx), var(--sail-dy), 0) scale(1)
+      rotate(var(--sail-spin, 180deg));
+  }
+}
+
+.sail-mark-pop {
+  animation: sail-mark-pop 420ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+
+.sail-halo-pop {
+  animation: sail-halo-pop 520ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.sail-check-in {
+  animation: sail-check-in 260ms cubic-bezier(0.2, 0.8, 0.3, 1.4) 220ms both;
+}
+
+.sail-confetti {
+  animation: sail-confetti 900ms cubic-bezier(0.15, 0.6, 0.3, 1) 140ms both;
+}
+
+/* ---------------------------------------------------------------------------
+   Success mark, part two: a ring that draws itself around the disc with a
+   sparkle riding its leading edge, then a halo that breathes.
+
+   The ring and the sparkle share a duration and start angle, so the dot appears
+   to be painting the line rather than merely orbiting alongside it. Both are
+   entrance flourishes and clear themselves afterwards, leaving the designed
+   static mark.
+   --------------------------------------------------------------------------- */
+
+/* --sail-ring-length is the circumference, set on the element so the keyframe
+   doesn't hard-code the radius. */
+@keyframes sail-ring-draw {
+  0% { stroke-dashoffset: var(--sail-ring-length); opacity: 1; }
+  75% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+@keyframes sail-sparkle-orbit {
+  0% { transform: rotate(0deg); }
+  75%, 100% { transform: rotate(360deg); }
+}
+
+@keyframes sail-sparkle-fade {
+  0%, 8% { opacity: 0; transform: scale(0.4); }
+  20% { opacity: 1; transform: scale(1); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.3); }
+}
+
+/* Timer variant: the same ring, but it means something.
+   Linear rather than eased — an eased sweep misreports how much time is left —
+   and it holds at full opacity instead of fading, because the screen leaves the
+   moment it closes. Duration comes from --sail-timer so the 5s lives in one
+   place, next to the timeout that acts on it. */
+@keyframes sail-ring-timer {
+  from { stroke-dashoffset: var(--sail-ring-length); }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes sail-sparkle-hold {
+  0% { opacity: 0; transform: scale(0.4); }
+  4% { opacity: 1; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.sail-ring-timer {
+  animation: sail-ring-timer var(--sail-timer) linear 200ms both;
+}
+
+.sail-sparkle-timer {
+  animation: sail-sparkle-orbit-timer var(--sail-timer) linear 200ms both;
+}
+
+@keyframes sail-sparkle-orbit-timer {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sail-sparkle-dot-timer {
+  animation: sail-sparkle-hold var(--sail-timer) ease-out 200ms both;
+}
+
+/* The lighter halo keeps breathing once the entrance is over. */
+@keyframes sail-halo-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+.sail-ring-draw {
+  animation: sail-ring-draw 800ms cubic-bezier(0.3, 0, 0.2, 1) 200ms both;
+}
+
+.sail-sparkle-orbit {
+  animation: sail-sparkle-orbit 800ms cubic-bezier(0.3, 0, 0.2, 1) 200ms both;
+}
+
+.sail-sparkle-dot {
+  animation: sail-sparkle-fade 800ms ease-out 200ms both;
+}
+
+/* Two animations, one element: the pop fills forwards, then the pulse — later in
+   the list, and with no fill mode so it stays inert during its delay — takes
+   over once the entrance has landed. */
+.sail-halo-breathe {
+  animation:
+    sail-halo-pop 520ms cubic-bezier(0.2, 0.8, 0.3, 1) both,
+    sail-halo-pulse 3s ease-in-out 1s infinite;
+}
+
+/* Motion is decoration here — nothing depends on it to be understood. */
+@media (prefers-reduced-motion: reduce) {
+  .sail-2 .sail-step-in-right,
+  .sail-2 .sail-step-in-left,
+  .sail-2 .sail-subflow-enter,
+  .sail-2 .sail-subflow-exit,
+  .sail-2 .sail-main-scale-down,
+  .sail-2 .sail-main-scale-up,
+  .sail-2 .sail-breadcrumb-slide,
+  .sail-2 .sail-overlay-in,
+  .sail-2 .sail-overlay-out,
+  .sail-2 .sail-panel-in,
+  .sail-2 .sail-panel-out,
+  .sail-pop-in,
+  .sail-pop-out,
+  .sail-mark-pop,
+  .sail-halo-pop,
+  .sail-check-in,
+  /* The pulse loops forever, so it matters most here. */
+  .sail-halo-breathe {
+    animation: none;
+  }
+
+  /* Confetti and the ring flourish have no static state worth showing, so
+     they're removed outright. */
+  .sail-confetti,
+  .sail-ring-draw,
+  .sail-sparkle-orbit,
+  /* The orbiting sparkle is decoration in both variants. The ring it rides is
+     NOT, when it's a timer: it's the only indication that the screen is about to
+     advance on its own, so .sail-ring-timer deliberately keeps running here. */
+  .sail-sparkle-timer {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Flag badge outline.
+
+   The flag needs a white stroke so it separates from the logo it overlaps. A
+   white box behind it would show through above and below (the flag artwork is
+   16x12 inside a 16x16 viewBox), so this stacks four 1px drop-shadows to trace
+   the actual shape.
+   --------------------------------------------------------------------------- */
+.sail-flag-badge {
+  filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff)
+    drop-shadow(0 -1px 0 #fff);
+}

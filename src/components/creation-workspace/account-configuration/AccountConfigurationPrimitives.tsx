@@ -112,9 +112,10 @@ const COUNTRY_BADGE_SIZE = {
   sm: { width: 10, height: 10, gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
   md: { width: 12, height: 12, gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
   default: { width: 14, height: 14, gap: "gap-[4px]", label: "text-[12px] font-[600] leading-[16px] text-[#1A2C44]" },
+  flow: { width: 16, height: 16, gap: "gap-1", label: "text-sail-label-small-emphasized text-ink" },
 } as const
 
-export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" | "md" }) {
+export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" | "md" | "flow" }) {
   const countryCode = country === "United Kingdom" ? "UK" : country === "United States" ? "US" : country === "Canada" ? "CA" : country
   if (!countryCode) return null
   const flagSrc = COUNTRY_FLAG_SRC[countryCode]
@@ -142,14 +143,17 @@ export function AccountSummaryCard({
   actionLabel,
   onAction,
   subtitle,
+  size = "default",
 }: {
   account: NetworkAccount
   actionLabel?: string
   onAction?: () => void
   subtitle?: string
+  size?: "default" | "flow"
 }) {
+  const isFlow = size === "flow"
   return (
-    <div data-account-summary-card className="flex items-center gap-[10px] rounded-[8px] bg-[#F6F8FA] p-[10px]">
+    <div data-account-summary-card className={`flex items-center gap-[10px] rounded-[8px] bg-[#F6F8FA] ${isFlow ? "p-[12px]" : "p-[10px]"}`}>
       {account.hasBrandIcon ? (
         <Image
           src="/unified-account-icon.png"
@@ -159,15 +163,25 @@ export function AccountSummaryCard({
           className="h-[32px] w-[32px] shrink-0 rounded-[6px]"
         />
       ) : (
-        <span className="relative flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] text-[12px] font-[650] leading-none text-[#2C219E]">
+        <span className={`relative flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${isFlow ? "text-sail-label-small-emphasized" : "text-[12px] font-[650]"}`}>
           <AvatarInitials initials={account.initials} />
         </span>
       )}
-      <div className="flex min-w-0 flex-1 flex-col justify-center leading-[16px]">
-        <p className="truncate text-[13px] font-[600] leading-[16px] tracking-[-0.08px] text-[#1A2C44]">{account.name}</p>
-        <p className="truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]">{subtitle ?? account.email}</p>
+      <div className={`flex min-w-0 flex-1 flex-col justify-center ${isFlow ? "leading-[20px]" : "leading-[16px]"}`}>
+        <p className={isFlow
+          ? "text-sail-label-medium-emphasized truncate text-ink"
+          : "truncate text-[13px] font-[600] leading-[16px] tracking-[-0.08px] text-[#1A2C44]"}
+        >
+          {account.name}
+        </p>
+        <p className={isFlow
+          ? "text-sail-label-small truncate text-ink-faint"
+          : "truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]"}
+        >
+          {subtitle ?? account.email}
+        </p>
       </div>
-      <CountryBadge country={account.country} size="md" />
+      <CountryBadge country={account.country} size={isFlow ? "flow" : "md"} />
       {actionLabel && onAction ? (
         <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={onAction}>
           {actionLabel}
@@ -182,12 +196,15 @@ export function DuplicateAccountNudge({
   onUseExisting,
   onDismiss,
   description = "This email matches an existing account in your Network. Continue with it to add configurations instead of creating a duplicate.",
+  size = "default",
 }: {
   account: NetworkAccount
   onUseExisting: () => void
   onDismiss: () => void
   description?: string
+  size?: "default" | "flow"
 }) {
+  const isFlow = size === "flow"
   return (
     <div
       className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white shadow-[0_8px_24px_rgba(26,44,68,0.12)]"
@@ -195,15 +212,34 @@ export function DuplicateAccountNudge({
       role="region"
       aria-label="Existing account found"
     >
-      <div className="p-[8px]">
-        <AccountSummaryCard account={account} subtitle={account.id} />
-        <p className="px-[8px] pb-[4px] pt-[12px] text-[12px] leading-[16px] text-[#3C4F69]">
+      <div className={isFlow ? "p-[12px]" : "p-[8px]"}>
+        <AccountSummaryCard account={account} subtitle={account.id} size={size} />
+        <p className={isFlow
+          ? "text-sail-label-medium px-[8px] pb-[4px] pt-[12px] text-ink-muted"
+          : "px-[8px] pb-[4px] pt-[12px] text-[12px] leading-[16px] text-[#3C4F69]"}
+        >
           {description}
         </p>
       </div>
-      <div className="flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] p-[8px]">
-        <button type="button" className="rounded-[6px] px-[8px] py-[5px] text-[11px] font-[600] text-[#526378] hover:bg-[#EEF2F6]" onClick={onDismiss}>Create new anyway</button>
-        <button type="button" className="rounded-[6px] bg-[#675DFF] px-[8px] py-[5px] text-[11px] font-[600] text-white hover:bg-[#5B52F0]" onClick={onUseExisting}>Use existing account</button>
+      <div className={`flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] ${isFlow ? "p-[12px]" : "p-[8px]"}`}>
+        <button
+          type="button"
+          className={isFlow
+            ? "text-sail-label-small-emphasized rounded-[6px] px-[10px] py-[6px] text-ink-muted hover:bg-[#EEF2F6]"
+            : "rounded-[6px] px-[8px] py-[5px] text-[11px] font-[600] text-[#526378] hover:bg-[#EEF2F6]"}
+          onClick={onDismiss}
+        >
+          Create new anyway
+        </button>
+        <button
+          type="button"
+          className={isFlow
+            ? "text-sail-label-small-emphasized rounded-[6px] bg-[#675DFF] px-[10px] py-[6px] text-white hover:bg-[#5B52F0]"
+            : "rounded-[6px] bg-[#675DFF] px-[8px] py-[5px] text-[11px] font-[600] text-white hover:bg-[#5B52F0]"}
+          onClick={onUseExisting}
+        >
+          Use existing account
+        </button>
       </div>
     </div>
   )

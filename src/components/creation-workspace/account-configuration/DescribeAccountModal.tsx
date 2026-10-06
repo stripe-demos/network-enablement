@@ -13,7 +13,7 @@ import {
   type UserPath,
 } from "./model"
 import VoiceGlowViz from "./VoiceGlowViz"
-import useSpeechRecognition, { isSpeechRecognitionSupported, unlockMicrophone } from "./useSpeechRecognition"
+import useSpeechRecognition, { isSpeechRecognitionSupported, startMicrophone, stopMicrophone } from "./useSpeechRecognition"
 
 const DESCRIPTION_LIMIT = 10000
 
@@ -45,8 +45,10 @@ export function DescribeAccountModal({
   const [recommended, setRecommended] = useState<ConfigurationKind[]>([])
   const [picked, setPicked] = useState<ConfigurationKind[]>([])
   const [isRecording, setIsRecording] = useState(false)
+  const [micStream, setMicStream] = useState<MediaStream | null>(null)
   const [voiceError, setVoiceError] = useState<string | null>(null)
   const [bodyHeight, setBodyHeight] = useState<number>()
+  const voiceRingRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isOpen) {
@@ -58,6 +60,10 @@ export function DescribeAccountModal({
       setRecommended([])
       setPicked([])
       setIsRecording(false)
+      setMicStream((current) => {
+        stopMicrophone(current)
+        return null
+      })
       setVoiceError(null)
       setBodyHeight(undefined)
       spokenBaseRef.current = ""
@@ -73,6 +79,8 @@ export function DescribeAccountModal({
     },
     onError: (error) => {
       if (error.error === "no-speech" || error.error === "aborted") return
+      stopMicrophone(micStream)
+      setMicStream(null)
       setIsRecording(false)
       if (error.error === "not-allowed" || error.error === "service-not-allowed") {
         setVoiceError("Microphone access was blocked. Allow it in your browser to dictate.")
@@ -92,6 +100,8 @@ export function DescribeAccountModal({
 
   const toggleRecording = async () => {
     if (isRecording) {
+      stopMicrophone(micStream)
+      setMicStream(null)
       setIsRecording(false)
       return
     }
@@ -102,7 +112,8 @@ export function DescribeAccountModal({
     spokenBaseRef.current = description.trim()
     setVoiceError(null)
     try {
-      await unlockMicrophone()
+      const stream = await startMicrophone()
+      setMicStream(stream)
     } catch {
       setVoiceError("Microphone access was blocked. Allow it in your browser to dictate.")
       return
@@ -118,6 +129,8 @@ export function DescribeAccountModal({
     if (!canContinue) return
     const nextHeight = bodyRef.current?.offsetHeight
     if (nextHeight) setBodyHeight(nextHeight)
+    stopMicrophone(micStream)
+    setMicStream(null)
     setIsRecording(false)
     setStatus("thinking")
     if (thinkTimer.current) window.clearTimeout(thinkTimer.current)
@@ -196,19 +209,22 @@ export function DescribeAccountModal({
             {isRecording ? (
               <>
                 <div
+                  ref={voiceRingRef}
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 z-[1] rounded-[12px] p-px opacity-90 animate-[voiceBorderSpin_8s_linear_infinite]"
+                  className="pointer-events-none absolute inset-0 z-[1] rounded-[12px] p-px origin-center"
                   style={{
                     background: "conic-gradient(from var(--voice-angle, 0deg), #FF80B5, #FF8A3D, #FFC24B, #B06AFF, #FF80B5)",
                     WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
                     WebkitMaskComposite: "xor",
                     maskComposite: "exclude",
+                    opacity: 0.38,
                   }}
                 />
                 <VoiceGlowViz
                   active={isRecording}
                   origin="center"
-                  capture={false}
+                  stream={micStream}
+                  ringRef={voiceRingRef}
                   className="pointer-events-none absolute inset-0 z-0"
                 />
               </>

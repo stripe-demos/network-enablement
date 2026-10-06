@@ -13,13 +13,14 @@ type AudioContextCtor = typeof AudioContext
 export default function useMicAnalyser(
   active: boolean,
   onFrame: (frame: MicFrame) => void,
-  options?: { capture?: boolean },
+  options?: { capture?: boolean; stream?: MediaStream | null },
 ) {
   const onFrameRef = useRef(onFrame);
   onFrameRef.current = onFrame;
   const errorRef = useRef<unknown>(null);
   const barsRef = useRef(new Float32Array(BAR_COUNT));
   const capture = options?.capture !== false
+  const sharedStream = options?.stream ?? null
 
   useEffect(() => {
     if (!active) return undefined;
@@ -61,15 +62,16 @@ export default function useMicAnalyser(
       }
     };
 
+    const ownsStream = !sharedStream
     const start = async () => {
-      if (!capture || !navigator.mediaDevices?.getUserMedia || !(window.AudioContext || (window as Window & { webkitAudioContext?: AudioContextCtor }).webkitAudioContext)) {
+      if ((!capture && !sharedStream) || !navigator.mediaDevices?.getUserMedia || !(window.AudioContext || (window as Window & { webkitAudioContext?: AudioContextCtor }).webkitAudioContext)) {
         runSimulated();
         return;
       }
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream = sharedStream ?? await navigator.mediaDevices.getUserMedia({ audio: true });
         if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
+          if (ownsStream) stream.getTracks().forEach((track) => track.stop());
           return;
         }
         errorRef.current = null;
@@ -158,10 +160,10 @@ export default function useMicAnalyser(
     return () => {
       cancelled = true;
       if (raf) cancelAnimationFrame(raf);
-      if (stream) stream.getTracks().forEach((track) => track.stop());
+      if (ownsStream && stream) stream.getTracks().forEach((track) => track.stop());
       if (ctx && ctx.state !== 'closed') ctx.close();
     };
-  }, [active, capture]);
+  }, [active, capture, sharedStream]);
 
   return errorRef;
 }

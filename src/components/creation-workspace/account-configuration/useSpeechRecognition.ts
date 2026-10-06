@@ -52,9 +52,18 @@ export function isSpeechRecognitionSupported() {
 }
 
 export async function unlockMicrophone() {
-  if (!navigator.mediaDevices?.getUserMedia) return
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  stream.getTracks().forEach((track) => track.stop())
+  return startMicrophone()
+}
+
+export async function startMicrophone() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("getUserMedia is not available")
+  }
+  return navigator.mediaDevices.getUserMedia({ audio: true })
+}
+
+export function stopMicrophone(stream: MediaStream | null | undefined) {
+  stream?.getTracks().forEach((track) => track.stop())
 }
 
 export default function useSpeechRecognition(

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": false,
+    "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -21,6 +21,8 @@
     "node_modules",
     "src/components/product-catalog/**",
     "src/components/creation-workspace/ContractPlanEditorOverlay.tsx",
-    "src/components/creation-workspace/CreationFlowOverlay.tsx"
+    "src/components/creation-workspace/CreationFlowOverlay.tsx",
+    ".tmp-send-flow",
+    "src/send-flow/prototypes/prototype2/flow/quote.test.mjs"
   ]
 }

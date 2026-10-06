@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, type RefObject } from "react"
 import useMicAnalyser from "./useMicAnalyser"
 
 /**
@@ -136,11 +136,15 @@ export default function VoiceGlowViz({
   origin = "corner",
   className = "",
   capture = true,
+  stream,
+  ringRef,
 }: {
   active: boolean
   origin?: "corner" | "center"
   className?: string
   capture?: boolean
+  stream?: MediaStream | null
+  ringRef?: RefObject<HTMLElement | null>
 }) {
   const centered = origin === "center"
   const baseRef = useRef<HTMLDivElement>(null)
@@ -155,6 +159,7 @@ export default function VoiceGlowViz({
   const shimmerRef = useRef<Record<number, number>>({})
   const lastTimeRef = useRef<number | null>(null)
   const swayPhaseRef = useRef(0)
+  const ringAngleRef = useRef(0)
 
   // Start each session fresh so the first frame snaps rather than easing in
   // from a stale value (and a reduced-motion single frame paints its level).
@@ -267,9 +272,20 @@ export default function VoiceGlowViz({
       coreRef.current.style.transform = `translateX(${sway('core')}px) scale(${grow.toFixed(4)})`;
       coreRef.current.style.filter = filterFor(BLUR.core);
     }
+
+    if (ringRef?.current) {
+      ringAngleRef.current = (ringAngleRef.current + dt * (0.12 + 0.72 * e)) % 360
+      const pulse = 0.38 + 0.62 * e
+      const ring = ringRef.current
+      ring.style.setProperty("--voice-angle", `${ringAngleRef.current.toFixed(1)}deg`)
+      ring.style.opacity = pulse.toFixed(3)
+      ring.style.filter = `saturate(${(0.85 + 1.35 * e).toFixed(3)}) brightness(${(0.92 + 0.55 * e).toFixed(3)})`
+      ring.style.transform = `scale(${(1 + 0.018 * e).toFixed(4)})`
+      ring.style.padding = `${(1 + 2.2 * e).toFixed(2)}px`
+    }
   };
 
-  useMicAnalyser(active, onFrame, { capture });
+  useMicAnalyser(active, onFrame, { capture: capture || Boolean(stream), stream });
 
   if (!active) return null;
 
