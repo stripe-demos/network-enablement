@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 import dynamic from "next/dynamic"
-import { AnimatePresence, motion } from "framer-motion"
 
 import { AccountConfigurationDemo } from "@/components/AccountConfigurationDemo"
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
@@ -415,9 +414,8 @@ function StandardDocs() {
         </div>
       </div>
 
-      <AnimatePresence initial={false}>
-        {activeDemo === "invoice" ? (
-          <motion.div key="invoice-demo" className="example-ui fixed inset-0 z-[80] bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+      {activeDemo === "invoice" ? (
+          <div key="invoice-demo" className="example-ui fixed inset-0 z-[80] bg-white">
             <ListPageDemo flow="invoices" exampleLabel="Invoice" ctaLabel="Create invoice" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -425,11 +423,11 @@ function StandardDocs() {
                 </FlowProviders>
               )}
             </ListPageDemo>
-          </motion.div>
+          </div>
         ) : null}
 
         {activeDemo === "subscription" ? (
-          <motion.div key="subscription-demo" className="example-ui fixed inset-0 z-[80] bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+          <div key="subscription-demo" className="example-ui fixed inset-0 z-[80] bg-white">
             <ListPageDemo flow="subscriptions" exampleLabel="Subscription" ctaLabel="Create subscription" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -439,21 +437,21 @@ function StandardDocs() {
                 </FlowProviders>
               )}
             </ListPageDemo>
-          </motion.div>
+          </div>
         ) : null}
 
         {activeDemo === "account" ? (
-          <motion.div key="account-demo" className="example-ui fixed inset-0 z-[80] overflow-auto bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+          <div key="account-demo" className="example-ui fixed inset-0 z-[80] overflow-auto bg-white">
             <AccountConfigurationDemo
               patternLabel="Creation flows"
               exampleLabel="Account creation"
               onExit={goToPreviousPage}
             />
-          </motion.div>
+          </div>
         ) : null}
 
         {activeDemo === "send" ? (
-          <motion.div key="send-demo" className="example-ui fixed inset-0 z-[80] bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+          <div key="send-demo" className="example-ui fixed inset-0 z-[80] bg-white">
             <ListPageDemo flow="payouts" exampleLabel="Send money" ctaLabel="Send money" ctaIcon="send" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -461,9 +459,8 @@ function StandardDocs() {
                 </FlowProviders>
               )}
             </ListPageDemo>
-          </motion.div>
+          </div>
         ) : null}
-      </AnimatePresence>
     </>
   )
 }

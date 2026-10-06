@@ -67,6 +67,9 @@ export function CreationWorkspace({
 }: CreationWorkspaceProps) {
   const { productFormStyle } = useProductFormStyle()
   const isRefreshSurface = productFormStyle === "refresh"
+  const enterTransition = skipEnterAnimation ? { duration: 0 } : { duration: 0.32, ease: dissolveEase }
+  const hugEnterTransition = skipEnterAnimation ? { duration: 0 } : largeModalHugContent ? { duration: 0.25, ease: smoothOutEase } : { duration: 0.32, ease: dissolveEase }
+  const dimTransition = skipEnterAnimation ? { duration: 0 } : { duration: 0.3, ease: dissolveEase }
 
   return (
     <AnimatePresence>
@@ -81,8 +84,8 @@ export function CreationWorkspace({
                   className="absolute inset-0 bg-black/40"
                   initial={skipEnterAnimation ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3, ease: dissolveEase }}
+                  exit={skipEnterAnimation ? { opacity: 1 } : { opacity: 0 }}
+                  transition={dimTransition}
                   onClick={presentation === "large-modal" || presentation === "standard-small" ? onClose : undefined}
                 />
               ) : (
@@ -91,8 +94,8 @@ export function CreationWorkspace({
                   className="absolute inset-0 bg-white"
                   initial={skipEnterAnimation ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3, ease: dissolveEase }}
+                  exit={skipEnterAnimation ? { opacity: 1 } : { opacity: 0 }}
+                  transition={dimTransition}
                 />
               )}
             </AnimatePresence>
@@ -107,8 +110,8 @@ export function CreationWorkspace({
                 className="absolute inset-0 z-10 flex items-center justify-center px-[16px]"
                 initial={skipEnterAnimation ? false : { opacity: 0, scale: 1.01 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.03 }}
-                transition={{ duration: 0.32, ease: dissolveEase }}
+                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.03 }}
+                transition={enterTransition}
               >
                 <div className={`flex max-h-[min(90vh,760px)] w-full ${navigator ? "max-w-[680px]" : "max-w-[480px]"} flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_15px_35px_0px_rgba(48,49,61,0.08),0px_5px_15px_0px_rgba(0,0,0,0.12)]`}>
                   {header}
@@ -130,8 +133,8 @@ export function CreationWorkspace({
                 className="absolute inset-0 z-10 flex items-center justify-center p-[24px]"
                 initial={skipEnterAnimation ? false : { opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
-                transition={largeModalHugContent ? { duration: 0.25, ease: smoothOutEase } : { duration: 0.32, ease: dissolveEase }}
+                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : { opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
+                transition={hugEnterTransition}
                 onClick={(event: MouseEvent<HTMLDivElement>) => {
                   if (event.target === event.currentTarget) onClose?.()
                 }}
@@ -160,8 +163,8 @@ export function CreationWorkspace({
                 className="absolute inset-0 z-10 flex items-center justify-center p-[24px]"
                 initial={skipEnterAnimation ? false : { opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.32, ease: dissolveEase }}
+                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
+                transition={enterTransition}
               >
                 {/* Hug-to-content modal: sizes to exactly header + narrow form + 420px preview. */}
                 <div className="flex max-h-[90vh] w-auto max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_20px_60px_rgba(0,0,0,0.12),0px_4px_16px_rgba(0,0,0,0.08)]">
@@ -185,8 +188,8 @@ export function CreationWorkspace({
                 className={`absolute inset-0 z-10 flex flex-col ${isRefreshSurface ? "bg-[#F6F9FC]" : "bg-white"}`}
                 initial={skipEnterAnimation ? false : isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
                 animate={isRefreshSurface ? { opacity: 1, scale: 1 } : { opacity: 1 }}
-                exit={isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
-                transition={isRefreshSurface ? { duration: 0.25, ease: [0.22, 1, 0.36, 1] } : { duration: 0.2 }}
+                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
+                transition={skipEnterAnimation ? { duration: 0 } : isRefreshSurface ? { duration: 0.25, ease: [0.22, 1, 0.36, 1] } : { duration: 0.2 }}
               >
                 {!hideHeader && header}
                 {toolbar}

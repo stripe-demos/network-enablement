@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from "framer-motion"
 import type { ReactNode } from "react"
 
 // A floating white pill for wayfinding out of an example demo back to the /patterns docs.
@@ -25,12 +24,8 @@ export function DemoContextBar({
 }) {
   const pos = placement === "bottom-left" ? "bottom-[8px] left-[8px]" : "left-[8px] top-[8px]"
   return (
-    <motion.div
+    <div
       className={`fixed ${pos} ${zIndexClass} flex h-[40px] w-max items-center gap-[10px] rounded-full border border-white/[0.08] bg-[#1A2234] px-[16px] shadow-[0_6px_20px_-6px_rgba(10,16,28,0.35),0_2px_6px_-2px_rgba(10,16,28,0.25)]`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
     >
       <button
         type="button"
@@ -48,7 +43,7 @@ export function DemoContextBar({
           {trailingAction}
         </>
       ) : null}
-    </motion.div>
+    </div>
   )
 }
 
