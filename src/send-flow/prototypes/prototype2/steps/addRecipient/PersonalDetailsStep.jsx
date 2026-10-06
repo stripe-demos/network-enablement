@@ -140,7 +140,7 @@ export default function PersonalDetailsStep() {
           onChange={(v) => patchNewRecipient('email', v)}
         />
         {showNudge ? (
-          <div className="mt-3">
+          <div className="mt-1.5">
             <DuplicateAccountNudge
               size="flow"
               account={matchingAccount}

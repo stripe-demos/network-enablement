@@ -47,6 +47,32 @@ type CreationWorkspaceProps = {
 const dissolveEase = [0.25, 0.1, 0.25, 1.0] as const
 const smoothOutEase = [0.22, 1, 0.36, 1] as const
 
+function Shell({
+  skip,
+  className,
+  children,
+  initial,
+  animate,
+  exit,
+  transition,
+  ...rest
+}: {
+  skip: boolean
+  className: string
+  children: ReactNode
+  initial?: object | false
+  animate?: object
+  exit?: object
+  transition?: object
+} & Record<string, unknown>) {
+  if (skip) return <div className={className} {...rest}>{children}</div>
+  return (
+    <motion.div className={className} initial={initial} animate={animate} exit={exit} transition={transition} {...rest}>
+      {children}
+    </motion.div>
+  )
+}
+
 export function CreationWorkspace({
   mode,
   header,
@@ -77,24 +103,26 @@ export function CreationWorkspace({
         <div className={embedded ? "relative h-full min-h-0 w-full" : "fixed inset-0 z-30"} role="dialog" aria-modal="true">
           {/* Backdrop — cross-fades between dimmed modals and white fullscreen. */}
           {!embedded && (
-            <AnimatePresence initial={!skipEnterAnimation}>
+            <AnimatePresence>
               {presentation === "modal" || presentation === "large-modal" || presentation === "standard-small" ? (
-                <motion.div
+                <Shell
+                  skip={skipEnterAnimation}
                   key="backdrop-dim"
                   className="absolute inset-0 bg-black/40"
-                  initial={skipEnterAnimation ? false : { opacity: 0 }}
+                  initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={skipEnterAnimation ? { opacity: 1 } : { opacity: 0 }}
+                  exit={{ opacity: 0 }}
                   transition={dimTransition}
                   onClick={presentation === "large-modal" || presentation === "standard-small" ? onClose : undefined}
                 />
               ) : (
-                <motion.div
+                <Shell
+                  skip={skipEnterAnimation}
                   key="backdrop-white"
                   className="absolute inset-0 bg-white"
-                  initial={skipEnterAnimation ? false : { opacity: 0 }}
+                  initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={skipEnterAnimation ? { opacity: 1 } : { opacity: 0 }}
+                  exit={{ opacity: 0 }}
                   transition={dimTransition}
                 />
               )}
@@ -103,14 +131,15 @@ export function CreationWorkspace({
 
           {/* Content — cross-dissolve between modal card and fullscreen shell.
               Both surfaces are absolute-positioned so they overlay during the transition. */}
-          <AnimatePresence mode="sync" initial={!skipEnterAnimation}>
+          <AnimatePresence mode="sync">
             {presentation === "modal" ? (
-              <motion.div
+              <Shell
+                skip={skipEnterAnimation}
                 key="surface-modal"
                 className="absolute inset-0 z-10 flex items-center justify-center px-[16px]"
-                initial={skipEnterAnimation ? false : { opacity: 0, scale: 1.01 }}
+                initial={{ opacity: 0, scale: 1.01 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.03 }}
+                exit={{ opacity: 0, scale: 1.03 }}
                 transition={enterTransition}
               >
                 <div className={`flex max-h-[min(90vh,760px)] w-full ${navigator ? "max-w-[680px]" : "max-w-[480px]"} flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_15px_35px_0px_rgba(48,49,61,0.08),0px_5px_15px_0px_rgba(0,0,0,0.12)]`}>
@@ -126,14 +155,15 @@ export function CreationWorkspace({
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </Shell>
             ) : presentation === "large-modal" ? (
-              <motion.div
+              <Shell
+                skip={skipEnterAnimation}
                 key="surface-large-modal"
                 className="absolute inset-0 z-10 flex items-center justify-center p-[24px]"
-                initial={skipEnterAnimation ? false : { opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
+                initial={{ opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : { opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
+                exit={{ opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
                 transition={hugEnterTransition}
                 onClick={(event: MouseEvent<HTMLDivElement>) => {
                   if (event.target === event.currentTarget) onClose?.()
@@ -156,14 +186,15 @@ export function CreationWorkspace({
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </Shell>
             ) : presentation === "standard-small" ? (
-              <motion.div
+              <Shell
+                skip={skipEnterAnimation}
                 key="surface-standard-small"
                 className="absolute inset-0 z-10 flex items-center justify-center p-[24px]"
-                initial={skipEnterAnimation ? false : { opacity: 0, scale: 0.98 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
+                exit={{ opacity: 0, scale: 0.98 }}
                 transition={enterTransition}
               >
                 {/* Hug-to-content modal: sizes to exactly header + narrow form + 420px preview. */}
@@ -181,15 +212,16 @@ export function CreationWorkspace({
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </Shell>
             ) : (
-              <motion.div
+              <Shell
+                skip={skipEnterAnimation}
                 key="surface-full"
                 className={`absolute inset-0 z-10 flex flex-col ${isRefreshSurface ? "bg-[#F6F9FC]" : "bg-white"}`}
-                initial={skipEnterAnimation ? false : isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
+                initial={isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
                 animate={isRefreshSurface ? { opacity: 1, scale: 1 } : { opacity: 1 }}
-                exit={skipEnterAnimation ? { opacity: 1, scale: 1 } : isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
-                transition={skipEnterAnimation ? { duration: 0 } : isRefreshSurface ? { duration: 0.25, ease: [0.22, 1, 0.36, 1] } : { duration: 0.2 }}
+                exit={isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
+                transition={isRefreshSurface ? { duration: 0.25, ease: [0.22, 1, 0.36, 1] } : { duration: 0.2 }}
               >
                 {!hideHeader && header}
                 {toolbar}
@@ -202,7 +234,7 @@ export function CreationWorkspace({
                     <HierarchicalLayout navigator={navigator} editor={editor} preview={preview} />
                   )}
                 </div>
-              </motion.div>
+              </Shell>
             )}
           </AnimatePresence>
         </div>
