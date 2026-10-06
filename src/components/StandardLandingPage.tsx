@@ -13,6 +13,7 @@ import { NavStyleProvider } from "@/components/creation-workspace/navStyle"
 import { ProductFormStyleProvider } from "@/components/creation-workspace/productFormStyle"
 import { SegmentedStyleProvider } from "@/components/creation-workspace/segmentedStyle"
 import { SubscriptionCreationEditor } from "@/components/creation-workspace/SubscriptionCreationEditor"
+import { Icon } from "@/send-flow/icons/SailIcons"
 
 const SendMoneyCreationEditor = dynamic(
   () => import("@/components/creation-workspace/SendMoneyCreationEditor").then((mod) => ({ default: mod.SendMoneyCreationEditor })),
@@ -215,16 +216,30 @@ function ExampleChip({
   )
 }
 
-function CreateListButton({ label, onClick }: { label: string; onClick: () => void }) {
+function PlusIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M6.7 0.85C6.7 0.380558 6.31944 0 5.85 0C5.38056 0 5 0.380558 5 0.85V5H0.85C0.380558 5 0 5.38056 0 5.85C0 6.31944 0.380558 6.7 0.85 6.7H5V10.85C5 11.3194 5.38056 11.7 5.85 11.7C6.31944 11.7 6.7 11.3194 6.7 10.85V6.7H10.85C11.3194 6.7 11.7 6.31944 11.7 5.85C11.7 5.38056 11.3194 5 10.85 5H6.7V0.85Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+function CreateListButton({
+  label,
+  onClick,
+  icon = "add",
+}: {
+  label: string
+  onClick: () => void
+  icon?: "add" | "send"
+}) {
   return (
     <button
       type="button"
       className="flex h-[32px] items-center gap-[6px] rounded-[7px] border border-[#D4DEE9] bg-white px-[12px] text-[13px] font-[600] text-[#1A2C44] shadow-[0_1px_2px_rgba(20,34,52,0.06)] hover:bg-[#F5F6F8]"
       onClick={onClick}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-        <path d="M6.7 0.85C6.7 0.380558 6.31944 0 5.85 0C5.38056 0 5 0.380558 5 0.85V5H0.85C0.380558 5 0 5.38056 0 5.85C0 6.31944 0.380558 6.7 0.85 6.7H5V10.85C5 11.3194 5.38056 11.7 5.85 11.7C6.31944 11.7 6.7 11.3194 6.7 10.85V6.7H10.85C11.3194 6.7 11.7 6.31944 11.7 5.85C11.7 5.38056 11.3194 5 10.85 5H6.7V0.85Z" fill="currentColor" />
-      </svg>
+      {icon === "send" ? <Icon name="send" size="xxsmall" fill="currentColor" /> : <PlusIcon />}
       {label}
     </button>
   )
@@ -234,12 +249,14 @@ function ListPageDemo({
   flow,
   exampleLabel,
   ctaLabel,
+  ctaIcon,
   onExit,
   children,
 }: {
   flow: string
   exampleLabel: string
   ctaLabel: string
+  ctaIcon?: "add" | "send"
   onExit: () => void
   children: (props: { isOpen: boolean; onClose: () => void }) => ReactNode
 }) {
@@ -258,7 +275,7 @@ function ListPageDemo({
           }
           onExit()
         }}
-        headerAction={<CreateListButton label={ctaLabel} onClick={() => setIsEditorOpen(true)} />}
+        headerAction={<CreateListButton label={ctaLabel} icon={ctaIcon} onClick={() => setIsEditorOpen(true)} />}
       />
       {children({ isOpen: isEditorOpen, onClose: () => setIsEditorOpen(false) })}
     </>
@@ -302,11 +319,14 @@ function StandardDocs() {
   const openDemo = (key: DemoKey) => {
     setActiveDemo(key)
     const url = `#${DEMO_HASH[key]}`
+    const x = window.scrollX
+    const y = window.scrollY
     try {
       window.history.pushState({ demo: key }, "", url)
     } catch {
       window.location.hash = DEMO_HASH[key]
     }
+    window.scrollTo(x, y)
   }
 
   const goToPreviousPage = () => {
@@ -395,9 +415,9 @@ function StandardDocs() {
         </div>
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {activeDemo === "invoice" ? (
-          <motion.div key="invoice-demo" className="example-ui fixed inset-0 z-[80]" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+          <motion.div key="invoice-demo" className="example-ui fixed inset-0 z-[80] bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
             <ListPageDemo flow="invoices" exampleLabel="Invoice" ctaLabel="Create invoice" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -409,7 +429,7 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "subscription" ? (
-          <motion.div key="subscription-demo" className="example-ui fixed inset-0 z-[80]" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+          <motion.div key="subscription-demo" className="example-ui fixed inset-0 z-[80] bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
             <ListPageDemo flow="subscriptions" exampleLabel="Subscription" ctaLabel="Create subscription" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
@@ -423,7 +443,7 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "account" ? (
-          <motion.div key="account-demo" className="example-ui fixed inset-0 z-[80] overflow-auto" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+          <motion.div key="account-demo" className="example-ui fixed inset-0 z-[80] overflow-auto bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
             <AccountConfigurationDemo
               patternLabel="Creation flows"
               exampleLabel="Account creation"
@@ -433,8 +453,8 @@ function StandardDocs() {
         ) : null}
 
         {activeDemo === "send" ? (
-          <motion.div key="send-demo" className="example-ui fixed inset-0 z-[80]" exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
-            <ListPageDemo flow="payouts" exampleLabel="Send money" ctaLabel="Send money" onExit={goToPreviousPage}>
+          <motion.div key="send-demo" className="example-ui fixed inset-0 z-[80] bg-white" initial={false} exit={{ opacity: 0, pointerEvents: "none", transition: { duration: 0.28 } }}>
+            <ListPageDemo flow="payouts" exampleLabel="Send money" ctaLabel="Send money" ctaIcon="send" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
                   <SendMoneyCreationEditor isOpen={isOpen} onClose={onClose} />

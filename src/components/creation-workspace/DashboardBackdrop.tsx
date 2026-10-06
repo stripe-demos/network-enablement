@@ -65,13 +65,9 @@ export function DashboardBackdrop({
       {showContextBar ? <DemoContextBar patternLabel={patternLabel} exampleLabel={exampleLabel} onBack={onBack} placement="bottom-left" /> : null}
 
       {/* Wireframe dashboard — fills the viewport behind the modal + dim. */}
-      <motion.div
+      <div
         className="fixed inset-0 z-30 flex bg-white"
         aria-hidden={headerAction ? undefined : true}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
       >
         <div className="pointer-events-none flex h-full w-full select-none">
           {/* ── Left sidebar (pure wireframe) ──────────────────────── */}
@@ -180,7 +176,7 @@ export function DashboardBackdrop({
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </>
   )
 }

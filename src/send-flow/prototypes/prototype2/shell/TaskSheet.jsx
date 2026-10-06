@@ -42,7 +42,7 @@ export default function TaskSheet({
     // don't depend on step content that changes as screens get built.
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center ${
-        closing ? 'sail-overlay-out' : 'sail-overlay-in'
+        closing ? 'sail-overlay-out' : ''
       }`}
       data-step={stepId}
       onClick={onRequestClose}
@@ -53,7 +53,7 @@ export default function TaskSheet({
           would scale its 12px radius and its shadow along with it. */}
       <div
         className={`relative flex h-full w-full items-center justify-center p-8 ${
-          closing ? 'sail-panel-out' : 'sail-panel-in'
+          closing ? 'sail-panel-out' : ''
         }`}
       >
         {/* stopPropagation belongs on the PANEL, not on this wrapper. The wrapper

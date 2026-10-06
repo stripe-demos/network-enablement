@@ -267,6 +267,7 @@ export function SubscriptionCreationEditor({
         presentation={presentation}
         isOpen={isOpen}
         embedded={embedded}
+        skipEnterAnimation
         navigator={
           navStyle === "sidebar" && activeKind === "subscription" && showInvoiceTemplatePage ? (
             <SubscriptionPageNav activePage={activePage} onSelectPage={handleSelectPage} tabs={subscriptionPageTabs} />

@@ -225,6 +225,7 @@ export function InvoiceCreationEditor({
       presentation={presentation}
       isOpen={isOpen}
       embedded={embedded}
+      skipEnterAnimation
       header={
         <SimpleCreationHeader
           title="Create invoice"

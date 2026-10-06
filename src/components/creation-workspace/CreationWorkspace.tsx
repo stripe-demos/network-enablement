@@ -40,6 +40,8 @@ type CreationWorkspaceProps = {
   standardSmallFormWidth?: number
   /** "large-modal" only: size the surface to its editor instead of using the fixed 80% canvas. */
   largeModalHugContent?: boolean
+  /** Skip the enter fade/scale so a screen that is already open does not flash. */
+  skipEnterAnimation?: boolean
 }
 
 const dissolveEase = [0.25, 0.1, 0.25, 1.0] as const
@@ -61,6 +63,7 @@ export function CreationWorkspace({
   standardSmallPreviewWidth,
   standardSmallFormWidth,
   largeModalHugContent = false,
+  skipEnterAnimation = false,
 }: CreationWorkspaceProps) {
   const { productFormStyle } = useProductFormStyle()
   const isRefreshSurface = productFormStyle === "refresh"
@@ -71,12 +74,12 @@ export function CreationWorkspace({
         <div className={embedded ? "relative h-full min-h-0 w-full" : "fixed inset-0 z-30"} role="dialog" aria-modal="true">
           {/* Backdrop — cross-fades between dimmed modals and white fullscreen. */}
           {!embedded && (
-            <AnimatePresence>
+            <AnimatePresence initial={!skipEnterAnimation}>
               {presentation === "modal" || presentation === "large-modal" || presentation === "standard-small" ? (
                 <motion.div
                   key="backdrop-dim"
                   className="absolute inset-0 bg-black/40"
-                  initial={{ opacity: 0 }}
+                  initial={skipEnterAnimation ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3, ease: dissolveEase }}
@@ -86,7 +89,7 @@ export function CreationWorkspace({
                 <motion.div
                   key="backdrop-white"
                   className="absolute inset-0 bg-white"
-                  initial={{ opacity: 0 }}
+                  initial={skipEnterAnimation ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3, ease: dissolveEase }}
@@ -97,12 +100,12 @@ export function CreationWorkspace({
 
           {/* Content — cross-dissolve between modal card and fullscreen shell.
               Both surfaces are absolute-positioned so they overlay during the transition. */}
-          <AnimatePresence mode="sync">
+          <AnimatePresence mode="sync" initial={!skipEnterAnimation}>
             {presentation === "modal" ? (
               <motion.div
                 key="surface-modal"
                 className="absolute inset-0 z-10 flex items-center justify-center px-[16px]"
-                initial={{ opacity: 0, scale: 1.01 }}
+                initial={skipEnterAnimation ? false : { opacity: 0, scale: 1.01 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.03 }}
                 transition={{ duration: 0.32, ease: dissolveEase }}
@@ -125,7 +128,7 @@ export function CreationWorkspace({
               <motion.div
                 key="surface-large-modal"
                 className="absolute inset-0 z-10 flex items-center justify-center p-[24px]"
-                initial={{ opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
+                initial={skipEnterAnimation ? false : { opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: largeModalHugContent ? 0.96 : 0.98 }}
                 transition={largeModalHugContent ? { duration: 0.25, ease: smoothOutEase } : { duration: 0.32, ease: dissolveEase }}
@@ -155,7 +158,7 @@ export function CreationWorkspace({
               <motion.div
                 key="surface-standard-small"
                 className="absolute inset-0 z-10 flex items-center justify-center p-[24px]"
-                initial={{ opacity: 0, scale: 0.98 }}
+                initial={skipEnterAnimation ? false : { opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.32, ease: dissolveEase }}
@@ -180,7 +183,7 @@ export function CreationWorkspace({
               <motion.div
                 key="surface-full"
                 className={`absolute inset-0 z-10 flex flex-col ${isRefreshSurface ? "bg-[#F6F9FC]" : "bg-white"}`}
-                initial={isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
+                initial={skipEnterAnimation ? false : isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
                 animate={isRefreshSurface ? { opacity: 1, scale: 1 } : { opacity: 1 }}
                 exit={isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
                 transition={isRefreshSurface ? { duration: 0.25, ease: [0.22, 1, 0.36, 1] } : { duration: 0.2 }}

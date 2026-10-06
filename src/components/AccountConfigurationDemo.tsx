@@ -76,6 +76,7 @@ function DemoExperience({
           isOpen
           largeModalHugContent
           hideHeader
+          skipEnterAnimation
           header={null}
           editor={<UserPathPicker onChoose={setUserPath} />}
         />

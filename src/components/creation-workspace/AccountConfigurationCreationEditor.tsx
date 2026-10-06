@@ -176,6 +176,7 @@ export function AccountConfigurationCreationEditor({
           embedded={embedded}
           largeModalHugContent={!embedded}
           hideHeader
+          skipEnterAnimation
           header={null}
           editor={<AccountSuccessPage payload={completedPayload} hugContent={!embedded} onClose={onClose} onViewAccount={onClose} />}
         />
@@ -193,6 +194,7 @@ export function AccountConfigurationCreationEditor({
       presentation={presentation}
       isOpen={isOpen}
       embedded={embedded}
+      skipEnterAnimation
       header={
         <SimpleCreationHeader
           title="Add configurations"
