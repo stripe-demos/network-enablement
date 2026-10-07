@@ -866,7 +866,7 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
                 value={billingAddressValue(details)}
                 tokens={tokens}
                 onChange={(patch) => onChange({
-                  billingCountry: patch.country ?? details.billingCountry || details.country || "United States",
+                  billingCountry: patch.country ?? (details.billingCountry || details.country || "United States"),
                   billingLine1: patch.line1 ?? details.billingLine1,
                   billingLine2: patch.line2 ?? details.billingLine2,
                   billingCity: patch.city ?? details.billingCity,
@@ -891,7 +891,7 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
                 tokens={tokens}
                 onChange={(patch) => onChange({
                   shippingName: patch.name ?? details.shippingName,
-                  shippingCountry: patch.country ?? details.shippingCountry || details.country || "United States",
+                  shippingCountry: patch.country ?? (details.shippingCountry || details.country || "United States"),
                   shippingLine1: patch.line1 ?? details.shippingLine1,
                   shippingLine2: patch.line2 ?? details.shippingLine2,
                   shippingCity: patch.city ?? details.shippingCity,

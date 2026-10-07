@@ -12,7 +12,6 @@ import { NavStyleProvider } from "@/components/creation-workspace/navStyle"
 import { ProductFormStyleProvider } from "@/components/creation-workspace/productFormStyle"
 import { SegmentedStyleProvider } from "@/components/creation-workspace/segmentedStyle"
 import { SubscriptionCreationEditor } from "@/components/creation-workspace/SubscriptionCreationEditor"
-import { Icon } from "@/send-flow/icons/SailIcons"
 
 const SendMoneyCreationEditor = dynamic(
   () => import("@/components/creation-workspace/SendMoneyCreationEditor").then((mod) => ({ default: mod.SendMoneyCreationEditor })),
@@ -223,6 +222,14 @@ function PlusIcon() {
   )
 }
 
+function SendIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path fillRule="evenodd" clipRule="evenodd" d="M14.8238 0C14.689 0 14.5552 0.0231783 14.4282 0.068522L0.730534 4.96056C0.29244 5.11702 0 5.53199 0 5.99719C0 6.47099 0.303182 6.89163 0.752669 7.04146L6.90707 9.09293L8.95854 15.2473C9.10837 15.6968 9.52901 16 10.0028 16C10.468 16 10.883 15.7076 11.0394 15.2695L15.9315 1.57177C15.9768 1.44481 16 1.311 16 1.17618C16 0.526594 15.4734 0 14.8238 0ZM13 2L2.32423 5.98417L7.29743 7.64191L13 2ZM8.35809 8.70257L10.0158 13.6758L14 3L8.35809 8.70257Z" fill="currentColor" />
+    </svg>
+  )
+}
+
 function CreateListButton({
   label,
   onClick,
@@ -238,7 +245,7 @@ function CreateListButton({
       className="flex h-[32px] items-center gap-[6px] rounded-[7px] border border-[#D4DEE9] bg-white px-[12px] text-[13px] font-[600] text-[#1A2C44] shadow-[0_1px_2px_rgba(20,34,52,0.06)] hover:bg-[#F5F6F8]"
       onClick={onClick}
     >
-      {icon === "send" ? <Icon name="send" size="xxsmall" fill="currentColor" /> : <PlusIcon />}
+      {icon === "send" ? <SendIcon /> : <PlusIcon />}
       {label}
     </button>
   )

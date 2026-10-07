@@ -59,15 +59,22 @@ function Shell({
 }: {
   skip: boolean
   className: string
-  children: ReactNode
-  initial?: object | false
+  children?: ReactNode
+  initial?: false | object
   animate?: object
   exit?: object
   transition?: object
 } & Record<string, unknown>) {
   if (skip) return <div className={className} {...rest}>{children}</div>
   return (
-    <motion.div className={className} initial={initial} animate={animate} exit={exit} transition={transition} {...rest}>
+    <motion.div
+      className={className}
+      initial={initial as never}
+      animate={animate as never}
+      exit={exit as never}
+      transition={transition as never}
+      {...rest}
+    >
       {children}
     </motion.div>
   )
