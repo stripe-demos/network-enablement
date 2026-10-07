@@ -42,6 +42,8 @@ type CreationWorkspaceProps = {
   largeModalHugContent?: boolean
   /** Skip the enter fade/scale so a screen that is already open does not flash. */
   skipEnterAnimation?: boolean
+  /** Wash overlay drawn over the workspace surface (e.g. discard confirm). */
+  overlay?: ReactNode
 }
 
 const dissolveEase = [0.25, 0.1, 0.25, 1.0] as const
@@ -97,6 +99,7 @@ export function CreationWorkspace({
   standardSmallFormWidth,
   largeModalHugContent = false,
   skipEnterAnimation = false,
+  overlay,
 }: CreationWorkspaceProps) {
   const { productFormStyle } = useProductFormStyle()
   const isRefreshSurface = productFormStyle === "refresh"
@@ -149,7 +152,7 @@ export function CreationWorkspace({
                 exit={{ opacity: 0, scale: 1.03 }}
                 transition={enterTransition}
               >
-                <div className={`flex max-h-[min(90vh,760px)] w-full ${navigator ? "max-w-[680px]" : "max-w-[480px]"} flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_15px_35px_0px_rgba(48,49,61,0.08),0px_5px_15px_0px_rgba(0,0,0,0.12)]`}>
+                <div className={`relative flex max-h-[min(90vh,760px)] w-full ${navigator ? "max-w-[680px]" : "max-w-[480px]"} flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_15px_35px_0px_rgba(48,49,61,0.08),0px_5px_15px_0px_rgba(0,0,0,0.12)]`}>
                   {header}
                   <div className="flex min-h-0 flex-1">
                     {navigator && (
@@ -161,6 +164,7 @@ export function CreationWorkspace({
                       <ModalBodyLayout editor={editor} />
                     </div>
                   </div>
+                  {overlay}
                 </div>
               </Shell>
             ) : presentation === "large-modal" ? (
@@ -177,7 +181,7 @@ export function CreationWorkspace({
                 }}
               >
                 <div
-                  className={`flex max-h-[calc(100vh-48px)] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_20px_60px_rgba(0,0,0,0.12),0px_4px_16px_rgba(0,0,0,0.08)] ${largeModalHugContent ? "w-auto" : "max-w-full"}`}
+                  className={`relative flex max-h-[calc(100vh-48px)] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_20px_60px_rgba(0,0,0,0.12),0px_4px_16px_rgba(0,0,0,0.08)] ${largeModalHugContent ? "w-auto" : "max-w-full"}`}
                   style={largeModalHugContent ? undefined : { width: "min(80vw, 1280px)", height: "80vh" }}
                   data-large-modal-hug={largeModalHugContent ? "true" : undefined}
                 >
@@ -192,6 +196,7 @@ export function CreationWorkspace({
                       <HierarchicalLayout navigator={navigator} editor={editor} preview={preview} />
                     )}
                   </div>
+                  {overlay}
                 </div>
               </Shell>
             ) : presentation === "standard-small" ? (
@@ -205,7 +210,7 @@ export function CreationWorkspace({
                 transition={enterTransition}
               >
                 {/* Hug-to-content modal: sizes to exactly header + narrow form + 420px preview. */}
-                <div className="flex max-h-[90vh] w-auto max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_20px_60px_rgba(0,0,0,0.12),0px_4px_16px_rgba(0,0,0,0.08)]">
+                <div className="relative flex max-h-[90vh] w-auto max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-[12px] border border-[#EBEEF1] bg-white shadow-[0px_20px_60px_rgba(0,0,0,0.12),0px_4px_16px_rgba(0,0,0,0.08)]">
                   {/* Refresh keeps a divider under the header here (unlike the borderless fullscreen cards). */}
                   {!hideHeader && (isRefreshSurface ? <div className="border-b border-[#EAF0F6]">{header}</div> : header)}
                   {toolbar}
@@ -218,13 +223,14 @@ export function CreationWorkspace({
                       <HierarchicalLayout navigator={navigator} editor={editor} preview={preview} />
                     )}
                   </div>
+                  {overlay}
                 </div>
               </Shell>
             ) : (
               <Shell
                 skip={skipEnterAnimation}
                 key="surface-full"
-                className={`absolute inset-0 z-10 flex flex-col ${isRefreshSurface ? "bg-[#F6F9FC]" : "bg-white"}`}
+                className={`absolute inset-0 z-10 flex flex-col overflow-hidden ${isRefreshSurface ? "bg-[#F6F9FC]" : "bg-white"}`}
                 initial={isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
                 animate={isRefreshSurface ? { opacity: 1, scale: 1 } : { opacity: 1 }}
                 exit={isRefreshSurface ? { opacity: 0, scale: 0.96 } : { opacity: 0 }}
@@ -241,6 +247,7 @@ export function CreationWorkspace({
                     <HierarchicalLayout navigator={navigator} editor={editor} preview={preview} />
                   )}
                 </div>
+                {overlay}
               </Shell>
             )}
           </AnimatePresence>

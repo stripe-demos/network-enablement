@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 
 import { CreationWorkspace, type WorkspacePresentation } from "@/components/creation-workspace/CreationWorkspace"
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
+import { DiscardConfirmOverlay } from "@/components/creation-workspace/DiscardConfirmOverlay"
 import { SimpleCreationHeader } from "@/components/creation-workspace/SimpleCreationHeader"
 import { useAccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
 import { useAccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
@@ -58,6 +59,7 @@ export function AccountConfigurationCreationEditor({
   const [details, setDetails] = useState<AccountDetailsDraft>(INITIAL_ACCOUNT_DETAILS)
   const [configurations, setConfigurations] = useState<ConfigurationKind[]>([])
   const [completedPayload, setCompletedPayload] = useState<AccountConfigurationPayload | null>(null)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
   const updateDetails = (patch: Partial<AccountDetailsDraft>) => {
     setDetails((current) => ({ ...current, ...patch }))
@@ -156,6 +158,19 @@ export function AccountConfigurationCreationEditor({
     }
   }
 
+  const requestDiscard = () => setShowDiscardConfirm(true)
+
+  useEffect(() => {
+    if (!showDiscardConfirm) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      event.preventDefault()
+      setShowDiscardConfirm(false)
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [showDiscardConfirm])
+
   const handleSubmit = async () => {
     if (!readyToSubmit) return
     const payload = buildPayload()
@@ -210,13 +225,23 @@ export function AccountConfigurationCreationEditor({
       header={
         <SimpleCreationHeader
           title={creatingWithoutPicker ? "Create account" : "Add configurations"}
-          onDiscard={onClose}
+          onDiscard={requestDiscard}
           onSubmit={handleSubmit}
           submitLabel={submitLabel}
           submitDisabled={!readyToSubmit}
           submitDisabledReason={submitDisabledReason}
           discardLabel="Discard"
         />
+      }
+      overlay={
+        showDiscardConfirm ? (
+          <DiscardConfirmOverlay
+            title="Discard changes?"
+            description="Your progress on this account will be lost."
+            onKeepEditing={() => setShowDiscardConfirm(false)}
+            onDiscard={onClose}
+          />
+        ) : null
       }
       editor={
         <AccountConfigurationForm

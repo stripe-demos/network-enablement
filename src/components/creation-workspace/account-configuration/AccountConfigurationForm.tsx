@@ -169,11 +169,13 @@ function AccountIdentityFields({
   onChange,
   onUseExisting,
   autoFocus = false,
+  typeLabel = "Account type",
 }: {
   details: AccountDetailsDraft
   onChange: (patch: Partial<AccountDetailsDraft>) => void
   onUseExisting: (account: NetworkAccount) => void
   autoFocus?: boolean
+  typeLabel?: string
 }) {
   const [dismissedMatchId, setDismissedMatchId] = useState("")
   const firstInputRef = useRef<HTMLInputElement>(null)
@@ -195,7 +197,7 @@ function AccountIdentityFields({
   return (
     <div className="flex flex-col gap-[12px]" data-new-account-fields>
       <div className="flex flex-col gap-[4px]">
-        <span className={tokens.labelClass}>Account type</span>
+        <span className={tokens.labelClass}>{typeLabel}</span>
         <SegmentedControl
           value={details.type}
           options={ACCOUNT_TYPE_OPTIONS}
@@ -328,6 +330,7 @@ function AccountSelector({
       onChange={onDetailsChange}
       onUseExisting={onSelectExisting}
       autoFocus
+      typeLabel={style === "picker" ? "Type" : "Account type"}
     />
   )
 
