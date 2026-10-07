@@ -244,30 +244,57 @@ export function DescribeAccountModal({
         ? "Based on your description, here’s what we recommend."
         : "Describe what they do, then continue to see recommended configurations."}
       modalWidth="w-[560px]"
+      headerActions={
+        <button
+          type="button"
+          aria-label="Close"
+          className={`${tokens.closeButtonClass} shrink-0 self-start`}
+          onClick={onClose}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      }
       footer={
-        <div className="flex items-center justify-end gap-[8px] border-t border-[#ECF1F6] bg-white px-[20px] py-[12px]">
-          <button
-            type="button"
-            className={tokens.secondaryButtonClass}
-            onClick={step === "recommend"
-              ? () => {
+        <div className={`flex items-center gap-[12px] border-t border-[#ECF1F6] bg-white px-[20px] py-[12px] ${step === "recommend" ? "justify-between" : "justify-end"}`}>
+          {step === "recommend" ? (
+            <p className={`${tokens.helperClass} min-w-0`}>
+              For more details,{" "}
+              <a
+                href="https://docs.stripe.com/connect/accounts"
+                target="_blank"
+                rel="noreferrer"
+                className="font-[500] text-[#533AFD] transition-colors hover:text-[#4730E0]"
+              >
+                view docs
+              </a>
+            </p>
+          ) : null}
+          <div className="flex shrink-0 items-center gap-[8px]">
+            {step === "recommend" ? (
+              <button
+                type="button"
+                className={tokens.secondaryButtonClass}
+                onClick={() => {
                   setStep("describe")
                   setStatus("idle")
-                }
-              : onClose}
-          >
-            {step === "recommend" ? "Back" : "Close"}
-          </button>
-          <button
-            key={step}
-            type="button"
-            disabled={primary.disabled}
-            className={primary.disabled ? `${tokens.primaryButtonClass} cursor-not-allowed opacity-45` : tokens.primaryButtonClass}
-            onClick={primary.onClick}
-          >
-            {status === "thinking" && step === "describe" ? <ButtonSpinner /> : null}
-            {primary.label}
-          </button>
+                }}
+              >
+                Back
+              </button>
+            ) : null}
+            <button
+              key={step}
+              type="button"
+              disabled={primary.disabled}
+              className={primary.disabled ? `${tokens.primaryButtonClass} cursor-not-allowed opacity-45` : tokens.primaryButtonClass}
+              onClick={primary.onClick}
+            >
+              {status === "thinking" && step === "describe" ? <ButtonSpinner /> : null}
+              {primary.label}
+            </button>
+          </div>
         </div>
       }
     >

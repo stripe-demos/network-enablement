@@ -138,7 +138,7 @@ export const CONFIGURATION_OPTIONS: ConfigurationOption[] = [
     id: "recipient",
     title: "Recipient",
     relationship: "Receives funds from you",
-    description: "This account will receive funds from you either into their Stripe balance, or an external payout method like a bank account or card.",
+    description: "This account will be able to receive transfers or payouts from you either into their Stripe balance, or an external payout method like a bank account or card.",
     capabilities: ["Transfers", "Payouts"],
   },
 ]
