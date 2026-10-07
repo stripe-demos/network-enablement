@@ -7,8 +7,11 @@ import { getFormTokens } from "@/components/creation-workspace/forms/shared/form
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 
 import {
+  CONFIGURATION_OPTIONS,
   explainRecommendedConfigurations,
+  highlightAccountDescription,
   recommendConfigurationsFromDescription,
+  type ClassificationHighlight,
   type ConfigurationKind,
   type UserPath,
 } from "./model"
@@ -36,7 +39,9 @@ export function DescribeAccountModal({
   const tokens = getFormTokens(productFormStyle)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
-  const thinkTimer = useRef<number | null>(null)
+  const recommendAbort = useRef<AbortController | null>(null)
+  const highlightAbort = useRef<AbortController | null>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
   const spokenBaseRef = useRef("")
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
@@ -48,11 +53,16 @@ export function DescribeAccountModal({
   const [micStream, setMicStream] = useState<MediaStream | null>(null)
   const [voiceError, setVoiceError] = useState<string | null>(null)
   const [bodyHeight, setBodyHeight] = useState<number>()
+  const [highlights, setHighlights] = useState<ClassificationHighlight[]>([])
+  const [highlightPending, setHighlightPending] = useState(false)
   const voiceRingRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isOpen) {
-      if (thinkTimer.current) window.clearTimeout(thinkTimer.current)
+      recommendAbort.current?.abort()
+      recommendAbort.current = null
+      highlightAbort.current?.abort()
+      highlightAbort.current = null
       setDescription("")
       setFiles([])
       setStep("describe")
@@ -66,9 +76,46 @@ export function DescribeAccountModal({
       })
       setVoiceError(null)
       setBodyHeight(undefined)
+      setHighlights([])
+      setHighlightPending(false)
       spokenBaseRef.current = ""
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || step !== "describe") return
+    if (description.trim().length < 8) {
+      setHighlights([])
+      setHighlightPending(false)
+      return
+    }
+    setHighlights(highlightAccountDescription(description, userPath))
+    setHighlightPending(true)
+    highlightAbort.current?.abort()
+    const controller = new AbortController()
+    highlightAbort.current = controller
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch("/api/recommend-configurations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({ description, userPath }),
+        })
+        const payload = response.ok ? await response.json().catch(() => null) : null
+        if (controller.signal.aborted) return
+        if (Array.isArray(payload?.highlights)) setHighlights(payload.highlights)
+      } catch (error) {
+        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return
+      } finally {
+        if (!controller.signal.aborted) setHighlightPending(false)
+      }
+    }, isRecording ? 280 : 480)
+    return () => {
+      window.clearTimeout(timer)
+      controller.abort()
+    }
+  }, [description, userPath, isRecording, isOpen, step])
 
   useSpeechRecognition(isRecording, {
     onResult: ({ finalText, interimText }) => {
@@ -125,7 +172,7 @@ export function DescribeAccountModal({
   const canContinue = description.trim().length > 0 && status !== "thinking"
   const canApply = step === "recommend" && picked.length > 0
 
-  const continueFromDescription = () => {
+  const continueFromDescription = async () => {
     if (!canContinue) return
     const nextHeight = bodyRef.current?.offsetHeight
     if (nextHeight) setBodyHeight(nextHeight)
@@ -133,15 +180,41 @@ export function DescribeAccountModal({
     setMicStream(null)
     setIsRecording(false)
     setStatus("thinking")
-    if (thinkTimer.current) window.clearTimeout(thinkTimer.current)
-    thinkTimer.current = window.setTimeout(() => {
+    recommendAbort.current?.abort()
+    const controller = new AbortController()
+    recommendAbort.current = controller
+    try {
+      const response = await fetch("/api/recommend-configurations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          description,
+          userPath,
+          files: files.map((file) => file.name),
+        }),
+      })
+      const payload = response.ok ? await response.json().catch(() => null) : null
+      const fromApi = Array.isArray(payload?.configurations) ? payload.configurations as ConfigurationKind[] : null
+      const next = (fromApi ?? recommendConfigurationsFromDescription(description, userPath))
+        .filter((id) => !existing.includes(id))
+      if (controller.signal.aborted) return
+      setRecommended(next)
+      setPicked(next)
+      setStatus("ready")
+      setStep("recommend")
+    } catch (error) {
+      if (controller.signal.aborted) return
       const next = recommendConfigurationsFromDescription(description, userPath)
         .filter((id) => !existing.includes(id))
       setRecommended(next)
       setPicked(next)
       setStatus("ready")
       setStep("recommend")
-    }, 900)
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        console.warn("[describe-account] recommendation request failed", error)
+      }
+    }
   }
 
   const apply = () => {
@@ -211,7 +284,7 @@ export function DescribeAccountModal({
                 <div
                   ref={voiceRingRef}
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 z-[1] rounded-[12px] p-px origin-center"
+                  className="pointer-events-none absolute inset-[1px] z-[1] rounded-[11px] p-px origin-center"
                   style={{
                     background: "conic-gradient(from var(--voice-angle, 0deg), #FF80B5, #FF8A3D, #FFC24B, #B06AFF, #FF80B5)",
                     WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
@@ -229,24 +302,42 @@ export function DescribeAccountModal({
                 />
               </>
             ) : null}
-            <textarea
-              autoFocus
-              maxLength={DESCRIPTION_LIMIT}
-              className="relative z-[2] min-h-[132px] w-full resize-none border-0 bg-transparent px-[12px] pb-[6px] pt-[12px] text-[12px] font-[400] leading-[16px] tracking-[-0.024px] text-[#353A44] outline-none placeholder:text-[#8B95A3]"
-              placeholder={userPath === "direct"
-                ? "Create an account for a contractor who invoices us as a customer and receives payouts."
-                : "Create an account for a seller who accepts customer payments, invoices us, and receives payouts."}
-              value={description}
-              readOnly={isRecording}
-              aria-live={isRecording ? "polite" : undefined}
-              onChange={(event) => setDescription(event.target.value.slice(0, DESCRIPTION_LIMIT))}
-              onKeyDown={(event) => {
-                if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                  event.preventDefault()
-                  continueFromDescription()
-                }
-              }}
-            />
+            <div className="relative z-[2] min-h-[132px]">
+              {description ? (
+                <div
+                  ref={overlayRef}
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-[12px] pb-[6px] pt-[12px] text-[12px] font-[400] leading-[16px] tracking-[-0.024px] text-[#353A44] ${highlightPending ? "t-jev-mark-pending" : ""}`}
+                >
+                  <HighlightedDescription text={description} highlights={highlights} />
+                </div>
+              ) : null}
+              <textarea
+                autoFocus
+                maxLength={DESCRIPTION_LIMIT}
+                className={`relative min-h-[132px] w-full resize-none border-0 bg-transparent px-[12px] pb-[6px] pt-[12px] text-[12px] font-[400] leading-[16px] tracking-[-0.024px] outline-none ${
+                  description
+                    ? "text-transparent caret-[#353A44] selection:bg-[#533AFD]/20"
+                    : "text-[#353A44] placeholder:text-[#8B95A3]"
+                }`}
+                placeholder={userPath === "direct"
+                  ? "Create an account for a contractor who invoices us as a customer and receives payouts."
+                  : "Create an account for a seller who accepts customer payments, invoices us, and receives payouts."}
+                value={description}
+                readOnly={isRecording}
+                aria-live={isRecording ? "polite" : undefined}
+                onScroll={(event) => {
+                  if (overlayRef.current) overlayRef.current.scrollTop = event.currentTarget.scrollTop
+                }}
+                onChange={(event) => setDescription(event.target.value.slice(0, DESCRIPTION_LIMIT))}
+                onKeyDown={(event) => {
+                  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                    event.preventDefault()
+                    continueFromDescription()
+                  }
+                }}
+              />
+            </div>
             <div className="relative z-[2] flex flex-wrap items-center gap-[8px] px-[12px] pb-[10px] pr-[72px]">
               <button
                 type="button"
@@ -299,6 +390,9 @@ export function DescribeAccountModal({
               {description.length.toLocaleString()}/{DESCRIPTION_LIMIT.toLocaleString()}
             </span>
           </div>
+          {highlights.length > 0 || (isRecording && description.trim().length >= 8) ? (
+            <HighlightLegend highlights={highlights} listening={isRecording && highlightPending} />
+          ) : null}
           {voiceError ? (
             <p className="mt-[8px] text-[11px] leading-[16px] text-[#C45500]">{voiceError}</p>
           ) : null}
@@ -317,6 +411,75 @@ export function DescribeAccountModal({
         )}
       </div>
     </CreationModalShell>
+  )
+}
+
+const HIGHLIGHT_MARK: Record<ConfigurationKind, string> = {
+  customer: "t-jev-mark t-jev-mark-customer",
+  recipient: "t-jev-mark t-jev-mark-recipient",
+  merchant: "t-jev-mark t-jev-mark-merchant",
+}
+
+const HIGHLIGHT_DOT: Record<ConfigurationKind, string> = {
+  customer: "bg-[#2E7CF6]",
+  recipient: "bg-[#533AFD]",
+  merchant: "bg-[#039C7D]",
+}
+
+function HighlightedDescription({
+  text,
+  highlights,
+}: {
+  text: string
+  highlights: ClassificationHighlight[]
+}) {
+  const parts: Array<{ key: string; value: string; kind?: ConfigurationKind }> = []
+  let cursor = 0
+  for (const highlight of highlights) {
+    if (highlight.end <= cursor || highlight.start >= text.length) continue
+    const start = Math.max(highlight.start, cursor)
+    if (start > cursor) parts.push({ key: `t${cursor}`, value: text.slice(cursor, start) })
+    parts.push({ key: `h${start}`, value: text.slice(start, highlight.end), kind: highlight.kind })
+    cursor = highlight.end
+  }
+  if (cursor < text.length) parts.push({ key: `t${cursor}`, value: text.slice(cursor) })
+  return (
+    <>
+      {parts.map((part) => part.kind
+        ? <mark key={part.key} className={HIGHLIGHT_MARK[part.kind]}>{part.value}</mark>
+        : <span key={part.key}>{part.value}</span>)}
+    </>
+  )
+}
+
+function HighlightLegend({
+  highlights,
+  listening,
+}: {
+  highlights: ClassificationHighlight[]
+  listening: boolean
+}) {
+  const kinds = CONFIGURATION_OPTIONS
+    .map((option) => option.id)
+    .filter((id) => highlights.some((highlight) => highlight.kind === id))
+  return (
+    <div className="mt-[8px] flex flex-wrap items-center gap-x-[10px] gap-y-[4px]">
+      {kinds.map((id) => {
+        const option = CONFIGURATION_OPTIONS.find((candidate) => candidate.id === id)
+        if (!option) return null
+        return (
+          <span key={id} className="inline-flex items-center gap-[5px] text-[11px] leading-[16px] text-[#596171]">
+            <span className={`h-[7px] w-[7px] rounded-full ${HIGHLIGHT_DOT[id]}`} />
+            {option.title}
+          </span>
+        )
+      })}
+      {listening ? (
+        <span className="text-[11px] leading-[16px] text-[#8B95A3]">
+          {kinds.length > 0 ? "Updating from Jev…" : "Listening for account shape…"}
+        </span>
+      ) : null}
+    </div>
   )
 }
 

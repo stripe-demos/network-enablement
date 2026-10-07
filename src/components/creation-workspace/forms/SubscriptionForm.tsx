@@ -844,7 +844,7 @@ function ItemCard({ item, onUpdate, onRemove, autoFocus, onAddObject }: {
 
 // ── Page: Subscription (main) ──────────────────────────────────────────
 
-function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropdownRef, topPadding = true, customerLabel = "Account" }: {
+function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropdownRef, topPadding = true, customerLabel = "Invoice to" }: {
   data: Record<string, any>
   onChange: (data: Record<string, any>) => void
   errorFields?: Set<string>
@@ -1518,7 +1518,7 @@ function SubscriptionComposeForm({ data, onChange, errorFields, onAddObject, ite
         onAddObject={onAddObject}
         itemsDropdownRef={itemsDropdownRef}
         topPadding={false}
-        customerLabel="Account"
+        customerLabel="Invoice to"
       />
       <BillingPage data={data} onChange={onChange} topPadding={false} />
 
@@ -1617,7 +1617,7 @@ export function SubscriptionForm({ data, onChange, errorFields, onAddObject }: S
           onAddObject={onAddObject}
           itemsDropdownRef={itemsDropdownRef}
           topPadding={false}
-          customerLabel="Account"
+          customerLabel="Invoice to"
         />
       </StandardSubscriptionSection>
       <StandardSubscriptionSection title="Billing and payments">

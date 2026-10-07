@@ -6,12 +6,12 @@ import { useProductFormStyle } from "@/components/creation-workspace/productForm
 import { useInputFill } from "@/components/creation-workspace/inputFill"
 import { SegmentedControl } from "@/components/SegmentedControl"
 import { CustomSelect } from "./shared/CustomSelect"
-import { Checkbox } from "./shared/Checkbox"
+import { AddressFields, CountrySelect, formatAddressSummary, phoneCountryFromBillingCountry } from "./shared/AddressFields"
 import type { CustomerFormLayout } from "@/components/creation-workspace/customerFormLayout"
 import { TrashIcon, LargeChevronIcon } from "@/components/ProductCatalogIcons"
 import { OptionalGroups, type OptionalGroup } from "./shared/ComposeGroup"
 import { useAccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
-import { DuplicateAccountNudge, SelectControl } from "../account-configuration/AccountConfigurationPrimitives"
+import { DuplicateAccountNudge, Toggle } from "../account-configuration/AccountConfigurationPrimitives"
 import { EMAIL_PATTERN, findMatchingNetworkAccount, getDisplayedNetworkAccount, NETWORK_ACCOUNTS, type NetworkAccount } from "../account-configuration/model"
 
 const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
@@ -44,6 +44,12 @@ type CustomerSection = {
 }
 
 const linkClass = "text-[12px] font-[500] leading-[16px] text-[#533AFD] transition-colors hover:text-[#4730E0]"
+
+function toCountryName(value?: string) {
+  if (value === "CA" || value === "Canada") return "Canada"
+  if (value === "GB" || value === "UK" || value === "United Kingdom") return "United Kingdom"
+  return "United States"
+}
 
 function Field({
   label,
@@ -294,42 +300,35 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     },
     {
       id: "billing",
-      title: "Billing information",
-      errorFieldKeys: ["country", "phone", "currency", "timezone"],
+      title: "Billing details",
+      errorFieldKeys: ["country", "billingLine1", "phone", "currency", "timezone"],
       content: (
         <>
-          <CustomSelect
-            label="Billing details"
-            value={data.country ?? ""}
-            onChange={(v) => set("country", v)}
-            options={[
-              { value: "", label: "Choose a country..." },
-              { value: "US", label: "United States" },
-              { value: "CA", label: "Canada" },
-              { value: "GB", label: "United Kingdom" },
-              { value: "AU", label: "Australia" },
-            ]}
-          />
-
-          <div className="flex items-center gap-[8px]">
-            <div className="w-[72px] shrink-0">
-              <CustomSelect
-                label=""
-                value={data.phoneCountry ?? "US"}
-                onChange={(v) => set("phoneCountry", v)}
-                options={[
-                  { value: "US", label: "US" },
-                  { value: "CA", label: "CA" },
-                  { value: "GB", label: "GB" },
-                ]}
-              />
-            </div>
-            <input
-              type="tel"
-              className={tokens.inputClass}
-              placeholder="e.g. +1 (201) 555-0123"
-              value={data.phone ?? ""}
-              onChange={(e) => set("phone", e.target.value)}
+          <div className="flex flex-col gap-[6px]">
+            <p className={tokens.labelClass}>Billing address</p>
+            <AddressFields
+              showCountry={false}
+              value={{
+                country: toCountryName(data.billingCountry || data.accountCountry || data.country),
+                line1: data.billingLine1 ?? "",
+                line2: data.billingLine2 ?? "",
+                city: data.billingCity ?? "",
+                state: data.billingState ?? "",
+                postalCode: data.billingPostalCode ?? "",
+                phone: data.phone ?? "",
+                phoneCountry: phoneCountryFromBillingCountry(data.phoneCountry || data.billingCountry || data.accountCountry || data.country || "United States"),
+              }}
+              tokens={tokens}
+              onChange={(patch) => onChange({
+                billingCountry: patch.country ?? data.billingCountry ?? toCountryName(data.country),
+                billingLine1: patch.line1 ?? data.billingLine1 ?? "",
+                billingLine2: patch.line2 ?? data.billingLine2 ?? "",
+                billingCity: patch.city ?? data.billingCity ?? "",
+                billingState: patch.state ?? data.billingState ?? "",
+                billingPostalCode: patch.postalCode ?? data.billingPostalCode ?? "",
+                phone: patch.phone ?? data.phone ?? "",
+                phoneCountry: patch.phoneCountry ?? data.phoneCountry ?? "US",
+              })}
             />
           </div>
 
@@ -363,8 +362,52 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       ),
     },
     {
+      id: "shipping",
+      title: "Shipping details",
+      errorFieldKeys: ["shippingName", "shippingCountry", "shippingPhone"],
+      content: (
+        <>
+          <div className="flex items-center justify-between gap-[12px]">
+            <p className="text-[12px] font-[400] text-[#273951]">Same as billing details</p>
+            <Toggle
+              checked={data.sameAsBilling !== false}
+              label="Same as billing details"
+              onChange={(sameAsBilling) => set("sameAsBilling", sameAsBilling)}
+            />
+          </div>
+          {data.sameAsBilling === false ? (
+            <AddressFields
+              value={{
+                name: data.shippingName ?? "",
+                country: toCountryName(data.shippingCountry),
+                line1: data.shippingLine1 ?? "",
+                line2: data.shippingLine2 ?? "",
+                city: data.shippingCity ?? "",
+                state: data.shippingState ?? "",
+                postalCode: data.shippingPostalCode ?? "",
+                phone: data.shippingPhone ?? "",
+                phoneCountry: phoneCountryFromBillingCountry(data.shippingPhoneCountry || data.shippingCountry || "United States"),
+              }}
+              tokens={tokens}
+              onChange={(patch) => onChange({
+                shippingName: patch.name ?? data.shippingName ?? "",
+                shippingCountry: patch.country ?? data.shippingCountry ?? toCountryName(data.country),
+                shippingLine1: patch.line1 ?? data.shippingLine1 ?? "",
+                shippingLine2: patch.line2 ?? data.shippingLine2 ?? "",
+                shippingCity: patch.city ?? data.shippingCity ?? "",
+                shippingState: patch.state ?? data.shippingState ?? "",
+                shippingPostalCode: patch.postalCode ?? data.shippingPostalCode ?? "",
+                shippingPhone: patch.phone ?? data.shippingPhone ?? "",
+                shippingPhoneCountry: patch.phoneCountry ?? data.shippingPhoneCountry ?? "US",
+              })}
+            />
+          ) : null}
+        </>
+      ),
+    },
+    {
       id: "tax",
-      title: "Tax information",
+      title: "Tax and exemptions",
       errorFieldKeys: ["taxStatus", "taxId", "taxIdType"],
       content: (
         <>
@@ -459,63 +502,6 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
             Add another ID
           </button>
-        </>
-      ),
-    },
-    {
-      id: "shipping",
-      title: "Shipping information",
-      errorFieldKeys: ["shippingName", "shippingCountry", "shippingPhone"],
-      content: (
-        <>
-          <div className={`flex items-center gap-[8px] ${tokens.checkboxText}`}>
-            <Checkbox
-              checked={Boolean(data.sameAsBilling)}
-              onChange={(v) => set("sameAsBilling", v)}
-            />
-            Same as billing details
-          </div>
-
-          <input
-            className={tokens.inputClass}
-            placeholder="e.g. Jenny Rosen"
-            value={data.shippingName ?? ""}
-            onChange={(e) => set("shippingName", e.target.value)}
-          />
-
-          <CustomSelect
-            label=""
-            value={data.shippingCountry ?? ""}
-            onChange={(v) => set("shippingCountry", v)}
-            options={[
-              { value: "", label: "Choose a country..." },
-              { value: "US", label: "United States" },
-              { value: "CA", label: "Canada" },
-              { value: "GB", label: "United Kingdom" },
-            ]}
-          />
-
-          <div className="flex items-center gap-[8px]">
-            <div className="w-[72px] shrink-0">
-              <CustomSelect
-                label=""
-                value={data.shippingPhoneCountry ?? "US"}
-                onChange={(v) => set("shippingPhoneCountry", v)}
-                options={[
-                  { value: "US", label: "US" },
-                  { value: "CA", label: "CA" },
-                  { value: "GB", label: "GB" },
-                ]}
-              />
-            </div>
-            <input
-              type="tel"
-              className={tokens.inputClass}
-              placeholder="e.g. +1 (201) 555-0123"
-              value={data.shippingPhone ?? ""}
-              onChange={(e) => set("shippingPhone", e.target.value)}
-            />
-          </div>
         </>
       ),
     },
@@ -631,27 +617,41 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     const billingSection = sections.find((section) => section.id === "billing")
     const taxSection = sections.find((section) => section.id === "tax")
     const shippingSection = sections.find((section) => section.id === "shipping")
-    const billingAdded = Boolean(data.country || data.phone || data.currency || data.timezone)
-    const taxAdded = Boolean(data.taxId || additionalTaxIds.some((taxId) => taxId.taxId?.trim()))
-    const shippingAdded = Boolean(data.shippingName || data.shippingCountry || data.shippingPhone)
+    const billingSummary = formatAddressSummary([data.billingLine1, data.billingCity, data.billingState, data.billingPostalCode])
+      || data.phone
+      || data.currency
+      || "Not added"
+    const extraTaxId = additionalTaxIds.find((taxId) => taxId.taxId?.trim())?.taxId
+    const taxSummary = data.taxStatus === "exempt"
+      ? (data.taxId ? `Exempt · ${data.taxId}` : "Exempt")
+      : data.taxStatus === "reverse"
+        ? (data.taxId ? `Reverse charge · ${data.taxId}` : "Reverse charge")
+        : (data.taxId || extraTaxId)
+          ? `Tax ID · ${data.taxId || extraTaxId}`
+          : "Not added"
+    const shippingSummary = data.sameAsBilling !== false
+      ? "Same as billing details"
+      : formatAddressSummary([data.shippingLine1, data.shippingCity, data.shippingState, data.shippingPostalCode])
+        || data.shippingName
+        || "Not added"
     const optionalGroups: OptionalGroup[] = [
       {
         id: "billing",
-        title: "Billing information",
-        summary: billingAdded ? [data.country, data.currency].filter(Boolean).join(" · ") || "Added" : "Not added",
+        title: "Billing details",
+        summary: billingSummary,
         render: () => <div className="flex flex-col gap-[12px]">{billingSection?.content}</div>,
       },
       {
-        id: "tax",
-        title: "Tax information",
-        summary: taxAdded ? `Tax ID · ${data.taxId || additionalTaxIds.find((taxId) => taxId.taxId)?.taxId}` : "Not added",
-        render: () => <div className="flex flex-col gap-[12px]">{taxSection?.content}</div>,
+        id: "shipping",
+        title: "Shipping details",
+        summary: shippingSummary,
+        render: () => <div className="flex flex-col gap-[12px]">{shippingSection?.content}</div>,
       },
       {
-        id: "shipping",
-        title: "Shipping information",
-        summary: shippingAdded ? data.shippingName || data.shippingCountry || "Added" : "Same as billing",
-        render: () => <div className="flex flex-col gap-[12px]">{shippingSection?.content}</div>,
+        id: "tax",
+        title: "Tax and exemptions",
+        summary: taxSummary,
+        render: () => <div className="flex flex-col gap-[12px]">{taxSection?.content}</div>,
       },
     ]
 
@@ -772,40 +772,36 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
               </span>
             </Field>
           )}
-          <Field label="Country">
-            <SelectControl
+          <div className="flex flex-col gap-[4px]">
+            <span className={tokens.labelClass}>Country</span>
+            <CountrySelect
               className={tokens.selectClass}
               value={accountCountry}
               onChange={(country) => syncIdentity({ accountCountry: country, country })}
-            >
-              <option value="">Select a country</option>
-              <option>United Kingdom</option>
-              <option>United States</option>
-              <option>Canada</option>
-            </SelectControl>
-          </Field>
+            />
+          </div>
         </div>
-        <button
-          type="button"
-          aria-expanded={showMoreSettings}
-          aria-controls="account-more-settings"
-          className="flex w-full cursor-pointer items-center justify-between py-[8px]"
-          onClick={() => setShowMoreSettings((prev) => !prev)}
-        >
-          <span className="text-[12px] font-[600] leading-[16px] tracking-[-0.024px] text-[#1A2C44]">
-            More settings
-          </span>
-          <LargeChevronIcon rotated={showMoreSettings} size="sm" />
-        </button>
-        <div
-          id="account-more-settings"
-          aria-hidden={!showMoreSettings}
-          className={`grid min-h-0 min-w-0 transition-[grid-template-rows,opacity] duration-200 ease-out ${
-            showMoreSettings ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-          <div className="min-h-0 overflow-hidden">
-            <div className="pb-[8px]">
+        <div>
+          <button
+            type="button"
+            aria-expanded={showMoreSettings}
+            aria-controls="account-more-settings"
+            className="flex w-full cursor-pointer items-center justify-between py-[4px]"
+            onClick={() => setShowMoreSettings((prev) => !prev)}
+          >
+            <span className="text-[12px] font-[600] leading-[16px] tracking-[-0.024px] text-[#1A2C44]">
+              More settings
+            </span>
+            <LargeChevronIcon rotated={showMoreSettings} size="sm" />
+          </button>
+          <div
+            id="account-more-settings"
+            aria-hidden={!showMoreSettings}
+            className={`grid min-h-0 min-w-0 transition-[grid-template-rows,opacity] duration-200 ease-out ${
+              showMoreSettings ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            }`}
+          >
+            <div className="min-h-0 overflow-hidden pt-[6px]">
               <OptionalGroups groups={optionalGroups} hideHeader />
             </div>
           </div>
@@ -887,11 +883,12 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       </div>
 
       {/* More settings accordion */}
+      <div>
       <button
         type="button"
         aria-expanded={showMoreSettings}
         aria-controls="customer-more-settings"
-        className={`flex cursor-pointer items-center justify-between rounded-[8px] px-4 py-[8px] transition-colors duration-150 ${showMoreSettings ? (isRefresh ? "bg-[#F6F9FC]" : "bg-[#F5F6F8]") : (isRefresh ? "hover:bg-[#F6F9FC]" : "hover:bg-[#F5F6F8]")}`}
+        className={`flex w-full cursor-pointer items-center justify-between rounded-[8px] px-4 py-[4px] transition-colors duration-150 ${showMoreSettings ? (isRefresh ? "bg-[#F6F9FC]" : "bg-[#F5F6F8]") : (isRefresh ? "hover:bg-[#F6F9FC]" : "hover:bg-[#F5F6F8]")}`}
         onClick={() => setShowMoreSettings((prev) => !prev)}
       >
         <span className="text-[12px] font-[600] leading-[16px] tracking-[-0.024px] text-[#1A2C44]">
@@ -907,7 +904,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
         }`}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="flex flex-col gap-[24px] pb-[8px]">
+          <div className="flex flex-col gap-[16px] pt-[6px] pb-[8px]">
             {/* Additional account fields */}
             <div className="flex flex-col gap-[12px]">
               <Field label="Business name">
@@ -944,6 +941,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

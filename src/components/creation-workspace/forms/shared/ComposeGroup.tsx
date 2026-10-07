@@ -249,7 +249,7 @@ function OptionalGroupsRows({ groups, hideHeader = false }: { groups: OptionalGr
     return () => clearTimeout(t)
   }, [open])
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-[6px]">
       {!hideHeader && <OptionalFieldsHeader />}
       {groups.map((g) => {
         const isOpen = open === g.id

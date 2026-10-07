@@ -1,7 +1,7 @@
 'use client'
 
 import Image from "next/image"
-import { useLayoutEffect, useRef, type ReactNode } from "react"
+import { useId, useLayoutEffect, useRef, type ReactNode } from "react"
 
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
@@ -67,7 +67,41 @@ function AvatarInitials({ initials }: { initials: string }) {
   )
 }
 
-export function AccountAvatar({ account, size = 40 }: { account: Pick<NetworkAccount, "name" | "initials" | "hasBrandIcon">; size?: 40 | 44 }) {
+function avatarLoopPath(size: number, stroke: number, radius: number) {
+  const inset = stroke / 2
+  const r = Math.max(0.5, radius - inset)
+  const x1 = inset
+  const y1 = inset
+  const x2 = size - inset
+  const y2 = size - inset
+  const midX = size / 2
+  return [
+    `M ${midX} ${y1}`,
+    `H ${x2 - r}`,
+    `A ${r} ${r} 0 0 1 ${x2} ${y1 + r}`,
+    `V ${y2 - r}`,
+    `A ${r} ${r} 0 0 1 ${x2 - r} ${y2}`,
+    `H ${x1 + r}`,
+    `A ${r} ${r} 0 0 1 ${x1} ${y2 - r}`,
+    `V ${y1 + r}`,
+    `A ${r} ${r} 0 0 1 ${x1 + r} ${y1}`,
+    `H ${midX}`,
+  ].join(" ")
+}
+
+export function AccountAvatar({
+  account,
+  size = 40,
+  awaken,
+}: {
+  account: Pick<NetworkAccount, "name" | "initials" | "hasBrandIcon">
+  size?: 40 | 44
+  awaken?: boolean
+}) {
+  const gradientId = `avatar-rim-${useId().replace(/:/g, "")}`
+  const typeClass = size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[14px] font-[650]" : "h-[40px] w-[40px] rounded-[6px] text-[12px] font-[650]"
+  const radius = size === 44 ? 8 : 6
+
   if (account.hasBrandIcon) {
     return (
       <Image
@@ -75,17 +109,54 @@ export function AccountAvatar({ account, size = 40 }: { account: Pick<NetworkAcc
         alt=""
         width={size}
         height={size}
-        className={size === 44 ? "h-[44px] w-[44px] shrink-0 rounded-[8px]" : "h-[40px] w-[40px] shrink-0 rounded-[6px]"}
+        className={`${typeClass} shrink-0`}
       />
     )
   }
 
+  if (awaken === undefined) {
+    return (
+      <span
+        data-account-avatar="initials"
+        className={`${typeClass} relative flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E]`}
+      >
+        <AvatarInitials initials={account.initials} />
+      </span>
+    )
+  }
+
+  const stroke = 1
+  const loop = avatarLoopPath(size, stroke, radius)
+
   return (
     <span
       data-account-avatar="initials"
-      className={`${size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[14px] font-[650]" : "h-[40px] w-[40px] rounded-[6px] text-[12px] font-[650]"} relative flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E]`}
+      data-state={awaken ? "in" : "idle"}
+      className={`t-account-avatar ${typeClass} relative flex shrink-0 items-center justify-center leading-none`}
     >
-      <AvatarInitials initials={account.initials} />
+      <span className="t-account-avatar-fill absolute inset-0">
+        <AvatarInitials initials={account.initials} />
+      </span>
+      <svg
+        className="t-account-avatar-svg pointer-events-none absolute inset-0"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        fill="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2={size} y2={size} gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#F29BC4" />
+            <stop offset="35%" stopColor="#F0B07A" />
+            <stop offset="65%" stopColor="#E8C878" />
+            <stop offset="100%" stopColor="#C09AE8" />
+          </linearGradient>
+        </defs>
+        <path className="t-account-avatar-rest" d={loop} />
+        <path className="t-account-avatar-settled" d={loop} />
+        <path className="t-account-avatar-ring" d={loop} pathLength={1} stroke={`url(#${gradientId})`} />
+      </svg>
     </span>
   )
 }
@@ -168,12 +239,15 @@ export function AccountSummaryCard({
         </span>
       )}
       <div className={`flex min-w-0 flex-1 flex-col justify-center ${isFlow ? "leading-[20px]" : "leading-[16px]"}`}>
-        <p className={isFlow
-          ? "text-sail-label-medium-emphasized truncate text-ink"
-          : "truncate text-[13px] font-[600] leading-[16px] tracking-[-0.08px] text-[#1A2C44]"}
-        >
-          {account.name}
-        </p>
+        <div className="flex items-center gap-[8px]">
+          <p className={isFlow
+            ? "text-sail-label-medium-emphasized min-w-0 flex-1 truncate text-ink"
+            : "min-w-0 flex-1 truncate text-[13px] font-[600] leading-[16px] tracking-[-0.08px] text-[#1A2C44]"}
+          >
+            {account.name}
+          </p>
+          <CountryBadge country={account.country} size={isFlow ? "flow" : "md"} />
+        </div>
         <p className={isFlow
           ? "text-sail-label-small truncate text-ink-faint"
           : "truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]"}
@@ -181,7 +255,6 @@ export function AccountSummaryCard({
           {subtitle ?? account.email}
         </p>
       </div>
-      <CountryBadge country={account.country} size={isFlow ? "flow" : "md"} />
       {actionLabel && onAction ? (
         <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={onAction}>
           {actionLabel}

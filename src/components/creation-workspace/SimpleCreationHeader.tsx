@@ -10,6 +10,7 @@ import { useProductFormStyle } from "@/components/creation-workspace/productForm
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 
 const tabSpring = { type: "spring" as const, stiffness: 500, damping: 35, mass: 0.8 }
+const rolodexTransition = { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const }
 
 type AddOption = { kind: string; label: string }
 
@@ -235,15 +236,27 @@ export function SimpleCreationHeader({
                 )
               })
             ) : (
-              <motion.p
-                key="header-title-single"
-                layoutId="header-title"
-                layout
-                className={`truncate ${isRefresh ? "text-[15px] font-[675] leading-[20px] tracking-[-0.15px] text-[#142234]" : isSail ? "text-[15px] font-[600] leading-[20px] tracking-[-0.15px] text-[#1A2C44]" : "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#1A2C44]"}`}
-                transition={tabSpring}
-              >
-                {displayTitle}
-              </motion.p>
+              <span className="relative block min-w-0 overflow-hidden [perspective:220px]">
+                <span
+                  aria-hidden
+                  className={`invisible block truncate ${isRefresh ? "text-[15px] font-[675] leading-[20px] tracking-[-0.15px]" : isSail ? "text-[15px] font-[600] leading-[20px] tracking-[-0.15px]" : "text-[14px] font-[500] leading-[20px] tracking-[-0.15px]"}`}
+                >
+                  {displayTitle}
+                </span>
+                <AnimatePresence initial={false}>
+                  <motion.p
+                    key={displayTitle}
+                    className={`absolute inset-0 truncate [backface-visibility:hidden] ${isRefresh ? "text-[15px] font-[675] leading-[20px] tracking-[-0.15px] text-[#142234]" : isSail ? "text-[15px] font-[600] leading-[20px] tracking-[-0.15px] text-[#1A2C44]" : "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#1A2C44]"}`}
+                    initial={{ rotateX: 80, y: 12, opacity: 0 }}
+                    animate={{ rotateX: 0, y: 0, opacity: 1 }}
+                    exit={{ rotateX: -80, y: -12, opacity: 0 }}
+                    transition={rolodexTransition}
+                    style={{ transformOrigin: "50% 50%" }}
+                  >
+                    {displayTitle}
+                  </motion.p>
+                </AnimatePresence>
+              </span>
             )}
           </AnimatePresence>
         </LayoutGroup>

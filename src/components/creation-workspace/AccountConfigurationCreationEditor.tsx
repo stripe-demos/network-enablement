@@ -53,7 +53,7 @@ export function AccountConfigurationCreationEditor({
 }: AccountConfigurationCreationEditorProps) {
   const { accountSelectionStyle } = useAccountSelectionStyle()
   const { accountOnboardingStyle } = useAccountOnboardingStyle()
-  const [source, setSource] = useState<AccountSource>("existing")
+  const [source, setSource] = useState<AccountSource>("new")
   const [selectedAccount, setSelectedAccount] = useState<NetworkAccount | null>(null)
   const [details, setDetails] = useState<AccountDetailsDraft>(INITIAL_ACCOUNT_DETAILS)
   const [configurations, setConfigurations] = useState<ConfigurationKind[]>([])
@@ -184,9 +184,7 @@ export function AccountConfigurationCreationEditor({
     )
   }
 
-  const submitLabel = source === "new"
-    ? accountSelectionStyle !== "related-modal" ? "Create account" : "Add configurations"
-    : "Update configurations"
+  const submitLabel = "Save"
 
   return (
     <CreationWorkspace
@@ -197,7 +195,7 @@ export function AccountConfigurationCreationEditor({
       skipEnterAnimation
       header={
         <SimpleCreationHeader
-          title="Add configurations"
+          title={source === "new" ? "Create account" : "Add configurations"}
           onDiscard={onClose}
           onSubmit={handleSubmit}
           submitLabel={submitLabel}

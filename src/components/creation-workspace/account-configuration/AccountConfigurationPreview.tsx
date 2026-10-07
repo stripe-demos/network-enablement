@@ -3,9 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 
-import { SegmentedControl } from "@/components/SegmentedControl"
-
 import { AccountApiPreview } from "./AccountApiPreview"
+import { FieldHint } from "./AccountConfigurationForm"
 import { AccountAvatar, CheckIcon, CountryBadge } from "./AccountConfigurationPrimitives"
 import {
   getCapabilitiesForGroup,
@@ -118,16 +117,27 @@ function PreviewModeToggle({
   value: "dashboard" | "api"
   onChange: (next: "dashboard" | "api") => void
 }) {
+  const itemClass = (selected: boolean) =>
+    `flex h-[32px] min-w-[108px] items-center justify-center gap-[6px] rounded-[6px] px-[14px] text-[12px] leading-[16px] tracking-[-0.02px] transition-colors ${
+      selected ? "bg-[#F4F6F8] font-[600] text-[#1A2C44]" : "font-[500] text-[#6C7688] hover:text-[#1A2C44]"
+    }`
+
   return (
-    <SegmentedControl
-      value={value}
-      options={["dashboard", "api"] as const}
-      onChange={onChange}
-      variantOverride="segmented"
-      fitContent
-      getDisplayValue={(mode) => mode === "dashboard" ? "Dashboard" : "API"}
-      buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
-    />
+    <div className="flex items-center rounded-[8px] border border-[#E6EAF0] bg-white p-[3px] shadow-[0_1px_2px_rgba(20,34,52,0.04),0_10px_28px_rgba(20,34,52,0.08)]">
+      <button type="button" className={itemClass(value === "dashboard")} onClick={() => onChange("dashboard")} aria-pressed={value === "dashboard"}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M1.5 5h11M5.5 5v7.5" stroke="currentColor" strokeWidth="1.3" />
+        </svg>
+        Dashboard
+      </button>
+      <button type="button" className={itemClass(value === "api")} onClick={() => onChange("api")} aria-pressed={value === "api"}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M5 3.5L2.5 7 5 10.5M9 3.5L11.5 7 9 10.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        API
+      </button>
+    </div>
   )
 }
 
@@ -239,7 +249,7 @@ function EmptyAccountPreview() {
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M5.5 7.5h11M5.5 11h7M5.5 14.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><rect x="2.75" y="3.25" width="16.5" height="15.5" rx="3.25" stroke="currentColor" strokeWidth="1.5" /></svg>
       </div>
       <h3 className="mt-[14px] text-[14px] font-[600] leading-[20px] text-[#1A2C44]">Account configuration</h3>
-      <p className="mx-auto mt-[5px] max-w-[310px] text-[12px] leading-[18px] text-[#596171]">Choose an existing account or create a new one. Its configurations and capabilities will appear here.</p>
+      <p className="mx-auto mt-[5px] max-w-[310px] text-[12px] leading-[18px] text-[#596171]">As you create the account, its configurations and capabilities will appear here.</p>
     </div>
   )
 }
@@ -344,24 +354,41 @@ export function AccountConfigurationPreview({
         <div>
           <div className="px-[22px] py-[18px]">
             <div className="flex items-center gap-[12px]">
-              <AccountAvatar account={account} size={44} />
+              <AccountAvatar
+                account={account}
+                size={44}
+                awaken={isNewAccount ? Boolean(getDraftName(details)) : undefined}
+              />
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-[6px]">
-                  <p data-preview-account-name className="truncate text-[16px] font-[650] leading-[22px] tracking-[-0.18px] text-[#1A2C44]">{account.name}</p>
+                <div className="flex items-center gap-[8px]">
+                  <p data-preview-account-name className="min-w-0 flex-1 truncate text-[16px] font-[650] leading-[22px] tracking-[-0.18px] text-[#1A2C44]">{account.name}</p>
+                  {(!isNewAccount || details.country) ? <CountryBadge country={isNewAccount ? details.country : account.country} /> : null}
                 </div>
-                <p className={`mt-[2px] truncate text-[12px] leading-[17px] ${account.email ? "text-[#596171]" : "text-[#818DA0]"}`}>
-                  {account.email || "Add an account email"}
+                <p className="mt-[2px] flex min-w-0 items-center text-[12px] leading-[17px]">
+                  <span className={`min-w-0 truncate ${account.email ? "text-[#596171]" : "text-[#818DA0]"}`}>
+                    {account.email || "Add an account email"}
+                  </span>
+                  {!isNewAccount && account.id ? (
+                    <>
+                      <span className="shrink-0 px-[4px] text-[#818DA0]">·</span>
+                      <span className="min-w-0 truncate text-[#596171]">{account.id}</span>
+                    </>
+                  ) : null}
                 </p>
               </div>
-              {(!isNewAccount || details.country) ? <CountryBadge country={isNewAccount ? details.country : account.country} /> : null}
             </div>
           </div>
 
           <div className="border-t border-[#EBEEF1] px-[22px] py-[18px]">
-            <p className="text-[13px] font-[600] leading-[22px] text-[#1A2C44]">Configurations and capabilities</p>
+            <div className="inline-flex items-center gap-[4px]">
+              <p className="text-[13px] font-[600] leading-[22px] text-[#1A2C44]">Configurations and capabilities</p>
+              <FieldHint label="Configurations and capabilities">
+                A configuration represents what an account can do, and capabilities are the features it enables.
+              </FieldHint>
+            </div>
             <Expand open={!hasGroups}>
               <p className="mt-[6px] text-[12px] leading-[17px] text-[#818DA0]">
-                Select configurations in the form to build this account setup.
+                As you select configurations in the form, its associated capabilities are added.
               </p>
             </Expand>
             <div className={hasGroups ? "mt-[12px]" : undefined}>
@@ -422,8 +449,8 @@ export function AccountConfigurationPreview({
       )}
         </div>
       </div>
-      {SHOW_API_PREVIEW && !showEmpty ? (
-        <div className="flex shrink-0 justify-center">
+      {SHOW_API_PREVIEW && !showEmpty && userPath !== "direct" ? (
+        <div className="flex shrink-0 justify-center pb-[8px] pt-[18px]">
           <PreviewModeToggle value={previewMode} onChange={setPreviewMode} />
         </div>
       ) : null}

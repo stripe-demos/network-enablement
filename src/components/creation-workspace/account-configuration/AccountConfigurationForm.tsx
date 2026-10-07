@@ -9,12 +9,14 @@ import { CreationModalShell } from "@/components/creation-workspace/CreationModa
 import { EntityDropdown } from "@/components/creation-workspace/forms/EntityDropdown"
 import { Checkbox } from "@/components/creation-workspace/forms/shared/Checkbox"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
+import { cn } from "@/lib/utils"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useAccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
 import type { AccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
 import type { AccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
 
+import { AddressFields, CountrySelect, formatAddressSummary, phoneCountryFromBillingCountry, type AddressValue } from "@/components/creation-workspace/forms/shared/AddressFields"
 import { DescribeAccountModal } from "./DescribeAccountModal"
 import {
   AccountSummaryCard,
@@ -192,15 +194,34 @@ function AccountIdentityFields({
 
   return (
     <div className="flex flex-col gap-[12px]" data-new-account-fields>
-      <Field label="Display name">
-        <input
-          ref={firstInputRef}
-          className={tokens.inputClass}
-          placeholder="Shown on this account"
-          value={details.displayName ?? ""}
-          onChange={(event) => onChange({ displayName: event.target.value })}
+      <div className="flex flex-col gap-[4px]">
+        <span className={tokens.labelClass}>Account type</span>
+        <SegmentedControl
+          value={details.type}
+          options={ACCOUNT_TYPE_OPTIONS}
+          onChange={(type) => onChange({ type })}
+          variantOverride="segmented"
+          buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
         />
-      </Field>
+      </div>
+      {details.type === "Company" ? (
+        <Field label="Company name">
+          <input
+            ref={firstInputRef}
+            className={tokens.inputClass}
+            placeholder="Example Corp Inc"
+            value={details.registeredName}
+            onChange={(event) => onChange({ registeredName: event.target.value })}
+          />
+        </Field>
+      ) : (
+        <Field label="Legal name">
+          <span className="grid gap-[6px]">
+            <input ref={firstInputRef} aria-label="First name" className={tokens.inputClass} placeholder="First name" value={details.firstName} onChange={(event) => onChange({ firstName: event.target.value })} />
+            <input aria-label="Last name" className={tokens.inputClass} placeholder="Last name" value={details.lastName} onChange={(event) => onChange({ lastName: event.target.value })} />
+          </span>
+        </Field>
+      )}
       <div className="flex flex-col gap-[6px]">
         <Field label="Account email">
           <input
@@ -221,39 +242,13 @@ function AccountIdentityFields({
         ) : null}
       </div>
       <div className="flex flex-col gap-[4px]">
-        <span className={tokens.labelClass}>Type</span>
-        <SegmentedControl
-          value={details.type}
-          options={ACCOUNT_TYPE_OPTIONS}
-          onChange={(type) => onChange({ type })}
-          variantOverride="segmented"
-          buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
-        />
-      </div>
-      {details.type === "Company" ? (
-        <Field label="Registered name">
-          <input className={tokens.inputClass} placeholder="Example Corp Inc" value={details.registeredName} onChange={(event) => onChange({ registeredName: event.target.value })} />
-        </Field>
-      ) : (
-        <Field label="Legal name">
-          <span className="grid gap-[6px]">
-            <input aria-label="First name" className={tokens.inputClass} placeholder="First name" value={details.firstName} onChange={(event) => onChange({ firstName: event.target.value })} />
-            <input aria-label="Last name" className={tokens.inputClass} placeholder="Last name" value={details.lastName} onChange={(event) => onChange({ lastName: event.target.value })} />
-          </span>
-        </Field>
-      )}
-      <Field label="Country">
-        <SelectControl
+        <span className={tokens.labelClass}>Country</span>
+        <CountrySelect
           className={tokens.selectClass}
           value={details.country}
           onChange={(country) => onChange({ country, billingCountry: details.billingCountry || country })}
-        >
-          <option value="">Select a country</option>
-          <option>United Kingdom</option>
-          <option>United States</option>
-          <option>Canada</option>
-        </SelectControl>
-      </Field>
+        />
+      </div>
     </div>
   )
 }
@@ -308,7 +303,6 @@ function AccountSelector({
       label="Account"
       placeholder="Find or add an account"
       searchPlaceholder="Search by name, email, or account ID"
-      initialOpen
       items={getNetworkAccountItems(userPath)}
       getSearchText={getNetworkAccountSearchText(userPath)}
       renderOption={(item) => <AccountPickerOption id={item.id} userPath={userPath} />}
@@ -351,21 +345,17 @@ function AccountSelector({
               {accountPicker}
               {selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : null}
             </>
-          ) : <AccountIdentityFields details={details} onChange={onDetailsChange} onUseExisting={onSelectExisting} />}
+          ) : <AccountIdentityFields details={details} onChange={onDetailsChange} onUseExisting={onSelectExisting} autoFocus />}
         </>
+      ) : source === "existing" && selectedAccount ? (
+        <SelectedAccountSummary account={selectedAccount} />
       ) : (
-        <>
-          {accountPicker}
-          {selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : null}
-          {style === "picker" && source === "new" ? (
-            <AccountIdentityFields
-              details={details}
-              onChange={onDetailsChange}
-              onUseExisting={onSelectExisting}
-              autoFocus
-            />
-          ) : null}
-        </>
+        <AccountIdentityFields
+          details={details}
+          onChange={onDetailsChange}
+          onUseExisting={onSelectExisting}
+          autoFocus
+        />
       )}
 
       <CreationModalShell
@@ -448,13 +438,11 @@ function ConfigurationPicker({
   selected,
   existing,
   userPath,
-  source,
   onChange,
 }: {
   selected: ConfigurationKind[]
   existing: ConfigurationKind[]
   userPath?: UserPath
-  source: AccountSource
   onChange: (next: ConfigurationKind[]) => void
 }) {
   const { productFormStyle } = useProductFormStyle()
@@ -470,20 +458,18 @@ function ConfigurationPicker({
   return (
     <section className="flex flex-col gap-[12px]" data-configuration-picker>
       <div>
-        <h3 className={tokens.sectionTitle}>Configurations</h3>
-        {source === "new" ? (
-          <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">
-            Not sure what to pick?{" "}
-            <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={() => setDescribeOpen(true)}>
-              Tell us about this account
-            </button>.
-          </p>
-        ) : null}
+        <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Configurations</h3>
+        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">
+          Not sure what to pick?{" "}
+          <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={() => setDescribeOpen(true)}>
+            Describe the account to us
+          </button>.
+        </p>
       </div>
       {existingOptions.length > 0 ? (
         <div className="flex flex-col gap-[8px]">
           <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">On this account</p>
-          <HoverTip text="You can deactivate capabilities from this account’s page.">
+          <HoverTip text="You can deactivate capabilities from the account details page.">
             <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
               {existingOptions.map((option) => (
                 <ConfigurationRow key={option.id} option={option} checked locked />
@@ -679,13 +665,11 @@ function PayoutInformationSection({
     })
   }
 
-  const needsPayoutEmail = details.payoutMethods.some((method) => method === "bank-account" || method === "debit-card")
-
   return (
     <section className="flex flex-col gap-[12px]" data-payout-information>
       <div>
-        <h3 className={tokens.sectionTitle}>Payout methods</h3>
-        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Select where funds should be deposited.</p>
+        <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Payout methods</h3>
+        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Don’t have payout details? Stripe can collect them by email after account creation.</p>
       </div>
       <div className="flex flex-col gap-[7px]">
         {payoutMethods.map((method) => {
@@ -795,18 +779,61 @@ function PayoutInformationSection({
           )
         })}
       </div>
-      {needsPayoutEmail ? (
-        <p className="flex items-start gap-[6px] text-[11px] leading-[16px] text-[#6C7688]">
-          <svg className="mt-[2px] shrink-0 text-[#818DA0]" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
-            <circle cx="6" cy="3.75" r="0.7" fill="currentColor" />
-            <path d="M6 5.5v3.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-          Don’t have payout details? You can have Stripe collect them by email after account creation.
-        </p>
-      ) : null}
     </section>
   )
+}
+
+function billingDetailsSummary(details: AccountDetailsDraft) {
+  const address = formatAddressSummary([details.billingLine1, details.billingCity, details.billingState, details.billingPostalCode])
+  if (address) return address
+  if (!details.useAccountEmailForBilling && details.billingEmail?.trim()) return details.billingEmail.trim()
+  if (details.useAccountEmailForBilling) return "Same as account email"
+  return "Not added"
+}
+
+function shippingDetailsSummary(details: AccountDetailsDraft) {
+  if (details.sameAsBilling) return "Same as billing details"
+  return formatAddressSummary([details.shippingLine1, details.shippingCity, details.shippingState, details.shippingPostalCode])
+    || details.shippingAddress
+    || "Not added"
+}
+
+function taxDetailsSummary(details: AccountDetailsDraft) {
+  if (details.taxStatus === "exempt") return details.taxId ? `Exempt · ${details.taxId}` : "Exempt"
+  if (details.taxStatus === "reverse") return details.taxId ? `Reverse charge · ${details.taxId}` : "Reverse charge"
+  return details.taxId ? `Tax ID · ${details.taxId}` : "Not added"
+}
+
+function billingAddressValue(details: AccountDetailsDraft): AddressValue {
+  const country = details.billingCountry || details.country || "United States"
+  return {
+    country,
+    line1: details.billingLine1,
+    line2: details.billingLine2,
+    city: details.billingCity,
+    state: details.billingState,
+    postalCode: details.billingPostalCode,
+    phone: details.billingPhone,
+    phoneCountry: details.billingPhoneCountry || phoneCountryFromBillingCountry(country),
+  }
+}
+
+function shippingAddressValue(details: AccountDetailsDraft): AddressValue {
+  if (details.sameAsBilling) {
+    return { ...billingAddressValue(details), name: getDraftName(details) }
+  }
+  const country = details.shippingCountry || details.billingCountry || details.country || "United States"
+  return {
+    name: details.shippingName,
+    country,
+    line1: details.shippingLine1,
+    line2: details.shippingLine2,
+    city: details.shippingCity,
+    state: details.shippingState,
+    postalCode: details.shippingPostalCode,
+    phone: details.shippingPhone,
+    phoneCountry: details.shippingPhoneCountry || phoneCountryFromBillingCountry(country),
+  }
 }
 
 function CustomerDetailsSection({ details, onChange }: { details: AccountDetailsDraft; onChange: (patch: Partial<AccountDetailsDraft>) => void }) {
@@ -817,20 +844,76 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
 
   return (
     <section className="flex flex-col gap-[12px]">
-      <h3 className={tokens.sectionTitle}>Billing and shipping</h3>
+      <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Billing and shipping</h3>
       <div className="flex flex-col gap-[7px]">
-        <ReviewRow title="Billing details" summary={details.useAccountEmailForBilling ? "Same as account email" : details.billingEmail || "Not added"} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
+        <ReviewRow title="Billing details" summary={billingDetailsSummary(details)} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
           <div className="flex flex-col gap-[12px]">
-            <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#6C7688]">Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
+            <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[400] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#6C7688]">Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
             {!details.useAccountEmailForBilling ? <Field label="Billing email"><input type="email" className={tokens.inputClass} placeholder={details.accountEmail || "billing@example.com"} value={details.billingEmail} onChange={(event) => onChange({ billingEmail: event.target.value })} /></Field> : null}
-            <Field label="Billing country"><SelectControl className={tokens.selectClass} value={details.billingCountry || details.country} onChange={(billingCountry) => onChange({ billingCountry })}><option value="">Select a country</option><option>United Kingdom</option><option>United States</option><option>Canada</option></SelectControl></Field>
+            <div className="flex flex-col gap-[6px]">
+              <p className={tokens.labelClass}>Billing address</p>
+              <AddressFields
+                showCountry={false}
+                value={billingAddressValue(details)}
+                tokens={tokens}
+                onChange={(patch) => onChange({
+                  billingCountry: patch.country ?? details.billingCountry || details.country || "United States",
+                  billingLine1: patch.line1 ?? details.billingLine1,
+                  billingLine2: patch.line2 ?? details.billingLine2,
+                  billingCity: patch.city ?? details.billingCity,
+                  billingState: patch.state ?? details.billingState,
+                  billingPostalCode: patch.postalCode ?? details.billingPostalCode,
+                  billingPhone: patch.phone ?? details.billingPhone,
+                  billingPhoneCountry: patch.phoneCountry ?? details.billingPhoneCountry,
+                })}
+              />
+            </div>
           </div>
         </ReviewRow>
-        <ReviewRow title="Tax information" summary={details.taxId ? `Tax ID · ${details.taxId}` : "Not added"} open={openRow === "tax"} onToggle={() => setOpenRow(openRow === "tax" ? null : "tax")}>
-          <Field label="Tax ID"><input className={tokens.inputClass} placeholder="GB123456789" value={details.taxId} onChange={(event) => onChange({ taxId: event.target.value })} /></Field>
+        <ReviewRow title="Shipping details" summary={shippingDetailsSummary(details)} open={openRow === "shipping"} onToggle={() => setOpenRow(openRow === "shipping" ? null : "shipping")}>
+          <div className="flex flex-col gap-[12px]">
+            <div className="flex items-center justify-between gap-[12px]">
+              <p className="text-[12px] font-[400] text-[#273951]">Same as billing details</p>
+              <Toggle checked={details.sameAsBilling} label="Same as billing details" onChange={(sameAsBilling) => onChange({ sameAsBilling })} />
+            </div>
+            {details.sameAsBilling ? null : (
+              <AddressFields
+                value={shippingAddressValue(details)}
+                tokens={tokens}
+                onChange={(patch) => onChange({
+                  shippingName: patch.name ?? details.shippingName,
+                  shippingCountry: patch.country ?? details.shippingCountry || details.country || "United States",
+                  shippingLine1: patch.line1 ?? details.shippingLine1,
+                  shippingLine2: patch.line2 ?? details.shippingLine2,
+                  shippingCity: patch.city ?? details.shippingCity,
+                  shippingState: patch.state ?? details.shippingState,
+                  shippingPostalCode: patch.postalCode ?? details.shippingPostalCode,
+                  shippingPhone: patch.phone ?? details.shippingPhone,
+                  shippingPhoneCountry: patch.phoneCountry ?? details.shippingPhoneCountry,
+                  shippingAddress: formatAddressSummary([
+                    patch.line1 ?? details.shippingLine1,
+                    patch.city ?? details.shippingCity,
+                    patch.state ?? details.shippingState,
+                    patch.postalCode ?? details.shippingPostalCode,
+                  ]),
+                })}
+              />
+            )}
+          </div>
         </ReviewRow>
-        <ReviewRow title="Shipping details" summary={details.shippingAddress || "Not added"} open={openRow === "shipping"} onToggle={() => setOpenRow(openRow === "shipping" ? null : "shipping")}>
-          <Field label="Shipping address"><textarea className={tokens.textareaClass} placeholder="Street, city, region, postal code" value={details.shippingAddress} onChange={(event) => onChange({ shippingAddress: event.target.value })} /></Field>
+        <ReviewRow title="Tax and exemptions" summary={taxDetailsSummary(details)} open={openRow === "tax"} onToggle={() => setOpenRow(openRow === "tax" ? null : "tax")}>
+          <div className="flex flex-col gap-[12px]">
+            <Field label="Tax status">
+              <SelectControl className={tokens.selectClass} value={details.taxStatus} onChange={(taxStatus) => onChange({ taxStatus: taxStatus as AccountDetailsDraft["taxStatus"] })}>
+                <option value="taxable">Taxable</option>
+                <option value="exempt">Exempt</option>
+                <option value="reverse">Reverse charge</option>
+              </SelectControl>
+            </Field>
+            <Field label="Tax ID">
+              <input className={tokens.inputClass} placeholder="GB123456789" value={details.taxId} onChange={(event) => onChange({ taxId: event.target.value })} />
+            </Field>
+          </div>
         </ReviewRow>
       </div>
     </section>
@@ -1043,7 +1126,7 @@ function MoreDetailsSection({ configurations, details, onChange }: { configurati
     <section className="flex flex-col">
       <button
         type="button"
-        className="flex w-full items-center justify-between py-[4px] text-left"
+        className="flex w-full items-center justify-between text-left"
         aria-expanded={expanded}
         onClick={() => setExpanded((current) => !current)}
       >
@@ -1157,7 +1240,6 @@ export function AccountConfigurationForm({
           selected={configurations}
           existing={existingConfigurations}
           userPath={userPath}
-          source={source}
           onChange={onConfigurationsChange}
         />
       ) : null}

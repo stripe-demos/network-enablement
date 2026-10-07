@@ -507,6 +507,91 @@ html[data-input-fill="filled"] [data-input-dropdown="true"] {
   .t-success-check svg path { animation: none !important; stroke-dashoffset: 0 !important; }
 }
 
+.t-account-avatar {
+  overflow: visible;
+}
+.t-account-avatar-fill {
+  border-radius: inherit;
+  background: #F0F3F6;
+  color: #8B95A6;
+  transition:
+    background 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s,
+    color 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+}
+.t-account-avatar[data-state="idle"] .t-account-avatar-fill {
+  transition-delay: 0s;
+  transition-duration: 0.28s;
+}
+.t-account-avatar[data-state="in"] .t-account-avatar-fill {
+  background: #EEEAFE;
+  color: #2C219E;
+}
+.t-account-avatar-svg {
+  display: block;
+  overflow: visible;
+}
+.t-account-avatar-rest,
+.t-account-avatar-settled,
+.t-account-avatar-ring {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.t-account-avatar-rest {
+  stroke: #D5DCE4;
+  stroke-width: 0.85;
+}
+.t-account-avatar-settled {
+  stroke: #D8D0FF;
+  stroke-width: 0.85;
+  stroke-opacity: 0;
+}
+.t-account-avatar-ring {
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.t-account-avatar[data-state="in"] .t-account-avatar-ring {
+  animation:
+    t-avatar-draw 1.25s cubic-bezier(0.37, 0, 0.2, 1) forwards,
+    t-avatar-gradient-fade 0.7s 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.t-account-avatar[data-state="in"] .t-account-avatar-rest {
+  animation: t-avatar-rest-fade 0.4s 0.06s ease forwards;
+}
+.t-account-avatar[data-state="in"] .t-account-avatar-settled {
+  animation: t-avatar-settled-in 0.7s 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes t-avatar-draw { to { stroke-dashoffset: 0; } }
+@keyframes t-avatar-rest-fade { to { stroke-opacity: 0; } }
+@keyframes t-avatar-gradient-fade { to { stroke-opacity: 0; } }
+@keyframes t-avatar-settled-in { to { stroke-opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .t-account-avatar-ring,
+  .t-account-avatar-rest,
+  .t-account-avatar-settled {
+    animation: none !important;
+  }
+  .t-account-avatar .t-account-avatar-fill {
+    transition: none !important;
+  }
+  .t-account-avatar[data-state="in"] .t-account-avatar-fill {
+    background: #EEEAFE;
+    color: #2C219E;
+  }
+  .t-account-avatar[data-state="in"] .t-account-avatar-ring {
+    stroke-opacity: 0;
+  }
+  .t-account-avatar[data-state="in"] .t-account-avatar-rest {
+    stroke-opacity: 0;
+  }
+  .t-account-avatar[data-state="in"] .t-account-avatar-settled {
+    stroke-opacity: 1;
+  }
+}
+
 .t-input {
   transition: border-color var(--duration-quick) var(--ease-out);
   will-change: transform;
@@ -769,4 +854,26 @@ html[data-input-fill="filled"] [data-input-dropdown="true"] {
   .voice-glow-blob {
     animation: none !important;
   }
+}
+
+.t-jev-mark {
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  animation: t-jev-mark-in 240ms ease;
+}
+
+.t-jev-mark-customer { background: rgba(46, 124, 246, 0.22); }
+.t-jev-mark-recipient { background: rgba(83, 58, 253, 0.22); }
+.t-jev-mark-merchant { background: rgba(3, 156, 125, 0.22); }
+.t-jev-mark-pending { opacity: 0.62; }
+
+@keyframes t-jev-mark-in {
+  from { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-jev-mark { animation: none; }
 }

@@ -208,7 +208,7 @@ export default function VoiceGlowViz({
       const { amp, lag } = SWAY[layer]
       const s = 0.62 * Math.sin(p + lag) + 0.38 * Math.sin(p * 0.57 + lag * 1.6 + 1.1)
       const reach = amp * (0.75 + 0.25 * e)
-      return (centered ? 0.6 * reach * s : -0.35 * reach + 0.65 * reach * s).toFixed(2)
+      return (centered ? 0.28 * reach * s : -0.35 * reach + 0.65 * reach * s).toFixed(2)
     }
 
     if (baseRef.current) {
@@ -280,8 +280,8 @@ export default function VoiceGlowViz({
       ring.style.setProperty("--voice-angle", `${ringAngleRef.current.toFixed(1)}deg`)
       ring.style.opacity = pulse.toFixed(3)
       ring.style.filter = `saturate(${(0.85 + 1.35 * e).toFixed(3)}) brightness(${(0.92 + 0.55 * e).toFixed(3)})`
-      ring.style.transform = `scale(${(1 + 0.018 * e).toFixed(4)})`
-      ring.style.padding = `${(1 + 2.2 * e).toFixed(2)}px`
+      ring.style.transform = "none"
+      ring.style.padding = `${(1 + 1.4 * e).toFixed(2)}px`
     }
   };
 
@@ -291,45 +291,47 @@ export default function VoiceGlowViz({
 
   if (centered) {
     // Centred variant — same layer roles, but anchored to the middle of the
-    // bottom edge and scaling from the bottom centre.
-    const cLayer = 'pointer-events-none absolute bottom-0 origin-bottom rounded-full';
+    // bottom edge and scaling from the bottom centre. Layers span the full
+    // width and fade in the gradient so overflow-hidden on the card clips at
+    // already-transparent edges instead of cutting a smaller blob.
+    const cLayer = "pointer-events-none absolute bottom-0 origin-bottom"
     return (
-      <div className={className} aria-hidden="true">
-        <div className="absolute inset-x-0 bottom-0" style={{ height: CORNER_HEIGHT }}>
-          {/* 1. Ambient halo — a wide, low wash centred on the bottom edge. */}
+      <div
+        className={className}
+        aria-hidden="true"
+        style={{
+          WebkitMaskImage: "linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent)",
+          maskImage: "linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent)",
+        }}
+      >
+        <div className="absolute inset-x-0 bottom-0 overflow-visible" style={{ height: 72 }}>
           <div
             ref={baseRef}
-            className={`${cLayer} bottom-[-8%] left-[12%] h-[104%] w-[76%]`}
+            className={`${cLayer} inset-x-0 h-[140%]`}
             style={{
-              background: `radial-gradient(ellipse 60% 120% at 50% 100%, ${PURPLE}ff 0%, ${ORANGE}cc 30%, ${PINK}aa 54%, ${PINK}00 88%)`,
+              background: `radial-gradient(ellipse 100% 130% at 50% 100%, ${PURPLE}ff 0%, ${ORANGE}cc 28%, ${PINK}aa 50%, ${PINK}00 78%)`,
               filter: `blur(${BLUR.base}px) saturate(${SAT.rest})`,
               opacity: REST.base,
             }}
           />
-
-          {/* 2. Side lobes — pink left, orange right, breathing outward. */}
           <div
             ref={sideLeftRef}
-            className={`${cLayer} bottom-[-4%] left-[20%] h-[86%] w-[30%]`}
-            style={{ background: lobeBg(PINK, '60% 100%'), filter: `blur(${BLUR.side}px) saturate(${SAT.rest})`, opacity: REST.lobe }}
+            className={`${cLayer} bottom-[-6%] left-[8%] h-[110%] w-[42%]`}
+            style={{ background: lobeBg(PINK, "55% 100%"), filter: `blur(${BLUR.side}px) saturate(${SAT.rest})`, opacity: REST.lobe }}
           />
           <div
             ref={sideRightRef}
-            className={`${cLayer} bottom-[-4%] right-[20%] h-[86%] w-[30%]`}
-            style={{ background: lobeBg(ORANGE, '40% 100%'), filter: `blur(${BLUR.side}px) saturate(${SAT.rest})`, opacity: REST.lobe }}
+            className={`${cLayer} bottom-[-6%] right-[8%] h-[110%] w-[42%]`}
+            style={{ background: lobeBg(ORANGE, "45% 100%"), filter: `blur(${BLUR.side}px) saturate(${SAT.rest})`, opacity: REST.lobe }}
           />
-
-          {/* 3. Centre lobe — the densest colour, in the middle. */}
           <div
             ref={lobeRef}
-            className={`${cLayer} bottom-[-6%] left-[34%] h-[96%] w-[32%]`}
-            style={{ background: lobeBg(PURPLE, '50% 100%'), filter: `blur(${BLUR.lobe}px) saturate(${SAT.rest})`, opacity: REST.lobe }}
+            className={`${cLayer} bottom-[-8%] left-[28%] h-[120%] w-[44%]`}
+            style={{ background: lobeBg(PURPLE, "50% 100%"), filter: `blur(${BLUR.lobe}px) saturate(${SAT.rest})`, opacity: REST.lobe }}
           />
-
-          {/* 4. Hot core — the brightest point, small and low at the centre. */}
           <div
             ref={coreRef}
-            className={`${cLayer} bottom-[-4%] left-[42%] h-[58%] w-[16%]`}
+            className={`${cLayer} bottom-[-4%] left-[38%] h-[70%] w-[24%]`}
             style={{
               background: `radial-gradient(ellipse 110% 110% at 50% 100%, #FFFFFFee 0%, ${ORANGE}cc 32%, ${PINK}99 58%, ${PINK}00 82%)`,
               filter: `blur(${BLUR.core}px) saturate(${SAT.rest})`,
@@ -338,7 +340,7 @@ export default function VoiceGlowViz({
           />
         </div>
       </div>
-    );
+    )
   }
 
   // Shared layer base — anchored to the bottom-right corner, blurred, blooming

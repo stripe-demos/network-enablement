@@ -59,6 +59,7 @@ type EntityDropdownProps = {
   autoFocus?: boolean
   /** Inset result and create-action hover surfaces by 4px with a 4px radius. */
   insetOptionHover?: boolean
+  hideSearch?: boolean
 }
 
 export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownProps>(function EntityDropdown({
@@ -90,6 +91,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   noResultsClassName,
   autoFocus,
   insetOptionHover = false,
+  hideSearch = false,
 }, ref) {
   const { productFormStyle } = useProductFormStyle()
   const { inputFill } = useInputFill()
@@ -108,16 +110,16 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   useImperativeHandle(ref, () => ({
     open() {
       setIsOpen(true)
-      setTimeout(() => inputRef.current?.focus(), 0)
+      if (!hideSearch) setTimeout(() => inputRef.current?.focus(), 0)
     },
   }))
 
   useEffect(() => {
     if (initialOpenRef.current) {
       setIsOpen(true)
-      setTimeout(() => inputRef.current?.focus(), 0)
+      if (!hideSearch) setTimeout(() => inputRef.current?.focus(), 0)
     }
-  }, [])
+  }, [hideSearch])
 
   useEffect(() => {
     if (!autoFocus || initialOpenRef.current) return
@@ -167,9 +169,9 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   }, [isOpen, activeIndex, filtered])
 
   useEffect(() => {
-    if (!isOpen || !isRefresh) return
+    if (!isOpen || !isRefresh || hideSearch) return
     requestAnimationFrame(() => inputRef.current?.focus())
-  }, [isOpen, isRefresh])
+  }, [isOpen, isRefresh, hideSearch])
 
   const closeDropdown = () => {
     setIsOpen(false)
@@ -208,12 +210,16 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   }
 
   const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (isOpen && hideSearch) {
+      handleOpenKeyDown(event)
+      return
+    }
     if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
       event.preventDefault()
       setIsOpen(true)
       return
     }
-    if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey && !hideSearch) {
       event.preventDefault()
       setSearch(event.key)
       setIsOpen(true)
@@ -274,7 +280,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
             {label}
           </span>
         )}
-        {isOpen && !isRefresh ? (
+        {isOpen && !isRefresh && !hideSearch ? (
           <input
             ref={inputRef}
             className={`${ic} ${floatingControlClass}`}
@@ -290,8 +296,8 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
             type="button"
             className={`${ic} ${floatingControlClass} flex items-center justify-between text-left`}
             onClick={() => {
-              setIsOpen(true)
-              setTimeout(() => inputRef.current?.focus(), 0)
+              setIsOpen((open) => !open)
+              if (!hideSearch) setTimeout(() => inputRef.current?.focus(), 0)
             }}
             onKeyDown={handleTriggerKeyDown}
           >
@@ -308,7 +314,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
             role="listbox"
             className={`absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-[8px] border ${isRefresh ? "border-[#EAF0F6]" : "border-[#E3E8EF]"} bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)]`}
           >
-            {isRefresh && (
+            {isRefresh && !hideSearch && (
               <div className="border-b border-[#EAF0F6] px-[10px] py-[7px]">
                 <input
                   ref={inputRef}

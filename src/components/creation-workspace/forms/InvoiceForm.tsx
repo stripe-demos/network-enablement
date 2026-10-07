@@ -734,7 +734,7 @@ export function InvoiceForm({ data, onChange, errorFields, onAddObject }: Invoic
       <InvoiceFieldRegion field="invoice.customer">
         <div className="flex flex-col gap-[12px]">
           <EntityDropdown
-            label="Account"
+            label="Invoice to"
             placeholder="Find or add an account"
             searchPlaceholder="Search by name, email, or account ID"
             items={getInvoiceAccountItems(data._createdCustomers ?? [])}
