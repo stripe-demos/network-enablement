@@ -8,6 +8,7 @@ import FieldNote from '../../ui/FieldNote';
 import { deliveryMethod } from '../../data/deliveryMethods';
 import { DuplicateAccountNudge } from '@/components/creation-workspace/account-configuration/AccountConfigurationPrimitives';
 import { findMatchingNetworkAccount } from '@/components/creation-workspace/account-configuration/model';
+import { methodsForRecipient } from '../../data/payoutMethods';
 import {
   ADDRESS_FIELDS,
   addressRequired,
@@ -156,7 +157,7 @@ export default function PersonalDetailsStep() {
                     initials: matchingAccount.initials,
                     country: matchingAccount.country === 'UK' ? 'GB' : matchingAccount.country,
                     entity: 'recipient',
-                    methods: [],
+                    methods: methodsForRecipient(matchingAccount.id),
                     logo: matchingAccount.hasBrandIcon ? '/unified-account-icon.png' : undefined,
                     hasBrandIcon: matchingAccount.hasBrandIcon,
                   },

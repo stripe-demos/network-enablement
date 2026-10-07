@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { CreationWorkspace, type WorkspacePresentation } from "@/components/creation-workspace/CreationWorkspace"
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
@@ -53,7 +53,7 @@ export function AccountConfigurationCreationEditor({
 }: AccountConfigurationCreationEditorProps) {
   const { accountSelectionStyle } = useAccountSelectionStyle()
   const { accountOnboardingStyle } = useAccountOnboardingStyle()
-  const [source, setSource] = useState<AccountSource>("new")
+  const [source, setSource] = useState<AccountSource>("existing")
   const [selectedAccount, setSelectedAccount] = useState<NetworkAccount | null>(null)
   const [details, setDetails] = useState<AccountDetailsDraft>(INITIAL_ACCOUNT_DETAILS)
   const [configurations, setConfigurations] = useState<ConfigurationKind[]>([])
@@ -62,6 +62,18 @@ export function AccountConfigurationCreationEditor({
   const updateDetails = (patch: Partial<AccountDetailsDraft>) => {
     setDetails((current) => ({ ...current, ...patch }))
   }
+
+  useEffect(() => {
+    if (accountSelectionStyle === "no-picker") {
+      setSource("new")
+      setSelectedAccount(null)
+      setDetails(INITIAL_ACCOUNT_DETAILS)
+      setConfigurations([])
+      return
+    }
+    setSource("existing")
+    setSelectedAccount(null)
+  }, [accountSelectionStyle])
 
   const selectExistingAccount = (account: NetworkAccount) => {
     setSource("existing")
@@ -184,6 +196,8 @@ export function AccountConfigurationCreationEditor({
     )
   }
 
+  const noPicker = accountSelectionStyle === "no-picker"
+  const creatingWithoutPicker = noPicker && source === "new"
   const submitLabel = "Save"
 
   return (
@@ -195,7 +209,7 @@ export function AccountConfigurationCreationEditor({
       skipEnterAnimation
       header={
         <SimpleCreationHeader
-          title={source === "new" ? "Create account" : "Add configurations"}
+          title={creatingWithoutPicker ? "Create account" : "Add configurations"}
           onDiscard={onClose}
           onSubmit={handleSubmit}
           submitLabel={submitLabel}

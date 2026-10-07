@@ -8,9 +8,6 @@ import {
   type UserPath,
 } from "./model"
 
-const EXISTING_APPLIED_AT = "2024-03-12T16:22:00.000Z"
-const EXISTING_CREATED_AT = "2024-03-12T16:22:00.000Z"
-
 export type AccountApiPreviewInput = {
   source: AccountSource
   selectedAccount: NetworkAccount | null
@@ -45,35 +42,51 @@ function dashboardValue(access: AccountDetailsDraft["traits"]["dashboardAccess"]
   return "full"
 }
 
-function assignCapability(
-  capabilities: Record<string, unknown>,
-  name: string,
-  status: "active" | "pending",
-) {
+function requestCapability(capabilities: Record<string, unknown>, name: string) {
   if (name === "Payouts") {
     const existing = (capabilities.stripe_balance as Record<string, unknown> | undefined) ?? {}
     capabilities.stripe_balance = {
       ...existing,
-      payouts: { status },
+      payouts: { requested: true },
     }
     return
   }
-  capabilities[capabilityKey(name)] = { status }
+  capabilities[capabilityKey(name)] = { requested: true }
 }
 
-function configurationBlock(
+function configurationRequest(
   kind: ConfigurationKind,
   capabilities: string[],
-  isExisting: boolean,
 ) {
-  const block: Record<string, unknown> = {}
-  if (isExisting) block.applied = EXISTING_APPLIED_AT
-  if (capabilities.length > 0) {
-    const entries: Record<string, unknown> = {}
-    capabilities.forEach((name) => assignCapability(entries, name, isExisting ? "active" : "pending"))
-    block.capabilities = entries
-  }
-  return block
+  const entries: Record<string, unknown> = {}
+  if (kind === "customer") requestCapability(entries, "Automatic indirect tax")
+  capabilities.forEach((name) => requestCapability(entries, name))
+  return Object.keys(entries).length > 0 ? { capabilities: entries } : {}
+}
+
+function addressFromDetails(
+  details: AccountDetailsDraft,
+  prefix: "billing" | "shipping",
+) {
+  const country = countryCode(
+    prefix === "billing"
+      ? details.billingCountry || details.country
+      : details.shippingCountry || details.billingCountry || details.country,
+  )
+  const line1 = (prefix === "billing" ? details.billingLine1 : details.shippingLine1).trim()
+  const line2 = (prefix === "billing" ? details.billingLine2 : details.shippingLine2).trim()
+  const city = (prefix === "billing" ? details.billingCity : details.shippingCity).trim()
+  const state = (prefix === "billing" ? details.billingState : details.shippingState).trim()
+  const postalCode = (prefix === "billing" ? details.billingPostalCode : details.shippingPostalCode).trim()
+  if (!line1 && !city && !postalCode) return null
+  const address: Record<string, string> = {}
+  if (country) address.country = country
+  if (line1) address.line1 = line1
+  if (line2) address.line2 = line2
+  if (city) address.city = city
+  if (state) address.state = state
+  if (postalCode) address.postal_code = postalCode
+  return address
 }
 
 function pickIdentity(details: AccountDetailsDraft, account: NetworkAccount | null, isNew: boolean) {
@@ -84,8 +97,18 @@ function pickIdentity(details: AccountDetailsDraft, account: NetworkAccount | nu
   if (isNew) {
     const hasIdentity = Boolean(getDraftName(details) || details.country || details.accountEmail.trim())
     if (hasIdentity) identity.entity_type = details.type === "Individual" ? "individual" : "company"
-    if (details.type === "Company" && details.registeredName.trim()) {
-      identity.business_details = { registered_name: details.registeredName.trim() }
+    if (details.type === "Company") {
+      const businessDetails: Record<string, unknown> = {}
+      if (details.registeredName.trim()) businessDetails.registered_name = details.registeredName.trim()
+      const addresses: Record<string, unknown>[] = []
+      const principal = addressFromDetails(details, "billing")
+      if (principal) addresses.push({ purpose: "principal_place_of_business", ...principal })
+      if (!details.sameAsBilling) {
+        const administrative = addressFromDetails(details, "shipping")
+        if (administrative) addresses.push({ purpose: "administrative", ...administrative })
+      }
+      if (addresses.length > 0) businessDetails.additional_addresses = addresses
+      if (Object.keys(businessDetails).length > 0) identity.business_details = businessDetails
     }
     if (details.type === "Individual" && (details.firstName.trim() || details.lastName.trim())) {
       const individual: Record<string, string> = {}
@@ -102,7 +125,7 @@ export function isAccountApiPreviewEmpty(input: AccountApiPreviewInput) {
   return input.source !== "new" && !input.selectedAccount
 }
 
-export function buildAccountApiResponse(input: AccountApiPreviewInput) {
+export function buildAccountApiRequest(input: AccountApiPreviewInput) {
   const { source, selectedAccount, configurations, details, userPath } = input
   const isNew = source === "new"
   const account = isNew ? null : selectedAccount
@@ -110,29 +133,28 @@ export function buildAccountApiResponse(input: AccountApiPreviewInput) {
   const effectiveConfigurations = Array.from(new Set([...existingConfigurations, ...configurations]))
   const displayName = isNew ? getDraftName(details) : account?.name ?? ""
   const contactEmail = isNew ? details.accountEmail.trim() : account?.email ?? ""
+  const contactPhone = isNew ? details.billingPhone.trim() : ""
   const hasStarted = isNew
-    ? Boolean(displayName || contactEmail || details.country || configurations.length > 0)
+    ? Boolean(displayName || contactEmail || contactPhone || details.country || configurations.length > 0)
     : Boolean(account)
 
-  const fields: Record<string, unknown> = {
-    object: "v2.core.account",
-  }
+  if (!hasStarted) return {}
 
-  if (!hasStarted) return fields
+  const request: Record<string, unknown> = {}
+  if (contactEmail) request.contact_email = contactEmail
+  if (contactPhone) request.contact_phone = contactPhone
+  if (displayName) request.display_name = displayName
 
-  if (account) {
-    fields.id = account.id
-    fields.created = EXISTING_CREATED_AT
-  }
+  const identity = pickIdentity(details, account, isNew)
+  if (Object.keys(identity).length > 0) request.identity = identity
 
   if (effectiveConfigurations.length > 0) {
-    fields.applied_configurations = effectiveConfigurations
     const configuration: Record<string, unknown> = {}
     effectiveConfigurations.forEach((kind) => {
       const groupCapabilities = kind === "customer"
         ? []
         : getCapabilitiesForGroup(kind, effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities)
-      configuration[kind] = configurationBlock(kind, groupCapabilities, existingConfigurations.includes(kind))
+      configuration[kind] = configurationRequest(kind, groupCapabilities)
     })
     const otherCapabilities = getCapabilitiesForGroup(
       "other",
@@ -148,58 +170,49 @@ export function buildAccountApiResponse(input: AccountApiPreviewInput) {
           : "customer"
       const hostBlock = (configuration[host] as Record<string, unknown>) ?? {}
       const hostCapabilities = (hostBlock.capabilities as Record<string, unknown> | undefined) ?? {}
-      otherCapabilities.forEach((name) => assignCapability(hostCapabilities, name, "pending"))
+      otherCapabilities.forEach((name) => requestCapability(hostCapabilities, name))
       configuration[host] = { ...hostBlock, capabilities: hostCapabilities }
     }
-    fields.configuration = configuration
+    request.configuration = configuration
   }
-
-  if (contactEmail) fields.contact_email = contactEmail
-  if (displayName) fields.display_name = displayName
-
-  const identity = pickIdentity(details, account, isNew)
-  if (Object.keys(identity).length > 0) fields.identity = identity
 
   const showPlatformSettings = userPath !== "direct" && (
     effectiveConfigurations.includes("merchant") || effectiveConfigurations.includes("recipient")
   )
   if (showPlatformSettings) {
-    fields.dashboard = dashboardValue(details.traits.dashboardAccess)
-    fields.defaults = {
+    request.defaults = {
       responsibilities: {
         fees_collector: details.traits.feePayer === "platform" ? "application" : "stripe",
         losses_collector: details.traits.negativeBalanceLiability === "stripe" ? "stripe" : "application",
       },
     }
+    request.dashboard = dashboardValue(details.traits.dashboardAccess)
   }
 
-  fields.livemode = false
-
-  return {
-    ...(fields.id ? { id: fields.id } : {}),
-    object: fields.object,
-    ...(fields.applied_configurations ? { applied_configurations: fields.applied_configurations } : {}),
-    ...(fields.configuration ? { configuration: fields.configuration } : {}),
-    ...(fields.contact_email ? { contact_email: fields.contact_email } : {}),
-    ...(fields.created ? { created: fields.created } : {}),
-    ...(fields.dashboard ? { dashboard: fields.dashboard } : {}),
-    ...(fields.defaults ? { defaults: fields.defaults } : {}),
-    ...(fields.display_name ? { display_name: fields.display_name } : {}),
-    ...(fields.identity ? { identity: fields.identity } : {}),
-    livemode: fields.livemode,
+  const include: string[] = []
+  if (request.configuration) {
+    for (const kind of ["customer", "merchant", "recipient"] as const) {
+      if ((request.configuration as Record<string, unknown>)[kind]) include.push(`configuration.${kind}`)
+    }
   }
+  if (request.identity) include.push("identity")
+  if (request.defaults) include.push("defaults")
+  if (include.length > 0) request.include = include
+
+  return request
 }
 
 export function buildAccountApiLlmPrompt(input: AccountApiPreviewInput, payload: Record<string, unknown>) {
   const action = input.source === "new" ? "create" : "update"
   const path = input.userPath ?? "platform"
-  const applied = Array.isArray(payload.applied_configurations)
-    ? (payload.applied_configurations as string[]).join(", ")
+  const configuration = payload.configuration && typeof payload.configuration === "object"
+    ? Object.keys(payload.configuration as Record<string, unknown>).join(", ")
     : "none yet"
   return [
-    `Stripe Accounts v2 response preview (${action}).`,
-    `Path: ${path}. Configurations: ${applied}.`,
-    "Use this object to write or explain the corresponding API request.",
+    `Stripe Accounts v2 ${action} request preview.`,
+    `POST https://api.stripe.com/v2/core/accounts`,
+    `Path: ${path}. Configurations: ${configuration}.`,
+    "This is the JSON body for the corresponding API request.",
     "",
     JSON.stringify(payload, null, 2),
   ].join("\n")

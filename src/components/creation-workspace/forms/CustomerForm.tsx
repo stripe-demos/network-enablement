@@ -144,6 +144,38 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
   const [dismissedMatchId, setDismissedMatchId] = useState("")
   const additionalBillingEmails = Array.isArray(data.additionalBillingEmails) ? data.additionalBillingEmails as string[] : []
   const additionalTaxIds = Array.isArray(data.taxIds) ? data.taxIds as { taxIdType?: string; taxId?: string }[] : []
+  const accountEmailForMatch = String(data.accountEmail ?? data.email ?? "")
+  const matchingAccount = accountConflictNudgeMode === "off"
+    ? undefined
+    : accountConflictNudgeMode === "always" && accountEmailForMatch.trim()
+      ? COMPOSE_ACCOUNTS.find((account) => account.id === "acct_juniper")
+      : (() => {
+          const match = findMatchingNetworkAccount(accountEmailForMatch)
+          return match ? COMPOSE_ACCOUNTS.find((account) => account.id === match.id) ?? match : undefined
+        })()
+
+  const applyExistingAccount = (account: NetworkAccount) => {
+    const country = account.country === "UK" ? "United Kingdom" : account.country === "CA" ? "Canada" : "United States"
+    onChange({
+      customerId: account.id,
+      name: account.name,
+      displayName: account.name,
+      accountEmail: account.email,
+      email: account.email,
+      accountCountry: country,
+      country,
+    })
+    onUseExistingAccount?.(account)
+  }
+
+  const duplicateNudge = matchingAccount && dismissedMatchId !== matchingAccount.id && data.customerId !== matchingAccount.id ? (
+    <DuplicateAccountNudge
+      account={matchingAccount}
+      description="This email matches an existing account in your Network. Continue with it instead of creating a duplicate."
+      onUseExisting={() => applyExistingAccount(matchingAccount)}
+      onDismiss={() => setDismissedMatchId(matchingAccount.id)}
+    />
+  ) : null
 
   useEffect(() => {
     if (!isRefresh || !emailHasError) return
@@ -199,18 +231,21 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
             )}
           </Field>
 
-          <Field label="Email">
-            <input
-              type="email"
-              className={ic("email")}
-              placeholder="e.g. jenny@example.com"
-              value={data.email ?? ""}
-              onChange={(e) => set("email", e.target.value)}
-            />
-            {errorFields?.has("email") && (
-              <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
-            )}
-          </Field>
+          <div className="flex flex-col gap-[6px]">
+            <Field label="Email">
+              <input
+                type="email"
+                className={ic("email")}
+                placeholder="e.g. jenny@example.com"
+                value={data.email ?? ""}
+                onChange={(e) => set("email", e.target.value)}
+              />
+              {errorFields?.has("email") && (
+                <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
+              )}
+            </Field>
+            {duplicateNudge}
+          </div>
 
           <button
             type="button"
@@ -674,29 +709,6 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       onChange({ ...patch, email: nextEmail, name })
     }
 
-    const matchingAccount = accountConflictNudgeMode === "off"
-      ? undefined
-      : accountConflictNudgeMode === "always" && accountEmail.trim()
-        ? COMPOSE_ACCOUNTS.find((account) => account.id === "acct_juniper")
-        : (() => {
-            const match = findMatchingNetworkAccount(accountEmail)
-            return match ? COMPOSE_ACCOUNTS.find((account) => account.id === match.id) : undefined
-          })()
-
-    const applyExistingAccount = (account: NetworkAccount) => {
-      const country = account.country === "UK" ? "United Kingdom" : account.country === "CA" ? "Canada" : "United States"
-      onChange({
-        customerId: account.id,
-        name: account.name,
-        displayName: account.name,
-        accountEmail: account.email,
-        email: account.email,
-        accountCountry: country,
-        country,
-      })
-      onUseExistingAccount?.(account)
-    }
-
     return (
       <div className="flex flex-col gap-[16px]">
         <div className="flex flex-col gap-[12px]">
@@ -721,14 +733,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
                 <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
               )}
             </Field>
-            {matchingAccount && dismissedMatchId !== matchingAccount.id && data.customerId !== matchingAccount.id ? (
-              <DuplicateAccountNudge
-                account={matchingAccount}
-                description="This email matches an existing account in your Network. Continue with it instead of creating a duplicate."
-                onUseExisting={() => applyExistingAccount(matchingAccount)}
-                onDismiss={() => setDismissedMatchId(matchingAccount.id)}
-              />
-            ) : null}
+            {duplicateNudge}
           </div>
           <div className="flex flex-col gap-[4px]">
             <span className={tokens.labelClass}>Account type</span>

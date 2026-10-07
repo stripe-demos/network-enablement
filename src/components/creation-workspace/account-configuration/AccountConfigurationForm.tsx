@@ -303,6 +303,7 @@ function AccountSelector({
       label="Account"
       placeholder="Find or add an account"
       searchPlaceholder="Search by name, email, or account ID"
+      initialOpen
       items={getNetworkAccountItems(userPath)}
       getSearchText={getNetworkAccountSearchText(userPath)}
       renderOption={(item) => <AccountPickerOption id={item.id} userPath={userPath} />}
@@ -321,9 +322,20 @@ function AccountSelector({
     />
   )
 
+  const identityFields = (
+    <AccountIdentityFields
+      details={details}
+      onChange={onDetailsChange}
+      onUseExisting={onSelectExisting}
+      autoFocus
+    />
+  )
+
   return (
     <section className="flex flex-col gap-[12px]" data-account-selection-style={style}>
-      {style === "source-toggle" ? (
+      {style === "no-picker" ? (
+        source === "existing" && selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : identityFields
+      ) : style === "source-toggle" ? (
         <>
           <div>
             <SegmentedControl
@@ -345,17 +357,14 @@ function AccountSelector({
               {accountPicker}
               {selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : null}
             </>
-          ) : <AccountIdentityFields details={details} onChange={onDetailsChange} onUseExisting={onSelectExisting} autoFocus />}
+          ) : identityFields}
         </>
-      ) : source === "existing" && selectedAccount ? (
-        <SelectedAccountSummary account={selectedAccount} />
       ) : (
-        <AccountIdentityFields
-          details={details}
-          onChange={onDetailsChange}
-          onUseExisting={onSelectExisting}
-          autoFocus
-        />
+        <>
+          {accountPicker}
+          {selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : null}
+          {style === "picker" && source === "new" ? identityFields : null}
+        </>
       )}
 
       <CreationModalShell

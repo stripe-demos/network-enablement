@@ -208,6 +208,30 @@ const FEATURED_METHODS = [
     // additional-KYC state is something the sender walks into by choosing RTP.
     lastDeliveryId: 'standard',
   },
+  {
+    id: 'pm_juniper_bank',
+    routing: '20-00-00',
+    account: '00048291',
+    recipientId: 'acct_juniper',
+    group: 'bank',
+    label: 'Revolut',
+    logo: '/logos/banks/revolut.png',
+    currency: 'GBP',
+    country: 'GB',
+    last4: '8291',
+    badge: 'lastUsed',
+    lastDeliveryId: 'fps',
+  },
+  {
+    id: 'pm_juniper_card',
+    recipientId: 'acct_juniper',
+    group: 'card',
+    label: 'Visa debit',
+    logo: '/logos/banks/visa.png',
+    currency: 'GBP',
+    country: 'GB',
+    last4: '4418',
+  },
 ];
 
 export const PAYOUT_METHODS = [

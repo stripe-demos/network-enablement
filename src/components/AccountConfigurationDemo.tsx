@@ -13,7 +13,7 @@ import type { UserPath } from "@/components/creation-workspace/account-configura
 import { AccountConflictNudgeModeProvider } from "@/components/creation-workspace/accountConflictNudgeMode"
 import { AccountOnboardingStyleProvider, useAccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
 import { AccountPropertiesLayoutProvider } from "@/components/creation-workspace/accountPropertiesLayout"
-import { AccountSelectionStyleProvider } from "@/components/creation-workspace/accountSelectionStyle"
+import { AccountSelectionStyleProvider, useAccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
 import { InputFillProvider } from "@/components/creation-workspace/inputFill"
 import { LayoutSplitProvider } from "@/components/creation-workspace/layoutSplit"
 import { ProductFormStyleProvider } from "@/components/creation-workspace/productFormStyle"
@@ -33,7 +33,9 @@ function DemoExperience({
   const [runKey, setRunKey] = useState(0)
   const [accountCompletion, setAccountCompletion] = useState<AccountConfigurationPayload | null>(null)
   const { accountOnboardingStyle } = useAccountOnboardingStyle()
+  const { accountSelectionStyle } = useAccountSelectionStyle()
   const canLaunch = Boolean(userPath)
+  const headerActionLabel = accountSelectionStyle === "no-picker" ? "Create account" : "Add"
 
   const launch = () => {
     if (!userPath) return
@@ -64,7 +66,7 @@ function DemoExperience({
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M6.7 0.85C6.7 0.380558 6.31944 0 5.85 0C5.38056 0 5 0.380558 5 0.85V5H0.85C0.380558 5 0 5.38056 0 5.85C0 6.31944 0.380558 6.7 0.85 6.7H5V10.85C5 11.3194 5.38056 11.7 5.85 11.7C6.31944 11.7 6.7 11.3194 6.7 10.85V6.7H10.85C11.3194 6.7 11.7 6.31944 11.7 5.85C11.7 5.38056 11.3194 5 10.85 5H6.7V0.85Z" fill="currentColor" />
             </svg>
-            Create account
+            {headerActionLabel}
           </button>
         }
       />

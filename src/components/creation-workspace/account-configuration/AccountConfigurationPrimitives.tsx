@@ -6,6 +6,7 @@ import { useId, useLayoutEffect, useRef, type ReactNode } from "react"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { cn } from "@/lib/utils"
+import CountryTag from "@/send-flow/prototypes/prototype2/ui/CountryTag"
 
 import { type NetworkAccount } from "./model"
 
@@ -161,12 +162,6 @@ export function AccountAvatar({
   )
 }
 
-const COUNTRY_FLAG_SRC: Record<string, string> = {
-  UK: "/flags/gb.svg",
-  US: "/flags/us.svg",
-  CA: "/flags/ca.svg",
-}
-
 export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
   return (
     <span className="flex min-w-0 flex-1 items-center justify-between gap-[10px] py-[2px]">
@@ -179,34 +174,26 @@ export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
   )
 }
 
-const COUNTRY_BADGE_SIZE = {
-  sm: { width: 10, height: 10, gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
-  md: { width: 12, height: 12, gap: "gap-[3px]", label: "text-[10px] font-[600] leading-[14px] text-[#1A2C44]" },
-  default: { width: 14, height: 14, gap: "gap-[4px]", label: "text-[12px] font-[600] leading-[16px] text-[#1A2C44]" },
-  flow: { width: 16, height: 16, gap: "gap-1", label: "text-sail-label-small-emphasized text-ink" },
-} as const
+function countryTagCode(country: string) {
+  if (country === "United Kingdom" || country === "UK" || country === "GB") return "GB"
+  if (country === "United States" || country === "US") return "US"
+  if (country === "Canada" || country === "CA") return "CA"
+  return ""
+}
 
-export function CountryBadge({ country, size = "default" }: { country: string; size?: "default" | "sm" | "md" | "flow" }) {
-  const countryCode = country === "United Kingdom" ? "UK" : country === "United States" ? "US" : country === "Canada" ? "CA" : country
-  if (!countryCode) return null
-  const flagSrc = COUNTRY_FLAG_SRC[countryCode]
-  const badge = COUNTRY_BADGE_SIZE[size]
-
-  return (
-    <span className={`flex shrink-0 items-center ${badge.gap}`}>
-      {flagSrc ? (
-        <Image
-          src={flagSrc}
-          alt=""
-          width={badge.width}
-          height={badge.height}
-          className="shrink-0"
-          style={{ width: badge.width, height: badge.height }}
-        />
-      ) : null}
-      <span className={badge.label}>{countryCode || "—"}</span>
-    </span>
-  )
+export function CountryBadge({
+  country,
+  size = "default",
+  tone,
+}: {
+  country: string
+  size?: "default" | "sm" | "md" | "flow"
+  tone?: "default" | "deep"
+}) {
+  const code = countryTagCode(country)
+  if (!code) return null
+  const onPanel = tone === "deep" || size === "md" || size === "flow"
+  return <CountryTag code={code} size={size === "sm" ? "sm" : "default"} tone={onPanel ? "deep" : "default"} />
 }
 
 export function AccountSummaryCard({
@@ -246,7 +233,7 @@ export function AccountSummaryCard({
           >
             {account.name}
           </p>
-          <CountryBadge country={account.country} size={isFlow ? "flow" : "md"} />
+          <CountryBadge country={account.country} size="sm" tone="deep" />
         </div>
         <p className={isFlow
           ? "text-sail-label-small truncate text-ink-faint"

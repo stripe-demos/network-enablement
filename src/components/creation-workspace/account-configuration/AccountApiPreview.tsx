@@ -5,7 +5,7 @@ import { useReducedMotion } from "framer-motion"
 
 import {
   buildAccountApiLlmPrompt,
-  buildAccountApiResponse,
+  buildAccountApiRequest,
   collapseToSectionRoots,
   collectJsonPaths,
   isAccountApiPreviewEmpty,
@@ -162,7 +162,7 @@ export function AccountApiPreview({
   embedded,
   ...input
 }: AccountApiPreviewInput & { embedded?: boolean }) {
-  const payload = buildAccountApiResponse(input)
+  const payload = buildAccountApiRequest(input)
   const isEmpty = isAccountApiPreviewEmpty(input)
   const serialized = JSON.stringify(payload)
   const [copied, setCopied] = useState(false)
@@ -231,26 +231,17 @@ export function AccountApiPreview({
       ? "flex w-full flex-col"
       : "flex w-full flex-col overflow-hidden rounded-[14px] border border-[#16324F] bg-[#0A2540] shadow-[0_10px_24px_rgba(10,37,64,0.18)]"}
     >
-      <div className="flex h-[40px] shrink-0 items-center justify-between gap-[12px] border-b border-white/10 px-[14px]">
+      <div className="flex h-[40px] shrink-0 items-center border-b border-white/10 px-[14px]">
         <p className="truncate font-mono text-[11px] font-[600] leading-[16px] text-[#C5D4E3]">
-          v2.core.account <span className="font-[500] text-[#7D92A8]">response</span>
+          v2.core.account <span className="font-[500] text-[#7D92A8]">request</span>
         </p>
-        {isEmpty ? null : (
-          <button
-            type="button"
-            className="shrink-0 rounded-[6px] px-[8px] py-[4px] text-[11px] font-[600] leading-[16px] text-[#A3B8CD] transition-colors hover:bg-white/5 hover:text-white"
-            onClick={copyForLlm}
-          >
-            {copied ? "Copied" : "Copy for LLM"}
-          </button>
-        )}
       </div>
       <div className="max-h-[min(520px,calc(100vh-220px))] overflow-auto px-[14px] py-[12px] font-mono text-[11px] leading-[18px] text-[#D7E2EC] [overflow-anchor:none]">
         {isEmpty ? (
           <div>
             <JsonNode value={payload} path="" newPaths={new Set()} leavingPaths={new Set()} />
             <p className="mt-[12px] font-sans text-[12px] leading-[18px] text-[#7D92A8]">
-              Choose an existing account or create a new one to start building this response.
+              Choose an existing account or create a new one to start building this request.
             </p>
           </div>
         ) : (
@@ -261,6 +252,20 @@ export function AccountApiPreview({
             leavingPaths={view.leaving}
             onLeft={handleLeft}
           />
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-[12px] border-t border-white/10 px-[14px] py-[10px]">
+        <p className="min-w-0 font-sans text-[12px] leading-[18px] text-[#7D92A8]">
+          Copy this request for an LLM to help you build it into your integration.
+        </p>
+        {isEmpty ? null : (
+          <button
+            type="button"
+            className="shrink-0 rounded-[6px] px-[8px] py-[4px] text-[11px] font-[600] leading-[16px] text-[#A3B8CD] transition-colors hover:bg-white/5 hover:text-white"
+            onClick={copyForLlm}
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
         )}
       </div>
     </div>

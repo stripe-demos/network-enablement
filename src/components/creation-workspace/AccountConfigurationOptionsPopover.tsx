@@ -30,6 +30,11 @@ const SELECTION_OPTIONS: ReadonlyArray<{
     description: "Create a new account inline from the Account field.",
   },
   {
+    value: "no-picker",
+    label: "No picker",
+    description: "Skip the account field and start a new account form.",
+  },
+  {
     value: "related-modal",
     label: "Modal",
     description: "Create the account in a Simple modal, then return here.",
@@ -105,7 +110,7 @@ const PROPERTIES_LAYOUT_OPTIONS: ReadonlyArray<{
 type PopoverState = "closed" | "open" | "closing"
 
 function optionButtonClass(selected: boolean) {
-  return `rounded-[5px] px-[9px] py-[6px] text-[12px] font-[600] leading-[16px] transition-colors ${
+  return `rounded-[5px] px-[7px] py-[6px] text-[12px] font-[600] leading-[16px] whitespace-nowrap transition-colors ${
     selected
       ? "bg-white text-[#353A44] shadow-[0_1px_2px_rgba(33,37,44,0.14)]"
       : "text-[#68778B] hover:bg-white/60 hover:text-[#353A44]"
@@ -221,7 +226,7 @@ export function AccountConfigurationOptionsPopover() {
 
         <div className="mt-[13px] border-t border-[#EBEEF1] pt-[12px]">
           <p className="text-[11px] font-[600] leading-[16px] text-[#526378]">Account selection</p>
-          <div role="group" aria-label="Account selection" className="mt-[6px] grid grid-cols-3 gap-[2px] rounded-[7px] bg-[#F1F4F7] p-[2px]">
+          <div role="group" aria-label="Account selection" className="mt-[6px] grid grid-cols-4 gap-[2px] rounded-[7px] bg-[#F1F4F7] p-[2px]">
             {SELECTION_OPTIONS.map((option) => {
               const selected = accountSelectionStyle === option.value
               return (

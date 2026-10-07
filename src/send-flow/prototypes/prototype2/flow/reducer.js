@@ -52,7 +52,18 @@ function methodFromNewRecipient(n, recipientId) {
     last4: digits.slice(-4) || '0000',
     badge: null,
     supportedDelivery: deliveryMethodsFor(n.country).map((d) => d.id),
+    routing: n.routing,
+    account: n.account,
+    swift: n.swift,
+    wire: n.wire,
   };
+}
+
+function typedDestinationReady(n) {
+  if (!n.method) return false;
+  return bankFieldsFor(n.country, n.method)
+    .filter((f) => !f.optional && !f.hidden)
+    .every((f) => String(n[f.key] ?? '').trim());
 }
 
 /**
@@ -518,16 +529,26 @@ export function reducer(state, action) {
 
     case 'ADOPT_RECIPIENT': {
       const recipient = action.recipient;
+      const prefills = recipient.methods?.length
+        ? recipient.methods
+        : methodsForRecipient(recipient.id);
+      const typed = typedDestinationReady(state.newRecipient)
+        ? methodFromNewRecipient(state.newRecipient, recipient.id)
+        : null;
+      const methods = typed
+        ? [typed, ...prefills.filter((method) => method.id !== typed.id)]
+        : prefills;
+      const adopted = { ...recipient, methods };
       return {
         ...state,
         addedRecipients: [
-          recipient,
+          adopted,
           ...state.addedRecipients.filter((item) => item.id !== recipient.id),
         ],
         draft: {
           ...state.draft,
-          recipientId: recipient.id,
-          payoutMethodId: recipient.methods?.[0]?.id ?? null,
+          recipientId: adopted.id,
+          payoutMethodId: methods[0]?.id ?? null,
           deliveryMethodId: null,
         },
         cursor: { rail: 'main', stepId: 'payoutMethod' },
