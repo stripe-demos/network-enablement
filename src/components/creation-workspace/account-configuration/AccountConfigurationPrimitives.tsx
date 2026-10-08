@@ -274,12 +274,14 @@ export function DuplicateAccountNudge({
   onUseExisting,
   onDismiss,
   description = "This email matches an existing account in your Network. Continue with it to add configurations instead of creating a duplicate.",
+  actionLabel = "Use existing account",
   size = "default",
 }: {
   account: NetworkAccount
   onUseExisting: () => void
   onDismiss: () => void
   description?: string
+  actionLabel?: string
   size?: "default" | "flow"
 }) {
   const isFlow = size === "flow"
@@ -316,7 +318,7 @@ export function DuplicateAccountNudge({
             : "rounded-[6px] bg-[#675DFF] px-[8px] py-[5px] text-[11px] font-[600] text-white hover:bg-[#5B52F0]"}
           onClick={onUseExisting}
         >
-          Use existing account
+          {actionLabel}
         </button>
       </div>
     </div>

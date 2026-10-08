@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import dynamic from "next/dynamic"
 
 import { AccountConfigurationDemo } from "@/components/AccountConfigurationDemo"
+import { CreateCustomerModal } from "@/components/creation-workspace/CreateCustomerModal"
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
 import { InvoiceCreationEditor } from "@/components/creation-workspace/InvoiceCreationEditor"
 import { InputFillProvider } from "@/components/creation-workspace/inputFill"
@@ -30,12 +31,13 @@ const COMPONENT_COLORS: Record<string, string> = {
 
 const STANDARD_BLOCKS = ["Title and actions", "Form", "Preview"] as const
 
-type DemoKey = "invoice" | "subscription" | "account" | "send"
+type DemoKey = "invoice" | "subscription" | "account" | "singleConfig" | "send"
 
 const DEMO_HASH: Record<DemoKey, string> = {
   invoice: "invoice",
   subscription: "subscription",
   account: "account-creation",
+  singleConfig: "single-config",
   send: "send-money",
 }
 
@@ -48,7 +50,9 @@ function demoFromHash(hash: string): DemoKey | null {
 function demoFromHistoryState(state: unknown): DemoKey | null {
   if (!state || typeof state !== "object" || !("demo" in state)) return null
   const demo = (state as { demo?: unknown }).demo
-  return demo === "invoice" || demo === "subscription" || demo === "account" || demo === "send" ? demo : null
+  return demo === "invoice" || demo === "subscription" || demo === "account" || demo === "singleConfig" || demo === "send"
+    ? demo
+    : null
 }
 
 function FieldWire({
@@ -360,6 +364,7 @@ function StandardDocs() {
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-2.5">
               <ExampleChip label="Account creation" href={`#${DEMO_HASH.account}`} onClick={() => openDemo("account")} />
+              <ExampleChip label="Single config" href={`#${DEMO_HASH.singleConfig}`} onClick={() => openDemo("singleConfig")} />
               <ExampleChip label="Invoice" href={`#${DEMO_HASH.invoice}`} onClick={() => openDemo("invoice")} />
               <ExampleChip label="Subscription" href={`#${DEMO_HASH.subscription}`} onClick={() => openDemo("subscription")} />
               <ExampleChip label="Send money" href={`#${DEMO_HASH.send}`} onClick={() => openDemo("send")} />
@@ -454,6 +459,18 @@ function StandardDocs() {
               exampleLabel="Account creation"
               onExit={goToPreviousPage}
             />
+          </div>
+        ) : null}
+
+        {activeDemo === "singleConfig" ? (
+          <div key="single-config-demo" className="example-ui fixed inset-0 z-[80] bg-white">
+            <ListPageDemo flow="account-configurations" exampleLabel="Single config" ctaLabel="Create customer" onExit={goToPreviousPage}>
+              {({ isOpen, onClose }) => (
+                <FlowProviders>
+                  <CreateCustomerModal isOpen={isOpen} onClose={onClose} />
+                </FlowProviders>
+              )}
+            </ListPageDemo>
           </div>
         ) : null}
 

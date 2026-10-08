@@ -31,7 +31,7 @@ type CustomerFormProps = {
   data: Record<string, any>
   onChange: (data: Record<string, any>) => void
   errorFields?: Set<string>
-  layout?: CustomerFormLayout | "compose"
+  layout?: CustomerFormLayout | "compose" | "single-config"
   onOpenInvoiceEditor?: () => void
   onUseExistingAccount?: (account: NetworkAccount) => void
 }
@@ -172,6 +172,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     <DuplicateAccountNudge
       account={matchingAccount}
       description="This email matches an existing account in your Network. Continue with it instead of creating a duplicate."
+      actionLabel={layout === "single-config" ? "View existing account" : "Use existing account"}
       onUseExisting={() => applyExistingAccount(matchingAccount)}
       onDismiss={() => setDismissedMatchId(matchingAccount.id)}
     />
@@ -648,7 +649,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
 
   const remainingSections = sections.filter(s => s.id !== "account")
 
-  if (layout === "compose") {
+  if (layout === "compose" || layout === "single-config") {
     const billingSection = sections.find((section) => section.id === "billing")
     const taxSection = sections.find((section) => section.id === "tax")
     const shippingSection = sections.find((section) => section.id === "shipping")
@@ -690,6 +691,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       },
     ]
 
+    const isSingleConfig = layout === "single-config"
     const accountType = data.accountType === "Individual" ? "Individual" : "Company"
     const accountEmail = data.accountEmail ?? data.email ?? ""
     const displayName = data.displayName ?? ""
@@ -704,87 +706,109 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       const nextFirst = String(patch.firstName ?? firstName)
       const nextLast = String(patch.lastName ?? lastName)
       const nextEmail = String(patch.accountEmail ?? accountEmail)
-      const name = nextDisplay.trim()
+      const name = (!isSingleConfig && nextDisplay.trim())
         || (nextType === "Individual" ? `${nextFirst} ${nextLast}`.trim() : nextRegistered.trim())
       onChange({ ...patch, email: nextEmail, name })
     }
 
+    const typeField = (
+      <div className="flex flex-col gap-[4px]">
+        <span className={tokens.labelClass}>Account type</span>
+        <SegmentedControl
+          value={accountType}
+          options={ACCOUNT_TYPE_OPTIONS}
+          onChange={(type) => syncIdentity({ accountType: type })}
+          variantOverride="segmented"
+          buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
+        />
+      </div>
+    )
+    const nameField = accountType === "Company" ? (
+      <Field label="Registered name">
+        <input
+          className={ic("name")}
+          placeholder="Example Corp Inc"
+          value={registeredName}
+          onChange={(e) => syncIdentity({ registeredName: e.target.value })}
+        />
+        {errorFields?.has("name") && (
+          <p className="text-[11px] text-[#DF1B41]">Enter a registered name</p>
+        )}
+      </Field>
+    ) : (
+      <Field label="Legal name">
+        <span className="grid gap-[6px]">
+          <input
+            aria-label="First name"
+            className={ic("name")}
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => syncIdentity({ firstName: e.target.value })}
+          />
+          <input
+            aria-label="Last name"
+            className={tokens.inputClass}
+            placeholder="Last name"
+            value={lastName}
+            onChange={(e) => syncIdentity({ lastName: e.target.value })}
+          />
+        </span>
+      </Field>
+    )
+    const emailField = (
+      <div className="flex flex-col gap-[6px]">
+        <Field label="Account email">
+          <input
+            type="email"
+            className={ic("email")}
+            placeholder="email@example.com"
+            value={accountEmail}
+            onChange={(e) => syncIdentity({ accountEmail: e.target.value })}
+          />
+          {errorFields?.has("email") && (
+            <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
+          )}
+        </Field>
+        {duplicateNudge}
+      </div>
+    )
+    const countryField = (
+      <div className="flex flex-col gap-[4px]">
+        <span className={tokens.labelClass}>Country</span>
+        <CountrySelect
+          className={tokens.selectClass}
+          value={accountCountry}
+          onChange={(country) => syncIdentity({ accountCountry: country, country })}
+        />
+      </div>
+    )
+
     return (
       <div className="flex flex-col gap-[16px]">
         <div className="flex flex-col gap-[12px]">
-          <Field label="Display name">
-            <input
-              className={tokens.inputClass}
-              placeholder="Shown on this account"
-              value={displayName}
-              onChange={(e) => syncIdentity({ displayName: e.target.value })}
-            />
-          </Field>
-          <div className="flex flex-col gap-[6px]">
-            <Field label="Account email">
-              <input
-                type="email"
-                className={ic("email")}
-                placeholder="email@example.com"
-                value={accountEmail}
-                onChange={(e) => syncIdentity({ accountEmail: e.target.value })}
-              />
-              {errorFields?.has("email") && (
-                <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
-              )}
-            </Field>
-            {duplicateNudge}
-          </div>
-          <div className="flex flex-col gap-[4px]">
-            <span className={tokens.labelClass}>Account type</span>
-            <SegmentedControl
-              value={accountType}
-              options={ACCOUNT_TYPE_OPTIONS}
-              onChange={(type) => syncIdentity({ accountType: type })}
-              variantOverride="segmented"
-              buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
-            />
-          </div>
-          {accountType === "Company" ? (
-            <Field label="Registered name">
-              <input
-                className={ic("name")}
-                placeholder="Example Corp Inc"
-                value={registeredName}
-                onChange={(e) => syncIdentity({ registeredName: e.target.value })}
-              />
-              {errorFields?.has("name") && (
-                <p className="text-[11px] text-[#DF1B41]">Enter a registered name</p>
-              )}
-            </Field>
+          {isSingleConfig ? (
+            <>
+              {typeField}
+              {nameField}
+              {emailField}
+              {countryField}
+            </>
           ) : (
-            <Field label="Legal name">
-              <span className="grid gap-[6px]">
+            <>
+              <Field label="Display name">
                 <input
-                  aria-label="First name"
-                  className={ic("name")}
-                  placeholder="First name"
-                  value={firstName}
-                  onChange={(e) => syncIdentity({ firstName: e.target.value })}
-                />
-                <input
-                  aria-label="Last name"
                   className={tokens.inputClass}
-                  placeholder="Last name"
-                  value={lastName}
-                  onChange={(e) => syncIdentity({ lastName: e.target.value })}
+                  placeholder="Shown on this account"
+                  value={displayName}
+                  onChange={(e) => syncIdentity({ displayName: e.target.value })}
                 />
-              </span>
-            </Field>
+              </Field>
+              {emailField}
+              {typeField}
+              {nameField}
+              {countryField}
+            </>
           )}
-          <div className="flex flex-col gap-[4px]">
-            <span className={tokens.labelClass}>Country</span>
-            <CountrySelect
-              className={tokens.selectClass}
-              value={accountCountry}
-              onChange={(country) => syncIdentity({ accountCountry: country, country })}
-            />
-          </div>
         </div>
         <div>
           <button
@@ -806,7 +830,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
               showMoreSettings ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
             }`}
           >
-            <div className="min-h-0 overflow-hidden pt-[6px]">
+            <div className="min-h-0 overflow-hidden pt-[12px]">
               <OptionalGroups groups={optionalGroups} hideHeader />
             </div>
           </div>
@@ -909,7 +933,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
         }`}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="flex flex-col gap-[16px] pt-[6px] pb-[8px]">
+          <div className="flex flex-col gap-[16px] pt-[12px] pb-[8px]">
             {/* Additional account fields */}
             <div className="flex flex-col gap-[12px]">
               <Field label="Business name">
