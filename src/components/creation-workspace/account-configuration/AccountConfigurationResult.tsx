@@ -269,14 +269,17 @@ function EmailPreviewShell({
   children: ReactNode
 }) {
   return (
-    <div className="w-full max-w-[440px]" data-email-preview>
+    <div className="w-full max-w-[440px]" data-email-preview role="region" aria-label="Email preview">
       <div className="overflow-hidden rounded-[12px] border border-[#E3E8EF] bg-white shadow-[0_18px_40px_rgba(20,34,52,0.10)]">
         <div className="flex items-center gap-[12px] border-b border-[#F0F3F7] px-[24px] py-[16px]">
           <span className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#6C7688] text-[13px] font-[700] text-white">S</span>
-          <div className="min-w-0 text-[12px] leading-[18px] text-[#596171]">
+          <div className="min-w-0 flex-1 text-[12px] leading-[18px] text-[#596171]">
             <p><span className="text-[#818DA0]">From:</span> Stripe</p>
-            <p><span className="text-[#818DA0]">Subject:</span> {subject}</p>
+            <p className="truncate"><span className="text-[#818DA0]">Subject:</span> {subject}</p>
           </div>
+          <span className="shrink-0 rounded-full bg-[#F0F3F7] px-[8px] py-[2px] text-[11px] font-[500] leading-[16px] text-[#818DA0]">
+            Preview
+          </span>
         </div>
         <div className="px-[24px] pb-[28px] pt-[20px]">{children}</div>
       </div>
@@ -307,7 +310,7 @@ function PayoutDetailsEmailPreview({
           ))}
         </ul>
       </div>
-      <div className="mt-[24px] flex h-[40px] items-center justify-center rounded-[8px] border border-[#D4DEE9] bg-[#F4F6F8] text-[13px] font-[600] text-[#6C7688]">
+      <div className="mt-[24px] flex h-[40px] items-center justify-center rounded-[8px] border border-[#C5CDD6] bg-[#E3E8EF] text-[13px] font-[600] text-[#3C4F69]">
         Add payout details
       </div>
       <p className="mt-[12px] text-center text-[11px] leading-[16px] text-[#818DA0]">This link will expire in 3 days.</p>
@@ -322,10 +325,10 @@ function OnboardingEmailPreview({ to }: { to: string }) {
       <p className="mt-[10px] text-[13px] leading-[20px] text-[#596171]">
         Use the link below to provide any remaining information so this account can start using Stripe.
       </p>
-      <div className="mt-[36px] flex h-[40px] items-center justify-center rounded-[8px] border border-[#D4DEE9] bg-[#F4F6F8] text-[13px] font-[600] text-[#6C7688]">
+      <div className="mt-[36px] flex h-[40px] items-center justify-center rounded-[8px] border border-[#C5CDD6] bg-[#E3E8EF] text-[13px] font-[600] text-[#3C4F69]">
         Continue setup
       </div>
-      <p className="mt-[16px] text-center text-[11px] leading-[16px] text-[#818DA0]">This link will expire in 7 days.</p>
+      <p className="mt-[12px] text-center text-[11px] leading-[16px] text-[#818DA0]">This link will expire in 7 days.</p>
     </EmailPreviewShell>
   )
 }
