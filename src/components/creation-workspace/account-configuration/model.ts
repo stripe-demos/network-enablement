@@ -423,7 +423,7 @@ function clampScore(value: number) {
   return Math.max(0, Math.min(1, value))
 }
 
-function scoreAccountDescription(description: string): Record<ConfigurationKind, number> {
+export function scoreAccountDescription(description: string): Record<ConfigurationKind, number> {
   const text = description.toLowerCase()
   const has = (pattern: RegExp) => pattern.test(text)
 
@@ -434,6 +434,7 @@ function scoreAccountDescription(description: string): Record<ConfigurationKind,
   if (has(/\bsellers?\b/) && has(/\b(payments?|payouts?|store|shop)\b/)) merchant += 0.55
   if (has(/\b(shops?|store)\b/)) merchant += 0.4
   if (has(/\bcard payments?\b/)) merchant += 0.45
+  if (has(/\b(their|its) customers?\s+pay/) || has(/\bcustomers?\s+pay\s+(them|the account|this account|directly)/)) merchant += 0.8
 
   let recipient = 0
   if (has(/\b(payouts?|receives? funds|receive money|transfers?)\b/)) recipient += 0.8
@@ -444,12 +445,14 @@ function scoreAccountDescription(description: string): Record<ConfigurationKind,
 
   let customer = 0
   if (has(/\b(subscriber|subscription|pays us|pays you|make[s]? payments to (you|us)|our customer)\b/)) customer += 0.85
+  if (has(/\b(we|you)\s+charge\s+(them|this account|the account)\b/) || has(/\bcharge[sd]?\s+(them|this account|the account)\s+a\b[\s\S]{0,24}\bfee/)) customer += 0.9
+  if (has(/\b(monthly|platform|listing)\s+fees?\b/) || has(/\bfees?\s+(to|for)\s+(list|listing|using|use)\b/)) customer += 0.8
   if (has(/\bpays? (our|your)\b/)) customer += 0.75
   if (has(/\bbuyer\b/)) customer += 0.6
   if (has(/\bbuys from (us|you)\b/)) customer += 0.8
   if (has(/\binvoice(s|d)? (them|the account|this account)\b/)) customer += 0.6
   if (has(/\bas a customer\b/) && !has(/\binvoices us as a customer\b/)) customer += 0.5
-  if (has(/\bcustomer\b/) && !has(/\bcustomer payments?\b/) && !has(/\binvoices us as a customer\b/)) customer += 0.2
+  if (has(/\bcustomer\b/) && !has(/\b(their|its|the account'?s) customers?\b/) && !has(/\bcustomer payments?\b/) && !has(/\binvoices us as a customer\b/)) customer += 0.2
 
   return {
     customer: clampScore(customer),
@@ -472,8 +475,8 @@ export type ClassificationHighlight = {
 }
 
 const FILLER_WORD = /^(a|an|the|and|or|but|then|maybe|also|just|basically|that|this|these|those|them|their|they|can|could|would|should|will|to|of|in|on|at|by|for|with|from|some|any|able|be|been|being|do|does|did|so|as|if|than|too|very|more|most|such|into|over|after|before|about)$/i
-const EVIDENCE_PHRASE = /\b(?:(?:accepts?|accepting|receives?|receiving)\s+(?:some\s+)?(?:funds|payments?|money|payouts?)|(?:pay|pays|paid|paying)\s+out(?:\s+(?:those|these|the|to)\s+\w+)?|end customers?|card payments?|invoices us|pays us|buys from (?:us|you))\b/gi
-const SIGNAL_WORD = /\b(contractors?|freelancers?|vendors?|suppliers?|payouts?|transfers?|invoices?|subscribers?|subscriptions?|buyers?|merchants?|sellers?|storefronts?|shopify|marketplaces?|shoppers?|shops?|stores?|payments?|customers?|memberships?|earnings?|funds|money)\b/gi
+const EVIDENCE_PHRASE = /\b(?:(?:accepts?|accepting|receives?|receiving)\s+(?:some\s+)?(?:funds|payments?|money|payouts?)|(?:pay|pays|paid|paying)\s+out(?:\s+(?:those|these|the|to)\s+\w+)?|end customers?|card payments?|invoices us|pays us|buys from (?:us|you)|(?:we|you)\s+charge\s+(?:them|this account|the account)|charge[sd]?\s+(?:them|this account|the account)\s+a(?:\s+\w+){0,4}\s+fees?|(?:monthly|platform|listing)\s+fees?)\b/gi
+const SIGNAL_WORD = /\b(contractors?|freelancers?|vendors?|suppliers?|payouts?|transfers?|invoices?|subscribers?|subscriptions?|buyers?|merchants?|sellers?|storefronts?|shopify|marketplaces?|shoppers?|shops?|stores?|payments?|customers?|memberships?|earnings?|funds|money|fees?|charged?)\b/gi
 
 function nextWordStart(text: string, index: number) {
   let edge = index
@@ -569,9 +572,9 @@ export function extractCandidateSpans(description: string) {
     const start = expandSpanLeft(description, match.index, 1)
     const end = expandSpanRight(description, match.index + match[0].length, 1)
     add(start, end)
-    if (spans.length >= 8) break
+    if (spans.length >= 12) break
   }
-  return spans.slice(0, 8)
+  return spans.slice(0, 12)
 }
 
 export function resolveHighlightOverlaps(highlights: ClassificationHighlight[]) {

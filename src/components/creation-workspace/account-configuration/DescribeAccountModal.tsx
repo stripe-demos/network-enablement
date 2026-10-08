@@ -242,7 +242,7 @@ export function DescribeAccountModal({
       title={step === "recommend" ? "Recommended configurations" : "Tell us about this account"}
       subtitle={step === "recommend"
         ? "Based on your description, here’s what we recommend."
-        : "Describe what they do, then continue to see recommended configurations."}
+        : "Describe how this account uses your platform and how money moves between you."}
       modalWidth="w-[560px]"
       headerActions={
         <button
@@ -349,7 +349,7 @@ export function DescribeAccountModal({
                 }`}
                 placeholder={userPath === "direct"
                   ? "Create an account for a contractor who invoices us as a customer and receives payouts."
-                  : "Create an account for a seller who accepts customer payments, invoices us, and receives payouts."}
+                  : "This account sells gym memberships through our platform and gets paid directly by their customers. We charge them a fee for using our platform."}
                 value={description}
                 readOnly={isRecording}
                 aria-live={isRecording ? "polite" : undefined}
