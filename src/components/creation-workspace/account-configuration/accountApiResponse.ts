@@ -156,23 +156,6 @@ export function buildAccountApiRequest(input: AccountApiPreviewInput) {
         : getCapabilitiesForGroup(kind, effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities)
       configuration[kind] = configurationRequest(kind, groupCapabilities)
     })
-    const otherCapabilities = getCapabilitiesForGroup(
-      "other",
-      effectiveConfigurations,
-      details.disabledCapabilities,
-      details.additionalCapabilities,
-    )
-    if (otherCapabilities.length > 0) {
-      const host = effectiveConfigurations.includes("merchant")
-        ? "merchant"
-        : effectiveConfigurations.includes("recipient")
-          ? "recipient"
-          : "customer"
-      const hostBlock = (configuration[host] as Record<string, unknown>) ?? {}
-      const hostCapabilities = (hostBlock.capabilities as Record<string, unknown> | undefined) ?? {}
-      otherCapabilities.forEach((name) => requestCapability(hostCapabilities, name))
-      configuration[host] = { ...hostBlock, capabilities: hostCapabilities }
-    }
     request.configuration = configuration
   }
 

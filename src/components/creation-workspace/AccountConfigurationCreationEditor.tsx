@@ -58,6 +58,7 @@ export function AccountConfigurationCreationEditor({
   const [selectedAccount, setSelectedAccount] = useState<NetworkAccount | null>(null)
   const [details, setDetails] = useState<AccountDetailsDraft>(INITIAL_ACCOUNT_DETAILS)
   const [configurations, setConfigurations] = useState<ConfigurationKind[]>([])
+  const [capabilityGroup, setCapabilityGroup] = useState<"merchant" | "recipient" | null>(null)
   const [completedPayload, setCompletedPayload] = useState<AccountConfigurationPayload | null>(null)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
@@ -66,6 +67,11 @@ export function AccountConfigurationCreationEditor({
   }
 
   useEffect(() => {
+    if (!isOpen) setCapabilityGroup(null)
+  }, [isOpen])
+
+  useEffect(() => {
+    setCapabilityGroup(null)
     if (accountSelectionStyle === "no-picker") {
       setSource("new")
       setSelectedAccount(null)
@@ -110,6 +116,7 @@ export function AccountConfigurationCreationEditor({
     setSelectedAccount(null)
     setDetails(INITIAL_ACCOUNT_DETAILS)
     setConfigurations([])
+    setCapabilityGroup(null)
   }
 
   const accountReady = source === "existing" ? Boolean(selectedAccount) : isNewAccountIdentityValid(details)
@@ -220,6 +227,8 @@ export function AccountConfigurationCreationEditor({
 
   const noPicker = accountSelectionStyle === "no-picker"
   const creatingWithoutPicker = noPicker && source === "new"
+  const parentTitle = creatingWithoutPicker ? "Create account" : "Add configurations"
+  const capabilityTitle = capabilityGroup === "merchant" ? "Merchant capabilities" : capabilityGroup === "recipient" ? "Recipient capabilities" : null
   const submitLabel = "Save"
 
   return (
@@ -231,7 +240,9 @@ export function AccountConfigurationCreationEditor({
       skipEnterAnimation
       header={
         <SimpleCreationHeader
-          title={creatingWithoutPicker ? "Create account" : "Add configurations"}
+          title={capabilityTitle ?? parentTitle}
+          parentLabel={capabilityTitle ? parentTitle : undefined}
+          onNavigateToParent={capabilityTitle ? () => setCapabilityGroup(null) : undefined}
           onDiscard={requestDiscard}
           onSubmit={handleSubmit}
           submitLabel={submitLabel}
@@ -267,6 +278,8 @@ export function AccountConfigurationCreationEditor({
           onSelectExisting={selectExistingAccount}
           onDetailsChange={updateDetails}
           onConfigurationsChange={setConfigurations}
+          capabilityGroup={capabilityGroup}
+          onOpenCapabilities={setCapabilityGroup}
         />
       }
       preview={

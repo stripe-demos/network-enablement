@@ -149,7 +149,7 @@ export type CapabilityItem = {
 }
 
 export type CapabilityGroup = {
-  id: "merchant" | "recipient" | "other"
+  id: "merchant" | "recipient"
   title: string
   items: CapabilityItem[]
 }
@@ -197,20 +197,6 @@ export const CAPABILITY_GROUPS: CapabilityGroup[] = [
     items: [
       { name: "Transfers", required: true },
       { name: "Payouts", required: true },
-    ],
-  },
-  {
-    id: "other",
-    title: "Other capabilities",
-    items: [
-      { name: "Bizum payments" },
-      { name: "MB WAY payments" },
-      { name: "Pix payments" },
-      { name: "Satispay payments" },
-      { name: "Scalapay payments" },
-      { name: "Pay with Stripe balance" },
-      { name: "Tax reporting (US 1099-K)" },
-      { name: "Tax reporting (US 1099-MISC)" },
     ],
   },
 ]

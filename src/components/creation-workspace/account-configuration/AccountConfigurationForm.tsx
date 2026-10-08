@@ -8,6 +8,7 @@ import { SegmentedControl } from "@/components/SegmentedControl"
 import { CreationModalShell } from "@/components/creation-workspace/CreationModalShell"
 import { EntityDropdown } from "@/components/creation-workspace/forms/EntityDropdown"
 import { Checkbox } from "@/components/creation-workspace/forms/shared/Checkbox"
+import { ChevronIcon } from "@/components/creation-workspace/forms/shared/CustomSelect"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { cn } from "@/lib/utils"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
@@ -36,6 +37,7 @@ import {
   PAYOUT_METHODS,
   findMatchingNetworkAccount,
   getCapabilities,
+  getCapabilitiesForGroup,
   getAccountRoles,
   getConfigurationOptions,
   getDisplayedNetworkAccount,
@@ -45,9 +47,6 @@ import {
   type AccountSource,
   type ConfigurationKind,
   type ConfigurationOption,
-  type DashboardAccess,
-  type FeePayer,
-  type NegativeBalanceLiability,
   type NetworkAccount,
   type PayoutMethod,
   type PayoutMethodDetailDraft,
@@ -135,14 +134,6 @@ export function FieldHint({ label, children }: { label: string; children: string
   )
 }
 
-function PropertyLabel({ label, hint }: { label: string; hint: string }) {
-  return (
-    <div className="flex items-center gap-[6px]">
-      <p className="text-[12px] font-[400] leading-[16px] text-[#273951]">{label}</p>
-      <FieldHint label={label}>{hint}</FieldHint>
-    </div>
-  )
-}
 function getNetworkAccounts(userPath?: UserPath) {
   return NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, userPath))
 }
@@ -419,41 +410,55 @@ function ConfigurationRow({
   option,
   checked,
   locked,
+  capabilityCount,
   onToggle,
+  onOpen,
 }: {
   option: ConfigurationOption
   checked: boolean
   locked?: boolean
+  capabilityCount?: number
   onToggle?: () => void
+  onOpen?: () => void
 }) {
+  const canOpen = Boolean(onOpen) && (checked || locked)
+  const capabilityLabel = typeof capabilityCount === "number"
+    ? `${capabilityCount} ${capabilityCount === 1 ? "capability" : "capabilities"}`
+    : null
+  const detail = canOpen && capabilityLabel
+    ? `${option.relationship} · ${capabilityLabel}`
+    : option.relationship
+  const open = () => {
+    if (canOpen) onOpen?.()
+    else if (!locked) onToggle?.()
+  }
+
   return (
     <div
       data-configuration={option.id}
       data-selected={checked ? "true" : "false"}
       data-existing={locked ? "true" : "false"}
-      className={`flex min-h-[48px] items-center gap-[9px] px-[11px] py-[9px] ${
+      className={`flex min-h-[48px] items-start gap-[9px] px-[11px] py-[9px] ${
         locked ? "bg-[#F8FAFB]" : checked ? "bg-[#F8F7FF]" : "hover:bg-[#F8FAFB]"
       }`}
     >
       <Checkbox
         checked={checked}
         label={locked ? `${option.title} is on this account` : checked ? `Remove ${option.title} configuration` : `Add ${option.title} configuration`}
-        className={locked ? "pointer-events-none opacity-55" : undefined}
+        className={`mt-[1px] ${locked ? "pointer-events-none opacity-55" : ""}`}
         onChange={() => {
           if (!locked) onToggle?.()
         }}
       />
-      {locked ? (
-        <div className="flex min-w-0 flex-1 items-center justify-between gap-[12px]">
-          <span className="text-[12px] font-[600] leading-[16px] text-[#596171]">{option.title}</span>
-          <span className="shrink-0 whitespace-nowrap text-right text-[11px] leading-[16px] text-[#6C7688]">{option.relationship}</span>
-        </div>
-      ) : (
-        <button type="button" className="flex min-w-0 flex-1 items-center justify-between gap-[12px] text-left" onClick={onToggle}>
-          <span className={`text-[12px] font-[600] leading-[16px] ${checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
-          <span className="shrink-0 whitespace-nowrap text-right text-[11px] leading-[16px] text-[#6C7688]">{option.relationship}</span>
-        </button>
-      )}
+      <button type="button" className="flex min-w-0 flex-1 items-center gap-[8px] text-left" onClick={open} disabled={locked && !canOpen}>
+        <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
+          <span className={`text-[12px] font-[600] leading-[16px] ${locked ? "text-[#596171]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
+          <span className="text-[11px] leading-[16px] text-[#6C7688]">{detail}</span>
+        </span>
+        {canOpen ? (
+          <ChevronIcon className="h-[12px] w-[12px] shrink-0 -rotate-90" />
+        ) : null}
+      </button>
     </div>
   )
 }
@@ -462,12 +467,16 @@ function ConfigurationPicker({
   selected,
   existing,
   userPath,
+  capabilityCounts,
   onChange,
+  onOpenCapabilities,
 }: {
   selected: ConfigurationKind[]
   existing: ConfigurationKind[]
   userPath?: UserPath
+  capabilityCounts: Partial<Record<"merchant" | "recipient", number>>
   onChange: (next: ConfigurationKind[]) => void
+  onOpenCapabilities: (id: "merchant" | "recipient") => void
 }) {
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
@@ -478,6 +487,7 @@ function ConfigurationPicker({
   const toggle = (option: ConfigurationOption) => {
     onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])
   }
+  const canOpen = (id: ConfigurationKind): id is "merchant" | "recipient" => id === "merchant" || id === "recipient"
 
   return (
     <section className="flex flex-col gap-[12px]" data-configuration-picker>
@@ -496,7 +506,14 @@ function ConfigurationPicker({
           <HoverTip text="You can deactivate configurations from the account details page.">
             <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
               {existingOptions.map((option) => (
-                <ConfigurationRow key={option.id} option={option} checked locked />
+                <ConfigurationRow
+                  key={option.id}
+                  option={option}
+                  checked
+                  locked
+                  capabilityCount={canOpen(option.id) ? capabilityCounts[option.id] : undefined}
+                  onOpen={canOpen(option.id) ? () => onOpenCapabilities(option.id) : undefined}
+                />
               ))}
             </div>
           </HoverTip>
@@ -513,7 +530,9 @@ function ConfigurationPicker({
                 key={option.id}
                 option={option}
                 checked={selected.includes(option.id)}
+                capabilityCount={canOpen(option.id) ? capabilityCounts[option.id] : undefined}
                 onToggle={() => toggle(option)}
+                onOpen={canOpen(option.id) ? () => onOpenCapabilities(option.id) : undefined}
               />
             ))}
           </div>
@@ -948,19 +967,21 @@ function CapabilitiesEditor({
   configurations,
   details,
   onChange,
+  groupId,
 }: {
   configurations: ConfigurationKind[]
   details: AccountDetailsDraft
   onChange: (patch: Partial<AccountDetailsDraft>) => void
+  groupId: "merchant" | "recipient"
 }) {
   const [query, setQuery] = useState("")
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([groupId])
   const { productFormStyle } = useProductFormStyle()
   const { inputFill } = useInputFill()
   const tokens = getFormTokens(productFormStyle, { filled: inputFill })
   const requested = new Set(getCapabilities(configurations, details.disabledCapabilities, details.additionalCapabilities))
   const normalizedQuery = query.trim().toLowerCase()
-  const visibleGroups = CAPABILITY_GROUPS.filter((group) => group.id === "other" || configurations.includes(group.id))
+  const visibleGroups = CAPABILITY_GROUPS.filter((group) => group.id === groupId)
   const previewLimit = 6
 
   const isChecked = (name: string) => requested.has(name)
@@ -1003,7 +1024,6 @@ function CapabilitiesEditor({
 
   return (
     <div className="flex flex-col gap-[12px]">
-      <p className="text-[11px] leading-[16px] text-[#6C7688]">Select which capabilities to request for this account.</p>
       <input
         className={tokens.inputClass}
         placeholder="Search capabilities"
@@ -1022,7 +1042,7 @@ function CapabilitiesEditor({
           return (
             <div key={group.id}>
               <div className="mb-[8px] flex items-center justify-between gap-[8px]">
-                <p className="text-[12px] font-[600] leading-[16px] text-[#273951]">{group.title}</p>
+                <p className="text-[12px] font-[600] leading-[16px] text-[#273951]">{group.id === groupId ? "Capabilities" : group.title}</p>
                 {optional.length > 0 ? (
                   <button
                     type="button"
@@ -1066,122 +1086,28 @@ function CapabilitiesEditor({
   )
 }
 
-function CapabilitiesSection({ configurations, details, onChange }: { configurations: ConfigurationKind[]; details: AccountDetailsDraft; onChange: (patch: Partial<AccountDetailsDraft>) => void }) {
-  const [open, setOpen] = useState(false)
-  const enabledCapabilities = getCapabilities(configurations, details.disabledCapabilities, details.additionalCapabilities)
-  const capabilitySummary = enabledCapabilities.length <= 2
-    ? enabledCapabilities.join(", ") || "None"
-    : `${enabledCapabilities.slice(0, 2).join(", ")} · +${enabledCapabilities.length - 2} more`
+function ConfigurationCapabilitiesPage({
+  groupId,
+  configurations,
+  details,
+  onChange,
+}: {
+  groupId: "merchant" | "recipient"
+  configurations: ConfigurationKind[]
+  details: AccountDetailsDraft
+  onChange: (patch: Partial<AccountDetailsDraft>) => void
+}) {
+  const title = groupId === "merchant" ? "Merchant capabilities" : "Recipient capabilities"
+  const helper = "Select all the capabilities you want to enable. We’ve pre-filled some for you based on your onboarding preferences and country."
 
   return (
-    <ReviewRow title="Capabilities" summary={capabilitySummary} open={open} onToggle={() => setOpen((current) => !current)}>
-      <CapabilitiesEditor configurations={configurations} details={details} onChange={onChange} />
-    </ReviewRow>
-  )
-}
-
-function MoreDetailsSection({ configurations, details, onChange }: { configurations: ConfigurationKind[]; details: AccountDetailsDraft; onChange: (patch: Partial<AccountDetailsDraft>) => void }) {
-  const [expanded, setExpanded] = useState(false)
-  const [openRow, setOpenRow] = useState<"properties" | null>(null)
-  const { productFormStyle } = useProductFormStyle()
-  const tokens = getFormTokens(productFormStyle)
-  const traitSummary = [
-    details.traits.feePayer === "platform" ? "Platform pays fees" : "Account pays fees",
-    details.traits.negativeBalanceLiability === "stripe" ? "Stripe covers negative balances" : "Platform covers negative balances",
-    details.traits.dashboardAccess === "stripe" ? "Stripe dashboard" : details.traits.dashboardAccess === "express" ? "Express dashboard" : "No dashboard",
-  ].join(" · ")
-  const propertiesEditor = (
-    <div className="flex flex-col gap-[16px]">
-      <div className="flex flex-col gap-[6px]">
-        <PropertyLabel label="Who pays Stripe fees" hint="Choose whether this account or your platform is charged Stripe’s processing fees." />
-        <SelectControl
-          className={tokens.selectClass}
-          value={details.traits.feePayer}
-          onChange={(feePayer) => onChange({ traits: { ...details.traits, feePayer: feePayer as FeePayer } })}
-        >
-          <option value="connected-account">This account</option>
-          <option value="platform">Your platform</option>
-        </SelectControl>
-        <div className="mt-[4px] flex items-center gap-[8px]">
-          <Checkbox
-            checked={details.traits.useLegacyFeeType}
-            label="Use legacy fee type"
-            onChange={(useLegacyFeeType) => onChange({ traits: { ...details.traits, useLegacyFeeType } })}
-          />
-          <span className="text-[12px] leading-[16px] text-[#273951]">Use legacy fee type</span>
-        </div>
+    <div className="flex flex-col gap-[16px] pb-[64px]">
+      <div>
+        <h3 className="truncate text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#1A2C44]">{title}</h3>
+        <p className="mt-[6px] text-[11px] leading-[16px] text-[#6C7688]">{helper}</p>
       </div>
-      <div className="flex flex-col gap-[6px]">
-        <PropertyLabel label="Negative balance liability" hint="Choose who is responsible if this account’s balance goes negative." />
-        <SelectControl
-          className={tokens.selectClass}
-          value={details.traits.negativeBalanceLiability}
-          onChange={(negativeBalanceLiability) => onChange({ traits: { ...details.traits, negativeBalanceLiability: negativeBalanceLiability as NegativeBalanceLiability } })}
-        >
-          <option value="stripe">Stripe</option>
-          <option value="platform">Platform</option>
-        </SelectControl>
-      </div>
-      <div className="flex flex-col gap-[6px]">
-        <PropertyLabel label="Dashboard access" hint="Choose whether this account can use the full Stripe Dashboard, Express, or no dashboard." />
-        <SelectControl
-          className={tokens.selectClass}
-          value={details.traits.dashboardAccess}
-          onChange={(dashboardAccess) => onChange({ traits: { ...details.traits, dashboardAccess: dashboardAccess as DashboardAccess } })}
-        >
-          <option value="stripe">Stripe</option>
-          <option value="express">Express</option>
-          <option value="none">None</option>
-        </SelectControl>
-      </div>
-      <div className="flex flex-col gap-[6px]">
-        <PropertyLabel label="Requirement collection" hint="Stripe collects identity and compliance information for this account. This can’t be changed." />
-        <div className="flex h-[30px] items-center rounded-[6px] border border-[#D8DEE4] bg-[#F4F7FA] px-[10px] text-[12px] font-[500] leading-[16px] text-[#596171]">
-          Stripe
-        </div>
-      </div>
+      <CapabilitiesEditor groupId={groupId} configurations={configurations} details={details} onChange={onChange} />
     </div>
-  )
-
-  const showProperties = configurations.includes("merchant")
-  const showCapabilities = configurations.includes("merchant") || configurations.includes("recipient")
-
-  return (
-    <section className="flex flex-col">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between text-left"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((current) => !current)}
-      >
-        <h3 className={tokens.sectionTitle}>More settings</h3>
-        <svg
-          className={`shrink-0 text-[#6C7688] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${expanded ? "rotate-180" : ""}`}
-          width="10"
-          height="10"
-          viewBox="0 0 16 16"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      <motion.div
-        initial={false}
-        animate={expanded ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className={expanded ? "overflow-visible" : "overflow-hidden"}
-      >
-        <div className="flex flex-col gap-[7px] pt-[12px]">
-          {showProperties ? (
-            <ReviewRow title="Account properties" summary={traitSummary} open={openRow === "properties"} onToggle={() => setOpenRow(openRow === "properties" ? null : "properties")}>
-              {propertiesEditor}
-            </ReviewRow>
-          ) : null}
-          {showCapabilities ? <CapabilitiesSection configurations={configurations} details={details} onChange={onChange} /> : null}
-        </div>
-      </motion.div>
-    </section>
   )
 }
 
@@ -1221,6 +1147,7 @@ export function AccountConfigurationForm({
   configurations,
   existingConfigurations,
   userPath,
+  capabilityGroup,
   onChooseExisting,
   onPrepareNew,
   onChooseNew,
@@ -1228,6 +1155,7 @@ export function AccountConfigurationForm({
   onSelectExisting,
   onDetailsChange,
   onConfigurationsChange,
+  onOpenCapabilities,
 }: {
   selectionStyle: AccountSelectionStyle
   onboardingStyle: AccountOnboardingStyle
@@ -1237,6 +1165,7 @@ export function AccountConfigurationForm({
   configurations: ConfigurationKind[]
   existingConfigurations: ConfigurationKind[]
   userPath?: UserPath
+  capabilityGroup: "merchant" | "recipient" | null
   onChooseExisting: () => void
   onPrepareNew: () => void
   onChooseNew: () => void
@@ -1244,8 +1173,25 @@ export function AccountConfigurationForm({
   onSelectExisting: (account: NetworkAccount) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
   onConfigurationsChange: (next: ConfigurationKind[]) => void
+  onOpenCapabilities: (group: "merchant" | "recipient" | null) => void
 }) {
   const canConfigure = source === "new" || Boolean(selectedAccountId)
+  const effectiveConfigurations = Array.from(new Set([...existingConfigurations, ...configurations]))
+  const capabilityCounts = {
+    merchant: getCapabilitiesForGroup("merchant", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities).length,
+    recipient: getCapabilitiesForGroup("recipient", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities).length,
+  }
+
+  if (capabilityGroup) {
+    return (
+      <ConfigurationCapabilitiesPage
+        groupId={capabilityGroup}
+        configurations={effectiveConfigurations}
+        details={details}
+        onChange={onDetailsChange}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col gap-[18px] pb-[64px]">
@@ -1267,14 +1213,13 @@ export function AccountConfigurationForm({
           selected={configurations}
           existing={existingConfigurations}
           userPath={userPath}
+          capabilityCounts={capabilityCounts}
           onChange={onConfigurationsChange}
+          onOpenCapabilities={onOpenCapabilities}
         />
       ) : null}
       {configurations.includes("customer") ? <CustomerDetailsSection details={details} onChange={onDetailsChange} /> : null}
       {configurations.includes("recipient") ? <PayoutInformationSection configurations={configurations} existingConfigurations={existingConfigurations} details={details} userPath={userPath} onChange={onDetailsChange} /> : null}
-      {userPath !== "direct" && (configurations.includes("merchant") || configurations.includes("recipient")) ? (
-        <MoreDetailsSection configurations={configurations} details={details} onChange={onDetailsChange} />
-      ) : null}
       {source === "new" && configurations.length > 0 && onboardingStyle === "pre-save" ? <OnboardingSection details={details} onChange={onDetailsChange} /> : null}
     </div>
   )

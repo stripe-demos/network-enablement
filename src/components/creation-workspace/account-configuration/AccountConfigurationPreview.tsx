@@ -292,8 +292,7 @@ export function AccountConfigurationPreview({
     ...configurations,
   ]))
   const listedOptions = getConfigurationOptions(userPath)
-  const otherCapabilities = getCapabilitiesForGroup("other", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities)
-  const hasGroups = listedOptions.some((option) => effectiveConfigurations.includes(option.id)) || otherCapabilities.length > 0
+  const hasGroups = listedOptions.some((option) => effectiveConfigurations.includes(option.id))
   const lastSelectedId = [...listedOptions].reverse().find((option) => effectiveConfigurations.includes(option.id))?.id
   const [previewMode, setPreviewMode] = useState<"dashboard" | "api">("dashboard")
   const existingKey = existingConfigurations.join(",")
@@ -301,44 +300,33 @@ export function AccountConfigurationPreview({
     .filter((option) => effectiveConfigurations.includes(option.id))
     .map((option) => option.id)
   const selectedConfigKey = selectedConfigIds.join(",")
-  const hasOther = otherCapabilities.length > 0
-  const [expandedIds, setExpandedIds] = useState<string[]>(() => [
-    ...existingConfigurations,
-    ...(otherCapabilities.length > 0 ? ["other"] : []),
-  ])
+  const [expandedIds, setExpandedIds] = useState<string[]>(() => [...existingConfigurations])
   const previewAccountKey = `${source}:${account.id}`
   const selectionRef = useRef({
     accountKey: previewAccountKey,
     ids: existingConfigurations,
-    hasOther,
   })
 
   useLayoutEffect(() => {
     const previous = selectionRef.current
     const accountChanged = previous.accountKey !== previewAccountKey
     const added = selectedConfigIds.filter((id) => !previous.ids.includes(id))
-    const otherAppeared = hasOther && !previous.hasOther
     selectionRef.current = {
       accountKey: previewAccountKey,
       ids: selectedConfigIds,
-      hasOther,
     }
 
     if (accountChanged) {
-      setExpandedIds([
-        ...existingKey.split(",").filter(Boolean),
-        ...(hasOther ? ["other"] : []),
-      ])
+      setExpandedIds(existingKey.split(",").filter(Boolean))
       return
     }
 
-    if (added.length === 0 && !otherAppeared) return
+    if (added.length === 0) return
     setExpandedIds((current) => Array.from(new Set([
       ...current,
       ...added,
-      ...(otherAppeared ? ["other"] : []),
     ])))
-  }, [existingKey, hasOther, previewAccountKey, selectedConfigKey])
+  }, [existingKey, previewAccountKey, selectedConfigKey])
 
   return (
     <div className="relative flex h-full w-full flex-col" data-configuration-preview data-preview-mode={previewMode}>
@@ -397,7 +385,7 @@ export function AccountConfigurationPreview({
                 const capabilities = option.id === "customer"
                   ? []
                   : getCapabilitiesForGroup(option.id, effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities)
-                const isLast = otherCapabilities.length === 0 && option.id === lastSelectedId
+                const isLast = option.id === lastSelectedId
                 return (
                   <Expand key={option.id} open={selected}>
                     <div className={isLast ? undefined : "pb-[14px]"}>
@@ -417,20 +405,6 @@ export function AccountConfigurationPreview({
                   </Expand>
                 )
               })}
-              <Expand open={otherCapabilities.length > 0}>
-                <ConfigurationCapabilityGroup
-                  id="other"
-                  title="Other"
-                  capabilities={otherCapabilities}
-                  expanded={expandedIds.includes("other")}
-                  onToggle={() => setExpandedIds((current) => (
-                    current.includes("other")
-                      ? current.filter((id) => id !== "other")
-                      : [...current, "other"]
-                  ))}
-                  collapsible
-                />
-              </Expand>
             </div>
           </div>
         </div>

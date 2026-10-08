@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 
 const { LayoutGroup } = require("framer-motion") as { LayoutGroup: React.ComponentType<{ children: React.ReactNode }> }
+import { ChevronRightIcon } from "@/components/ProductCatalogIcons"
 import type { NavLayoutMode } from "@/components/creation-workspace/navLayoutMode"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
@@ -22,6 +23,9 @@ type ObjectTab = {
 
 type SimpleCreationHeaderProps = {
   title: string
+  /** Parent crumb shown before `title` when drilled into a nested page. */
+  parentLabel?: string
+  onNavigateToParent?: () => void
   onDiscard: () => void
   onSubmit: () => void
   submitLabel: string
@@ -89,6 +93,8 @@ function AddObjectPopover({
 
 export function SimpleCreationHeader({
   title,
+  parentLabel,
+  onNavigateToParent,
   onDiscard,
   onSubmit,
   submitLabel,
@@ -235,6 +241,20 @@ export function SimpleCreationHeader({
                   </motion.button>
                 )
               })
+            ) : parentLabel ? (
+              <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-[6px]">
+                <button
+                  type="button"
+                  className={`min-w-0 truncate ${isRefresh ? "text-[15px] font-[500] leading-[20px] tracking-[-0.15px] text-[#667691] hover:text-[#142234]" : isSail ? "text-[15px] font-[500] leading-[20px] tracking-[-0.15px] text-[#667691] hover:text-[#1A2C44]" : "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#667691] hover:text-[#1A2C44]"}`}
+                  onClick={onNavigateToParent}
+                >
+                  {parentLabel}
+                </button>
+                <ChevronRightIcon className="h-[9px] w-[6px] shrink-0 text-[#C1CCD7]" />
+                <span className={`min-w-0 truncate ${isRefresh ? "text-[15px] font-[675] leading-[20px] tracking-[-0.15px] text-[#142234]" : isSail ? "text-[15px] font-[600] leading-[20px] tracking-[-0.15px] text-[#1A2C44]" : "text-[14px] font-[600] leading-[20px] tracking-[-0.15px] text-[#1A2C44]"}`}>
+                  {displayTitle}
+                </span>
+              </nav>
             ) : (
               <span className="relative block min-w-0 overflow-hidden [perspective:220px]">
                 <span
