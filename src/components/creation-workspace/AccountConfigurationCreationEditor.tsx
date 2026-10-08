@@ -105,6 +105,13 @@ export function AccountConfigurationCreationEditor({
     setSource("new")
   }
 
+  const clearSelectedAccount = () => {
+    setSource("new")
+    setSelectedAccount(null)
+    setDetails(INITIAL_ACCOUNT_DETAILS)
+    setConfigurations([])
+  }
+
   const accountReady = source === "existing" ? Boolean(selectedAccount) : isNewAccountIdentityValid(details)
   const onboardingEmailReady = source !== "new"
     || accountOnboardingStyle !== "pre-save"
@@ -256,6 +263,7 @@ export function AccountConfigurationCreationEditor({
           onChooseExisting={chooseExisting}
           onPrepareNew={prepareNew}
           onChooseNew={chooseNew}
+          onClearSelected={clearSelectedAccount}
           onSelectExisting={selectExistingAccount}
           onDetailsChange={updateDetails}
           onConfigurationsChange={setConfigurations}

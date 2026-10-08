@@ -255,10 +255,15 @@ function AccountIdentityFields({
   )
 }
 
-function SelectedAccountSummary({ account }: { account: NetworkAccount }) {
+function SelectedAccountSummary({ account, onChange }: { account: NetworkAccount; onChange?: () => void }) {
   return (
     <div data-selected-account-summary>
-      <AccountSummaryCard account={account} />
+      <AccountSummaryCard
+        account={account}
+        actionLabel={onChange ? "Remove" : undefined}
+        onAction={onChange}
+        revealActionOnHover
+      />
     </div>
   )
 }
@@ -272,6 +277,7 @@ function AccountSelector({
   onChooseExisting,
   onPrepareNew,
   onChooseNew,
+  onClearSelected,
   onSelectExisting,
   onDetailsChange,
 }: {
@@ -283,6 +289,7 @@ function AccountSelector({
   onChooseExisting: () => void
   onPrepareNew: () => void
   onChooseNew: () => void
+  onClearSelected?: () => void
   onSelectExisting: (account: NetworkAccount) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
 }) {
@@ -337,7 +344,12 @@ function AccountSelector({
   return (
     <section className="flex flex-col gap-[12px]" data-account-selection-style={style}>
       {style === "no-picker" ? (
-        source === "existing" && selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : identityFields
+        source === "existing" && selectedAccount ? (
+          <div className="flex flex-col gap-[12px]">
+            <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Selected account</h3>
+            <SelectedAccountSummary account={selectedAccount} onChange={onClearSelected} />
+          </div>
+        ) : identityFields
       ) : style === "source-toggle" ? (
         <>
           <div>
@@ -472,16 +484,16 @@ function ConfigurationPicker({
       <div>
         <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Configurations</h3>
         <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">
-          Not sure what to pick?{" "}
+          Select all roles that apply to this account. Not sure?{" "}
           <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={() => setDescribeOpen(true)}>
-            Describe the account to us
+            Tell us about the account
           </button>.
         </p>
       </div>
       {existingOptions.length > 0 ? (
         <div className="flex flex-col gap-[8px]">
           <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">On this account</p>
-          <HoverTip text="You can deactivate capabilities from the account details page.">
+          <HoverTip text="You can deactivate configurations from the account details page.">
             <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
               {existingOptions.map((option) => (
                 <ConfigurationRow key={option.id} option={option} checked locked />
@@ -681,7 +693,7 @@ function PayoutInformationSection({
     <section className="flex flex-col gap-[12px]" data-payout-information>
       <div>
         <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Payout methods</h3>
-        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Don’t have payout details? Stripe can collect them by email after account creation.</p>
+        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Don’t have payout details? You can choose to have Stripe email the account to collect them later.</p>
       </div>
       <div className="flex flex-col gap-[7px]">
         {payoutMethods.map((method) => {
@@ -1212,6 +1224,7 @@ export function AccountConfigurationForm({
   onChooseExisting,
   onPrepareNew,
   onChooseNew,
+  onClearSelected,
   onSelectExisting,
   onDetailsChange,
   onConfigurationsChange,
@@ -1227,6 +1240,7 @@ export function AccountConfigurationForm({
   onChooseExisting: () => void
   onPrepareNew: () => void
   onChooseNew: () => void
+  onClearSelected?: () => void
   onSelectExisting: (account: NetworkAccount) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
   onConfigurationsChange: (next: ConfigurationKind[]) => void
@@ -1244,6 +1258,7 @@ export function AccountConfigurationForm({
         onChooseExisting={onChooseExisting}
         onPrepareNew={onPrepareNew}
         onChooseNew={onChooseNew}
+        onClearSelected={onClearSelected}
         onSelectExisting={onSelectExisting}
         onDetailsChange={onDetailsChange}
       />

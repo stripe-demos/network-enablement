@@ -200,18 +200,20 @@ export function AccountSummaryCard({
   account,
   actionLabel,
   onAction,
+  revealActionOnHover = false,
   subtitle,
   size = "default",
 }: {
   account: NetworkAccount
   actionLabel?: string
   onAction?: () => void
+  revealActionOnHover?: boolean
   subtitle?: string
   size?: "default" | "flow"
 }) {
   const isFlow = size === "flow"
   return (
-    <div data-account-summary-card className={`flex items-center gap-[10px] rounded-[8px] bg-[#F6F8FA] ${isFlow ? "p-[12px]" : "p-[10px]"}`}>
+    <div data-account-summary-card className={`${revealActionOnHover ? "group " : ""}flex items-center gap-[10px] rounded-[8px] bg-[#F6F8FA] ${isFlow ? "p-[12px]" : "p-[10px]"}`}>
       {account.hasBrandIcon ? (
         <Image
           src="/unified-account-icon.png"
@@ -233,7 +235,23 @@ export function AccountSummaryCard({
           >
             {account.name}
           </p>
-          <CountryBadge country={account.country} size="sm" tone="deep" />
+          <span className="relative shrink-0">
+            <span className={revealActionOnHover && actionLabel && onAction
+              ? "block transition-opacity group-hover:opacity-0 group-focus-within:opacity-0"
+              : "block"}
+            >
+              <CountryBadge country={account.country} size="sm" tone="deep" />
+            </span>
+            {revealActionOnHover && actionLabel && onAction ? (
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 text-[11px] font-[600] leading-[16px] text-[#533AFD] opacity-0 transition-opacity hover:text-[#4730E0] group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
+                onClick={onAction}
+              >
+                {actionLabel}
+              </button>
+            ) : null}
+          </span>
         </div>
         <p className={isFlow
           ? "text-sail-label-small truncate text-ink-faint"
@@ -242,8 +260,8 @@ export function AccountSummaryCard({
           {subtitle ?? account.email}
         </p>
       </div>
-      {actionLabel && onAction ? (
-        <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={onAction}>
+      {actionLabel && onAction && !revealActionOnHover ? (
+        <button type="button" className="shrink-0 self-start pt-[2px] text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={onAction}>
           {actionLabel}
         </button>
       ) : null}
