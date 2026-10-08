@@ -505,16 +505,19 @@ function ConfigurationPicker({
           <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">On this account</p>
           <HoverTip text="You can deactivate configurations from the account details page.">
             <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
-              {existingOptions.map((option) => (
-                <ConfigurationRow
-                  key={option.id}
-                  option={option}
-                  checked
-                  locked
-                  capabilityCount={canOpen(option.id) ? capabilityCounts[option.id] : undefined}
-                  onOpen={canOpen(option.id) ? () => onOpenCapabilities(option.id) : undefined}
-                />
-              ))}
+              {existingOptions.map((option) => {
+                const groupId = canOpen(option.id) ? option.id : null
+                return (
+                  <ConfigurationRow
+                    key={option.id}
+                    option={option}
+                    checked
+                    locked
+                    capabilityCount={groupId ? capabilityCounts[groupId] : undefined}
+                    onOpen={groupId ? () => onOpenCapabilities(groupId) : undefined}
+                  />
+                )
+              })}
             </div>
           </HoverTip>
         </div>
@@ -525,16 +528,19 @@ function ConfigurationPicker({
             <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">Add</p>
           ) : null}
           <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
-            {addableOptions.map((option) => (
-              <ConfigurationRow
-                key={option.id}
-                option={option}
-                checked={selected.includes(option.id)}
-                capabilityCount={canOpen(option.id) ? capabilityCounts[option.id] : undefined}
-                onToggle={() => toggle(option)}
-                onOpen={canOpen(option.id) ? () => onOpenCapabilities(option.id) : undefined}
-              />
-            ))}
+            {addableOptions.map((option) => {
+              const groupId = canOpen(option.id) ? option.id : null
+              return (
+                <ConfigurationRow
+                  key={option.id}
+                  option={option}
+                  checked={selected.includes(option.id)}
+                  capabilityCount={groupId ? capabilityCounts[groupId] : undefined}
+                  onToggle={() => toggle(option)}
+                  onOpen={groupId ? () => onOpenCapabilities(groupId) : undefined}
+                />
+              )
+            })}
           </div>
         </div>
       ) : null}
