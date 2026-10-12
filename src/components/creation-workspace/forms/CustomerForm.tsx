@@ -709,7 +709,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     }
 
     const typeField = (
-      <div className="flex flex-col gap-[4px]">
+      <div className="flex flex-col gap-[6px]">
         <span className={tokens.labelClass}>Account type</span>
         <SegmentedControl
           value={accountType}
@@ -782,7 +782,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       </div>
     )
     const countryField = (
-      <div className="flex flex-col gap-[4px]">
+      <div className="flex flex-col gap-[6px]">
         <span className={tokens.labelClass}>Country</span>
         <CountrySelect
           className={tokens.selectClass}
@@ -794,7 +794,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
 
     return (
       <div className="flex flex-col gap-[16px]">
-        <div className="flex flex-col gap-[12px]">
+        <div className="flex flex-col gap-[16px]">
           {isSingleConfig ? (
             <>
               {typeField}

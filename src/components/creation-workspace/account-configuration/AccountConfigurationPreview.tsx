@@ -222,7 +222,7 @@ function PreviewModeToggle({
     }`
 
   return (
-    <div className="flex items-center rounded-[8px] border border-[#E6EAF0] bg-white p-[3px] shadow-[0_1px_2px_rgba(20,34,52,0.04),0_10px_28px_rgba(20,34,52,0.08)]">
+    <div className="flex items-center rounded-[8px] border border-[#E6EAF0] bg-white p-[4px] shadow-[0_1px_2px_rgba(20,34,52,0.04),0_10px_28px_rgba(20,34,52,0.08)]">
       <button type="button" className={itemClass(value === "dashboard")} onClick={() => onChange("dashboard")} aria-pressed={value === "dashboard"}>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.3" />
@@ -350,7 +350,7 @@ function EmptyAccountPreview() {
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M5.5 7.5h11M5.5 11h7M5.5 14.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><rect x="2.75" y="3.25" width="16.5" height="15.5" rx="3.25" stroke="currentColor" strokeWidth="1.5" /></svg>
       </div>
       <h3 className={`mt-[14px] ${type.previewSection}`}>Account configuration</h3>
-      <p className={`mx-auto mt-[5px] max-w-[310px] ${type.previewEmpty}`}>As you create the account, its configurations and capabilities will appear here.</p>
+      <p className={`mx-auto mt-[6px] max-w-[310px] ${type.previewEmpty}`}>As you create the account, its configurations and capabilities will appear here.</p>
     </div>
   )
 }

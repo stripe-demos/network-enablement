@@ -447,7 +447,7 @@ function AccountSelector({
   return (
     <section className={type.section} data-account-selection-style={style}>
       {source === "existing" && selectedAccount ? (
-        <div className={type.section}>
+        <div className={type.headingContent}>
           <h3 className={type.sectionTitle}>Selected account</h3>
           <SelectedAccountSummary account={selectedAccount} />
         </div>
@@ -557,7 +557,7 @@ function ConfigurationRow({
       data-configuration={option.id}
       data-selected={checked ? "true" : "false"}
       data-existing={locked ? "true" : "false"}
-      className={`flex items-start gap-[9px] ${type.rowPad} outline-none ${
+      className={`flex items-start gap-[8px] ${type.rowPad} outline-none ${
         locked ? "bg-[#F8FAFB]" : checked ? "bg-[#F8F7FF]" : "hover:bg-[#F8FAFB]"
       } ${locked && !canOpen ? "cursor-default" : "cursor-pointer"}`}
       onClick={activate}
@@ -567,7 +567,7 @@ function ConfigurationRow({
       aria-pressed={checked}
       aria-label={label}
     >
-      <span className="mt-[1px]">{checkbox}</span>
+      <span className="mt-[2px]">{checkbox}</span>
       <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
         <span className={`${type.rowTitle} ${locked ? "text-[#596171]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
         <span className={type.rowDetail}>{option.relationship}</span>
@@ -610,7 +610,7 @@ function ConfigurationPicker({
   const canOpen = (id: ConfigurationKind): id is "merchant" | "recipient" => id === "merchant" || id === "recipient"
   const closeCapabilities = () => setEditingGroup(null)
   return (
-    <section className="flex flex-col gap-[12px]" data-configuration-picker>
+    <section className={type.headingContent} data-configuration-picker>
       <div>
         <h3 className={type.fieldLabel}>Configurations</h3>
         <p className={`mt-[6px] ${type.helper}`}>
@@ -895,7 +895,7 @@ function PayoutInformationSection({
   }
 
   return (
-    <section className="flex flex-col gap-[12px]" data-payout-information>
+    <section className={type.headingContent} data-payout-information>
       <div>
         <h3 className={type.sectionTitle}>Payout methods</h3>
         <p className={`mt-[6px] ${type.helper}`}>Don’t have payout details? You can choose to have Stripe email the account to collect them later.</p>
@@ -1076,7 +1076,7 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
   const type = useCardCreateTypeScale()
 
   return (
-    <section className={type.section}>
+    <section className={type.headingContent}>
       <h3 className={type.sectionTitle}>Billing and shipping</h3>
       <div className={type.cardStack}>
         <ReviewRow title="Billing details" summary={billingDetailsSummary(details)} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
@@ -1316,15 +1316,16 @@ function OnboardingSection({ details, onChange }: { details: AccountDetailsDraft
   const type = useCardCreateTypeScale()
 
   return (
-    <section className={type.section} data-onboarding-placement="pre-save">
+    <section className={type.headingContent} data-onboarding-placement="pre-save">
       <div><h3 className={type.sectionTitle}>After creation</h3><p className={`${type.headingHelper} ${type.helper}`}>Choose how the account will finish providing any remaining information.</p></div>
-      <SegmentedControl
-        value={details.onboardingAction}
-        options={ONBOARDING_ACTION_OPTIONS}
-        getDisplayValue={(value) => value === "send-email" ? "Send email" : "Copy link"}
-        onChange={(onboardingAction) => onChange({ onboardingAction })}
-        variantOverride="segmented"
-      />
+      <div className={type.section}>
+        <SegmentedControl
+          value={details.onboardingAction}
+          options={ONBOARDING_ACTION_OPTIONS}
+          getDisplayValue={(value) => value === "send-email" ? "Send email" : "Copy link"}
+          onChange={(onboardingAction) => onChange({ onboardingAction })}
+          variantOverride="segmented"
+        />
       {details.onboardingAction === "send-email" ? (
         <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] p-[12px]">
           <div className="flex items-center justify-between gap-[12px]"><div><p className={type.matchCard ? tokens.toggleRow : "text-[12px] font-[600] text-[#273951]"}>Use account email</p><p className={`mt-[2px] ${type.helper}`}>Send the secure onboarding link after creation.</p></div><Toggle checked={details.useAccountEmailForOnboarding} label="Use account email for onboarding" onChange={(useAccountEmailForOnboarding) => onChange({ useAccountEmailForOnboarding })} /></div>
@@ -1333,6 +1334,7 @@ function OnboardingSection({ details, onChange }: { details: AccountDetailsDraft
       ) : (
         <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] p-[12px]"><p className={type.helper}>The secure link will be copied after the account is created.</p><p className="mt-[4px] truncate font-mono text-[10px] text-[#818DA0]">{ACCOUNT_ONBOARDING_LINK}</p></div>
       )}
+      </div>
     </section>
   )
 }
