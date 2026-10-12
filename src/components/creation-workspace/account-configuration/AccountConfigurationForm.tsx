@@ -52,7 +52,10 @@ import {
   type UserPath,
 } from "./model"
 
-const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
+const ACCOUNT_TYPE_OPTIONS = [
+  { id: "Company", name: "Company", detail: "Recommended for businesses you onboard, like yoga studios." },
+  { id: "Individual", name: "Individual", detail: "Generally used for freelancers, consultants, or solopreneurs." },
+] as const
 const ONBOARDING_ACTION_OPTIONS = ["send-email", "copy-link"] as const
 
 export function FieldHint({ label, children }: { label: string; children: string }) {
@@ -256,10 +259,18 @@ function AccountIdentityFields({
           searchPlaceholder="Search"
           hideSearch
           insetOptionHover
-          items={ACCOUNT_TYPE_OPTIONS.map((option) => ({ id: option, name: option }))}
+          items={ACCOUNT_TYPE_OPTIONS.map((option) => ({ id: option.id, name: option.name, detail: option.detail }))}
           selectedId={details.type}
           onSelect={(id) => onChange({ type: id as AccountDetailsDraft["type"] })}
           optionNameClassName="block truncate text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
+          renderOption={(item) => (
+            <span className="flex min-w-0 flex-col py-[2px]">
+              <span className="text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]">{item.name}</span>
+              {item.detail ? (
+                <span className="mt-[2px] text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#596171]">{item.detail}</span>
+              ) : null}
+            </span>
+          )}
         />
       ) : (
         <SelectControl
@@ -269,7 +280,7 @@ function AccountIdentityFields({
           onChange={(next) => onChange({ type: next as AccountDetailsDraft["type"] })}
         >
           {ACCOUNT_TYPE_OPTIONS.map((option) => (
-            <option key={option} value={option}>{option}</option>
+            <option key={option.id} value={option.id}>{option.name}</option>
           ))}
         </SelectControl>
       )}
@@ -592,14 +603,14 @@ function ConfigurationPicker({
         <p className={`mt-[6px] ${type.helper}`}>
           {isNewAccount ? (
             <>
-              Choose what this account can do. Not sure what to pick?{" "}
+              Choose what this account can do. Based on your business, we recommend Merchant and Customer.{" "}
               <button
                 type="button"
                 className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
-                onClick={() => setDescribeMode("describe")}
+                onClick={() => setDescribeMode("recommend")}
               >
-                Tell us about the account
-              </button>.
+                Learn why
+              </button>
             </>
           ) : (
             <>

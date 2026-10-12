@@ -110,9 +110,10 @@ function joinPhraseList(items: string[]) {
 function acceptPaymentsPhrase(capabilities: string[]) {
   const names = capabilities.map(paymentMethodLabel)
   if (names.length === 0) return "accept payments from its own users"
-  if (names.length <= 3) return `use ${joinPhraseList(names)} to accept payments from its own users`
+  if (names.length === 1) return `accept ${names[0]} payments from its own users`
+  if (names.length <= 3) return `accept ${joinPhraseList(names)} payments from its own users`
   const others = names.length - 3
-  return `use ${names[0]}, ${names[1]}, ${names[2]}, and ${others} other way${others === 1 ? "" : "s"} to accept payments from its own users`
+  return `accept payments with ${names[0]}, ${names[1]}, ${names[2]}, and ${others} other method${others === 1 ? "" : "s"} from its own users`
 }
 
 const PAYOUT_DESTINATION: Record<PayoutMethod, string> = {
