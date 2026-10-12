@@ -1,0 +1,52 @@
+/* ConsoleIcon.jsx. A 2×2 grid of 5-unit squares, drawn twice. At rest the grid
+   is turned 45° (shrunk to fit) and squashed to tan(30°) into cube tops, with
+   the bottom layer one layer pitch below (grid pitch 6.16 × sin 54.7° ≈ 5) and
+   the mark lifted by half that to stay centered. data-collapsed (set for half
+   of each hover / thinking cycle) slides the bottom layer up under the top one,
+   untilts, and turns back to squares; clearing it rebuilds in the opposite
+   order. `--dui-console-icon-pace` scales every duration (2 = half speed). */
+.dui-console-icon {
+  --dui-console-icon-pace: 1;
+  display: inline-block;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.dui-console-icon__lift,
+.dui-console-icon__drop,
+.dui-console-icon__tilt,
+.dui-console-icon__turn,
+.dui-console-icon__square { transform-box: view-box; transform-origin: 0 0; }
+.dui-console-icon__square { transform: translate(calc(var(--sx) * 3.5px), calc(var(--sy) * 3.5px)); }
+.dui-console-icon__turn {
+  transform: translate(8px, 8px) rotate(45deg) scale(0.88);
+  transition: transform calc(300ms * var(--dui-console-icon-pace)) cubic-bezier(0.2, 0, 0, 1);
+}
+.dui-console-icon__tilt {
+  transform-origin: 8px 8px;
+  transform: scaleY(0.577);
+  transition: transform calc(320ms * var(--dui-console-icon-pace)) cubic-bezier(0.2, 0, 0, 1) calc(240ms * var(--dui-console-icon-pace));
+}
+.dui-console-icon__lift,
+.dui-console-icon__drop {
+  transition: transform calc(380ms * var(--dui-console-icon-pace)) cubic-bezier(0.2, 0, 0, 1) calc(500ms * var(--dui-console-icon-pace));
+}
+.dui-console-icon__drop { transform: translateY(5px); }
+.dui-console-icon__lift { transform: translateY(-2.5px); }
+
+.dui-console-icon[data-collapsed] .dui-console-icon__turn {
+  transform: translate(8px, 8px) rotate(0deg) scale(1);
+  transition: transform calc(260ms * var(--dui-console-icon-pace)) cubic-bezier(0.4, 0, 0.2, 1) calc(380ms * var(--dui-console-icon-pace));
+}
+.dui-console-icon[data-collapsed] .dui-console-icon__tilt {
+  transform: none;
+  transition: transform calc(240ms * var(--dui-console-icon-pace)) cubic-bezier(0.4, 0, 0.2, 1) calc(200ms * var(--dui-console-icon-pace));
+}
+.dui-console-icon[data-collapsed] .dui-console-icon__lift,
+.dui-console-icon[data-collapsed] .dui-console-icon__drop {
+  transform: none;
+  transition: transform calc(240ms * var(--dui-console-icon-pace)) cubic-bezier(0.4, 0, 1, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dui-console-icon * { transition: none !important; }
+}

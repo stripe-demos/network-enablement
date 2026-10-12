@@ -1,0 +1,393 @@
+/* Hover/focus states for the dashboard component library (src/dashboard/ui). */
+
+.dui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  transition: outline-color 100ms cubic-bezier(0.2, 0, 0.1, 1), background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-btn:disabled { cursor: default; opacity: 0.5; }
+
+.dui-btn--md { height: 28px; padding: 4px 8px; font-size: 14px; font-weight: 600; line-height: 20px; letter-spacing: -0.15px; }
+.dui-btn--sm { height: 28px; padding: 0 12px; font-size: 13px; font-weight: 600; line-height: 20px; }
+.dui-btn--icon { width: 28px; height: 28px; padding: 0; }
+.dui-btn--dark { color: #C0C8D2; background: transparent; }
+.dui-btn--dark:not(:disabled):hover { color: #FFFFFF; background: #2B303B; }
+
+.dui-btn--secondary { color: #273951; background: #FFFFFF; outline: 1px solid #D4DEE9; outline-offset: 0; }
+.dui-btn--secondary:not(:disabled):hover { outline-color: #95A4BA; background: #F5F6F8; }
+
+.dui-btn--primary { color: #FFFFFF; background: #675DFF; box-shadow: 0px 1px 1px 0px rgba(47, 14, 99, 0.32); }
+.dui-btn--primary:not(:disabled):hover { background: #5648E0; }
+
+.dui-btn--ghost { color: #533AFD; background: transparent; }
+.dui-btn--ghost:not(:disabled):hover { background: #F5F6F8; }
+
+.dui-btn--destructive { color: #C0123C; background: #FFFFFF; outline: 1px solid #D4DEE9; }
+.dui-btn--destructive:not(:disabled):hover { outline-color: #C0123C; background: #FEF4F6; }
+
+/* Home-style "action" button: hard border + soft drop shadow. */
+.dui-btn--action { color: #353A44; background: #FFFFFF; border: 1px solid #D8DEE4; box-shadow: 0 1px 0.5px rgba(33,37,44,0.06); }
+.dui-btn--action:not(:disabled):hover { background: #F5F6F8; }
+
+.dui-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #353A44;
+  background: #FFFFFF;
+  border: 1px solid #D8DEE4;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-filter-pill:hover { background: #F5F6F8; }
+.dui-filter-pill--active { border-color: #675DFF; color: #533AFD; }
+
+.dui-view-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  cursor: pointer;
+  user-select: none;
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #596171;
+  box-shadow: 0px 0px 0px 1px #EBEEF1, 0px 2px 3px 0px rgba(33,37,44,0);
+  transition: box-shadow 150ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-view-chip:hover { box-shadow: 0px 0px 0px 1px #D4DEE9, 0px 2px 3px 0px rgba(33,37,44,0); }
+.dui-view-chip[aria-pressed='true'] { color: #1A2C44; box-shadow: 0px 0px 0px 2px #1A2C44, 0px 2px 3px 0px rgba(33,37,44,0.16); }
+
+.dui-live-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--dui-live-dot-color);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: top 400ms ease-out;
+}
+.dui-live-dot__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--dui-live-dot-color);
+  animation: dui-live-dot-pulse 1000ms cubic-bezier(0.2, 0, 0.1, 1) both;
+}
+@keyframes dui-live-dot-pulse {
+  from { transform: scale(1); opacity: 0.45; }
+  to { transform: scale(4); opacity: 0; }
+}
+
+.dui-value-tick { animation: dui-value-tick 320ms cubic-bezier(0.2, 0, 0.1, 1) both; }
+@keyframes dui-value-tick {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dui-live-dot { transition: none; }
+  .dui-live-dot__pulse, .dui-value-tick { animation: none; }
+}
+
+.dui-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--dui-collapse-duration, 200ms) ease-in-out,
+    opacity var(--dui-collapse-duration, 200ms) ease-in-out;
+}
+.dui-collapse[data-open] { grid-template-rows: 1fr; opacity: 1; }
+.dui-collapse__inner { min-height: 0; overflow: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .dui-collapse { transition: none; }
+}
+
+.dui-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  cursor: text;
+  box-shadow: inset 0 0 0 1px #ECF1F6;
+  transition: box-shadow 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-search:hover { box-shadow: inset 0 0 0 1px #D4DEE9; }
+.dui-search:focus-within { box-shadow: inset 0 0 0 1.5px #C7D3E0; }
+.dui-search input::placeholder { color: #9AA3B0; }
+
+.dui-tab { transition: color 150ms; }
+.dui-tab:not([aria-selected='true']):not([aria-disabled='true']):hover { color: #1A2C44 !important; }
+
+.dui-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+.dui-menu-item:hover { background: #F5F6F8; }
+
+.dui-table tbody tr { transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1); }
+.dui-table--hover tbody tr:hover { background: #F8F9FB; }
+.dui-table--clickable tbody tr { cursor: pointer; }
+
+.dui-link { color: #533AFD; font-weight: 600; cursor: pointer; text-decoration: none; }
+.dui-link:hover { color: #1A2C44; }
+
+.dui-card-footer-link { color: #596171; cursor: pointer; text-decoration: none; transition: color 100ms cubic-bezier(0.2, 0, 0.1, 1); }
+.dui-card-footer-link:hover { color: #533AFD; }
+
+.dui-app-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 0;
+  background: transparent;
+  color: #533AFD;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  cursor: pointer;
+  transition: color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-app-action:hover { color: #1A2C44; }
+
+.dui-app-tile { border-radius: 8px; transition: transform 100ms cubic-bezier(0.2, 0, 0.1, 1); cursor: pointer; }
+.dui-app-tile:hover { transform: translateY(-1px); }
+
+.dui-link-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 8px;
+  margin: 0 -8px;
+  box-sizing: content-box;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-link-row:hover { background: #F8F9FB; }
+.dui-link-row__well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-link-row:hover .dui-link-row__well { background: #EBEEF1 !important; }
+
+/* The hover fill bleeds 8px past the row so the swatch and value keep their alignment. */
+.dui-legend-row--interactive {
+  position: relative;
+  isolation: isolate;
+  cursor: pointer;
+  outline: none;
+}
+.dui-legend-row--interactive::before {
+  content: '';
+  position: absolute;
+  inset: 0 -8px;
+  z-index: -1;
+  border-radius: 6px;
+  background: transparent;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-legend-row--interactive:hover::before { background: #F5F6F8; }
+.dui-legend-row--interactive:focus-visible::before { box-shadow: 0 0 0 2px #533AFD; }
+
+@keyframes dui-popover-in {
+  from { opacity: 0; transform: scale(0.97) translateY(-2px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes dui-popover-in-above {
+  from { opacity: 0; transform: scale(0.97) translateY(2px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.dui-stat-trigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: -2px -6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-stat-trigger:hover, .dui-stat-trigger[aria-expanded='true'] { background: #F5F6F8; }
+.dui-stat-trigger:focus-visible { outline: 2px solid #8DC4F6; outline-offset: 1px; }
+
+.dui-filter-pill__clear { display: inline-flex; border-radius: 50%; color: #353A44; }
+.dui-filter-pill__clear:hover { color: #1A2C44; }
+.dui-filter-pill__clear:focus-visible { outline: 2px solid #8DC4F6; outline-offset: 1px; }
+
+.dui-popover {
+  position: fixed;
+  z-index: 10000;
+  background: #FFFFFF;
+  border: 1px solid #EBEEF1;
+  box-shadow: 0px 15px 35px 0px rgba(48,49,61,0.08), 0px 5px 15px 0px rgba(0,0,0,0.12);
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  transform-origin: top left;
+  animation: dui-popover-in 150ms cubic-bezier(0.2, 0, 0.1, 1) both;
+}
+.dui-popover--above { transform-origin: bottom left; animation-name: dui-popover-in-above; }
+.dui-popover--slide { animation: dui-popover-slide-in 200ms cubic-bezier(0.42, 0, 0.58, 1) both; }
+.dui-popover--slide.dui-popover--above { animation-name: dui-popover-slide-in-above; }
+@keyframes dui-popover-slide-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes dui-popover-slide-in-above {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dui-popover { animation: none; }
+}
+
+.dui-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #353A44;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-select-option:hover, .dui-select-option:focus-visible { background: #F5F6F8; }
+
+.dui-preset {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #353A44;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-preset:hover { background: #F5F6F8; }
+.dui-preset[aria-pressed='true'] { background: #EBE8FF; color: #533AFD; }
+
+.dui-date-input {
+  width: 144px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid #D4DEE9;
+  font-size: 14px;
+  line-height: 20px;
+  color: #1A2C44;
+  font-variant-numeric: tabular-nums;
+  background: #FFFFFF;
+  outline: none;
+  transition: box-shadow 100ms cubic-bezier(0.2, 0, 0.1, 1), border-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-date-input::placeholder { color: #9AA3B0; }
+.dui-date-input:hover { border-color: #95A4BA; }
+.dui-date-input:focus { border-color: #8DC4F6; box-shadow: 0 0 0 3px rgba(141, 196, 246, 0.45); }
+
+.dui-month-title {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 24px;
+  color: #1A2C44;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-month-title:hover { background: #F5F6F8; }
+.dui-month-title select { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.dui-calendar-day {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dui-calendar-day:disabled { cursor: default; }
+.dui-calendar-day:not(:disabled):not(.dui-calendar-day--endpoint):hover { background: #D8D3FF; }
+.dui-calendar-day--endpoint { background: #533AFD; }
+.dui-calendar-day--today { font-weight: 600; }
+.dui-calendar-day:focus-visible { outline: 2px solid #8DC4F6; outline-offset: 1px; }
+
+/* ScrollArea: native scrollbar hidden; the thumb floats over the content. */
+.dui-scroll-area { position: relative; display: flex; flex-direction: column; min-height: 0; }
+.dui-scroll-area__viewport { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.dui-scroll-area__viewport::-webkit-scrollbar { display: none; }
+.dui-scroll-area__thumb {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  z-index: 20;
+  width: 6px;
+  border-radius: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, width 120ms ease;
+}
+.dui-scroll-area[data-overflowing]:hover > .dui-scroll-area__thumb,
+.dui-scroll-area[data-overflowing][data-active] > .dui-scroll-area__thumb { opacity: 0.55; pointer-events: auto; }
+.dui-scroll-area[data-overflowing] > .dui-scroll-area__thumb:hover,
+.dui-scroll-area[data-overflowing][data-active] > .dui-scroll-area__thumb:active { opacity: 0.9; width: 8px; }
+
+/* Radio: the native input is hidden but focusable; the drawn circle shows its focus.
+   The label must be its containing block, or focusing the input scrolls the locked page. */
+.dui-radio-label { position: relative; }
+.dui-radio-input { position: absolute; top: 0; left: 0; opacity: 0; width: 0; height: 0; }
+.dui-radio-input:focus-visible + .dui-radio { outline: 2px solid #8DC4F6; outline-offset: 1px; }

@@ -1,0 +1,3961 @@
+@import "tailwindcss" source("./console");
+
+/* ── Design tokens ──────────────────────────────────────────── */
+/* Token spec source: Figma — Console — Spec, node 14845-26180.
+   Names below mirror the Figma group names (Surface/*, Border/*, Text/*,
+   Icon/*) so designers can grep for the same identifiers. Legacy aliases
+   from the original prototype are preserved at the bottom of each group
+   so existing usages keep working. */
+@theme {
+  /* ── Surface ────────────────────────────────────────── */
+  --color-surface-void: #09090A;        /* deepest — frame chrome */
+  --color-surface-0:  #101012;          /* page bg / panels */
+  --color-surface-05: #141416;          /* chart card resting bg (between 0 and 1) */
+  --color-surface-1:  #171719;          /* card / sidebar bg */
+  --color-surface-2:  #1E1E21;          /* hover / sub-card */
+  --color-surface-3:  #252528;          /* active / brighter sub-card */
+  --color-surface-4:  #565656;          /* brightest surface — used sparingly */
+
+  /* ── Border ─────────────────────────────────────────── */
+  --color-border-default: #2C2C30;
+  --color-border-subtle: #1E1E21;
+  --color-border-inner-shadow: #333336; /* used as the inner-bevel ring */
+  --color-border-hover: #3e3e44;        /* legacy — keep for nav hovers */
+  --color-border-rail: #3A3A3A;          /* sidebar rail separator */
+  --color-border: #1E1E21;              /* legacy alias = border-subtle */
+
+  /* ── Text ───────────────────────────────────────────── */
+  --color-text-primary: #D3D3D3;
+  --color-text-secondary: #A0A0AA;
+  --color-text-tertiary: #6D6D77;
+  --color-text-link: #FFFFFF;
+  --color-text-muted: #6D6D77;          /* legacy alias = text-tertiary */
+  --color-text-error: #FA7E91;          /* prototype-only; not in Figma */
+
+  /* ── Icon ───────────────────────────────────────────── */
+  --color-icon-default: #C9C9C9;
+  --color-icon-subtle: #6D6D77;
+  --color-icon-primary: #c9c9c9;        /* legacy alias = icon-default */
+
+  /* ── Brand ──────────────────────────────────────────── */
+  --color-blurple-75: #706AE7;
+  --color-accent: #706AE7;              /* legacy alias = blurple-75 */
+
+  /* ── Semantic ─────────────────────────────────────────── */
+  --color-semantic-info: #2B9DF6;
+  --color-semantic-error: #F23154;
+  --color-semantic-warning: #FF6118;
+  --color-semantic-success: #12B76A;
+
+  /* ── Accent ───────────────────────────────────────────── */
+  --color-accent-blurple: #533AFD;
+  --color-accent-lilac: #B68AFF;
+  --color-accent-blue: #2B9DF6;
+  --color-accent-orange: #FF6118;
+  --color-accent-yellow: #FFC01F;
+
+  /* ── Elevation ────────────────────────────────────────── */
+  --shadow-composer-contextual: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+/* ── Light mode token overrides ────────────────────────────── */
+[data-theme="light"] {
+  --color-surface-void: #FFFFFF;
+  --color-surface-0:  #F6F8FA;
+  --color-surface-05: #F3F5F7;
+  --color-surface-1:  #F1F3F5;
+  --color-surface-2:  #E3E8EE;
+  --color-surface-3:  #C1C9D0;
+  --color-surface-4:  #697386;
+
+  --color-border-default: #E3E8EE;
+  --color-border-subtle: #F0F2F5;
+  --color-border-inner-shadow: #CFD7DF;
+  --color-border-hover: #C1C9D0;
+  --color-border-rail: #D8DEE4;
+  --color-border: #F0F2F5;
+
+  --color-text-primary: #1A1F36;
+  --color-text-secondary: #4F566B;
+  --color-text-tertiary: #8792A2;
+  --color-text-link: #635BFF;
+  --color-text-muted: #8792A2;
+  --color-text-error: #CD3D64;
+
+  --color-icon-default: #3C4257;
+  --color-icon-subtle: #8792A2;
+  --color-icon-primary: #3C4257;
+
+  --color-blurple-75: #635BFF;
+  --color-accent: #635BFF;
+  --shadow-composer-contextual: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* ── Light mode shadow overrides ───────────────────────────── */
+[data-theme="light"] .item-popup {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--color-border-default);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+}
+[data-theme="light"] .item-popup-row:hover {
+    background: var(--color-surface-2);
+}
+[data-theme="light"] #railTooltip {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .feedback-tooltip {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    color: var(--color-text-primary);
+}
+[data-theme="light"] #conversation {
+    --conversation-surface: var(--color-surface-0);
+    background: var(--conversation-surface) !important;
+}
+[data-theme="light"] #convHeader::before,
+[data-theme="light"] .composer-dock {
+    background: var(--conversation-surface) !important;
+}
+[data-theme="light"] .conversation-dock-fade {
+    background: transparent !important;
+}
+[data-theme="light"] #canvasWrap {
+    background: var(--color-surface-0) !important;
+}
+[data-theme="light"] #iconRail {
+    background: var(--color-surface-1) !important;
+}
+[data-theme="light"] #railSeparator {
+    background-color: var(--color-border-default) !important;
+}
+[data-theme="light"] #resizeBar[data-state="idle"] {
+    background-color: var(--color-border-default) !important;
+    left: 0 !important;
+}
+[data-theme="light"] .linear-border:hover,
+[data-theme="light"] #newChatBtnWrap:hover .linear-border {
+    background: rgba(0,0,0,0.03);
+}
+[data-theme="light"] #newChatBtnWrap:hover #newChatBtn span {
+    color: var(--color-text-primary);
+    filter: none;
+}
+
+/* ── Type styles (Figma: Text/*) ────────────────────────────── */
+/* Registered as Tailwind utilities so you can write `type-body-medium`
+   instead of repeating the size/weight/line-height inline. Prefixed with
+   `type-` (not `text-`) to avoid clashing with Tailwind's text color
+   utilities. */
+@utility type-header {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+@utility type-body-emphasized {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.6;
+}
+@utility type-body-regular {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.6;
+}
+@utility type-body-medium {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.6;
+}
+@utility type-label-regular {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: normal;
+}
+@utility type-label-medium {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: normal;
+}
+@utility type-subtext {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.6;
+}
+@utility type-code {
+  font-family: 'Menlo', ui-monospace, SFMono-Regular, monospace;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.5;
+}
+@utility type-table-header {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+@utility type-artifact-chip {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ── Verbatim port from prototypes/main/index.html <style> blocks ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    /* Match original: Tailwind v3 CDN preflight resets body to line-height:inherit
+       which lands on html's 1.5. Locked design renders at 1.5, not 1.6. */
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    background: var(--color-surface-0);
+    -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* Messages + canvas: keep a permanent 6px scrollbar gutter on the right
+   so the visible right edge of the content never shifts when the panel
+   transitions between scrollable and non-scrollable states. The host
+   elements pair this rule with a 10px (not 16px) right padding so that
+   10 + 6 = 16, exactly matching their 16px left padding.
+   The thumb itself is transparent until the area is actively scrolling. */
+#messagesArea,
+#canvas,
+.messages-old-layer {
+    scrollbar-gutter: stable;
+}
+#messagesArea::-webkit-scrollbar,
+#canvas::-webkit-scrollbar,
+.messages-old-layer::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+}
+#messagesArea::-webkit-scrollbar-thumb,
+#canvas::-webkit-scrollbar-thumb,
+.messages-old-layer::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+#messagesArea.is-scrolling::-webkit-scrollbar-thumb,
+#canvas.is-scrolling::-webkit-scrollbar-thumb,
+.messages-old-layer.is-scrolling::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Override for #messagesArea only: hide the scrollbar entirely. The
+   sticky prompt input lives inside this scroll container, so any
+   reserved gutter on the right would leave a visible sliver of bg
+   between the prompt's right edge and the panel edge — and the
+   scrollbar thumb itself flashes a small white square in the bottom
+   corner during scroll. Hiding it removes both. The chat is still
+   scrollable via wheel / trackpad / keyboard. (Canvas keeps its
+   scrollbar — that comment about "10 + 6 = 16" still applies there.) */
+#messagesArea {
+    scrollbar-gutter: auto;
+    scrollbar-width: none;
+}
+#messagesArea::-webkit-scrollbar {
+    width: 0;
+    display: none;
+}
+
+.panel-transition {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity var(--view-fade-duration) ease,
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rail-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--color-icon-default);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.rail-icon:hover { background: var(--color-surface-1); color: var(--color-text-primary); }
+
+.rail-icon-sm {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.rail-icon-sm:hover { color: var(--color-text-primary); }
+
+.tab-pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    min-height: 24px;
+    /* Figma 16164:15741 / 16164:15697 — 4px horizontal inset for handle + label row */
+    padding: 0 4px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transform: scale(1) translateY(0);
+    transition:
+        background-color 0.15s ease,
+        opacity 0.12s cubic-bezier(0.32, 0.72, 0, 1),
+        transform 0.12s cubic-bezier(0.32, 0.72, 0, 1);
+    white-space: nowrap;
+    flex-shrink: 0;
+    overflow: visible;
+    background-color: transparent;
+}
+.tab-pill--closing {
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.94) translateY(2px);
+}
+/* FLIP slide target: transform here must stay independent of `.tab-pill` transform (close-out). */
+.tab-pill__anim {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+/* Mentioned state — highlight intentionally removed */
+.tab-pill--mentioned {}
+.multi-chart-cell--mentioned {}
+.tab-bar-root {
+    overflow: visible;
+}
+.tab-bar-track {
+    position: relative;
+    z-index: 1;
+}
+.tab-bar-measure-strip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    z-index: 0;
+    width: max-content;
+}
+.tab-pill--no-close .tab-pill__closeLayer {
+    display: none;
+}
+.tab-pill__main {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    position: relative;
+    z-index: 0;
+    opacity: 1;
+}
+.tab-pill.inactive .tab-pill__main {
+    opacity: 0.4;
+}
+.tab-pill__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+    line-height: 0;
+}
+.tab-pill__icon svg {
+    display: block;
+    flex-shrink: 0;
+}
+.tab-pill__label {
+    min-width: 0;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 16px;
+    align-self: center;
+    color: var(--color-text-secondary);
+}
+/* Label stays max 100px with end ellipsis at all times; use `title` on the span for full text. */
+.tab-pill:hover,
+.tab-pill:focus-within {
+    z-index: 3;
+}
+/* Close stack: full tab height so the X centers with icon + label row. */
+.tab-pill__closeLayer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    box-sizing: border-box;
+    /* Narrower than 40px Figma export so less label sits under the fade; X stays flush right */
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    /* Icon inset on `.tab-close` + flex-end */
+    padding: 0;
+    background: none;
+    opacity: 0;
+    pointer-events: none;
+}
+/* Hover blur (Figma 16164:15697 — gradient -90deg / stops 33.8% → 75.1%; strip narrowed to 32px so less label is obscured). */
+.tab-pill__closeGrad {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(-90deg, rgb(16, 16, 18) 33.8%, rgba(16, 16, 18, 0) 75.1%);
+}
+.tab-pill:hover .tab-pill__closeLayer,
+.tab-pill:focus-within .tab-pill__closeLayer {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* Overflow trigger: muted like inactive `.tab-pill` at rest; full-opacity label row on hover (more only). */
+.tab-bar-more {
+    position: relative;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    min-height: 24px;
+    padding: 0 4px;
+    border-radius: 4px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    transform: scale(1) translateY(0);
+    transition:
+        background-color 0.15s ease,
+        opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+        transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.tab-bar-more__main {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    color: var(--color-text-secondary);
+    opacity: 0.4;
+    transition: opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.tab-bar-more[aria-expanded="true"] .tab-bar-more__main {
+    opacity: 1;
+}
+.tab-bar-more:hover,
+.tab-bar-more:focus-visible {
+    z-index: 3;
+}
+.tab-bar-more:hover .tab-bar-more__main,
+.tab-bar-more:focus-visible .tab-bar-more__main {
+    opacity: 1;
+}
+.tab-bar-more__label {
+    line-height: 16px;
+    align-self: center;
+}
+.tab-bar-more__chev {
+    flex-shrink: 0;
+    display: block;
+    line-height: 0;
+    color: inherit;
+}
+
+/* Canvas tab bar — right cluster (Figma 9108:13062 / Console spec) */
+.tab-bar-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 12px;
+}
+.tab-bar-save-btn {
+    box-sizing: border-box;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border-default);
+    background-color: var(--color-surface-2);
+    color: var(--color-text-secondary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.tab-bar-save-btn:hover:not(:disabled) {
+    color: var(--color-text-primary);
+    border-color: #3a3a3e;
+    background-color: #242428;
+}
+.tab-bar-save-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+.tab-bar-save-btn:disabled:hover {
+    color: var(--color-text-secondary);
+    border-color: var(--color-border-default);
+    background-color: var(--color-surface-2);
+}
+.tab-bar-save-btn--dirty:not(:disabled) {
+    color: #e8e8ed;
+    border-color: #4a4a52;
+    background-color: #26262b;
+}
+.tab-bar-actions-kebab:hover {
+    background: var(--color-surface-3) !important;
+    color: var(--color-icon-default);
+}
+.tab-bar-view-toggle {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    height: 24px;
+    padding: 2px;
+    border-radius: 7px;
+    background-color: var(--color-surface-2);
+    gap: 0;
+}
+.tab-bar-view-toggle__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 5.5px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+.tab-bar-view-toggle__btn:hover:not(.tab-bar-view-toggle__btn--selected) {
+    color: var(--color-text-secondary);
+}
+.tab-bar-view-toggle__btn--selected {
+    background-color: var(--color-surface-1);
+    box-shadow: inset 0 0 0 1px var(--color-border-default);
+    color: var(--color-icon-default);
+}
+.tab-overflow-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+    font-size: 13px;
+}
+.tab-overflow-row__icon {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+}
+.tab-overflow-row__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-secondary);
+}
+.tab-overflow-row--active .tab-overflow-row__label {
+    color: var(--color-text-primary);
+}
+.tab-overflow-row__close {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: color 0.12s ease, background-color 0.12s ease;
+}
+.tab-overflow-row__close:hover:not(:disabled) {
+    color: var(--color-text-primary);
+    background-color: rgba(255, 255, 255, 0.06);
+}
+.tab-overflow-row__close:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+/* “N more” tab overflow: same shell + row padding as other ContextMenu / .item-popup menus
+   (no inter-row gap — gap was letting the panel bg show through and made hover look uneven). */
+.tab-overflow-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+}
+.item-popup.item-popup--tab-overflow {
+    max-width: calc(100vw - 16px);
+    box-sizing: border-box;
+}
+.item-popup.item-popup--tab-overflow .tab-overflow-row {
+    min-width: 0;
+    padding: 5px 10px;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+}
+.item-popup.item-popup--tab-overflow .tab-overflow-row__icon {
+    color: var(--color-icon-default);
+    box-sizing: border-box;
+    width: 16px;
+    flex-shrink: 0;
+    justify-content: center;
+}
+.item-popup.item-popup--tab-overflow .tab-overflow-row__label {
+    color: var(--color-text-primary);
+}
+.item-popup.item-popup--tab-overflow .tab-overflow-row--active .tab-overflow-row__label {
+    color: #ffffff;
+}
+/* Close matches lead icon column: same 16px track, centered glyph, symmetric row padding. */
+.item-popup.item-popup--tab-overflow .tab-overflow-row__close {
+    width: 16px;
+    height: 16px;
+    border-radius: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+}
+.item-popup.item-popup--tab-overflow .tab-overflow-row__close:hover:not(:disabled),
+.item-popup.item-popup--tab-overflow .tab-overflow-row__close:focus-visible:not(:disabled) {
+    color: var(--color-text-primary);
+    background-color: transparent;
+}
+
+.linear-border {
+    position: relative;
+    border: 1px solid var(--color-border-default) !important;
+    background: var(--color-surface-1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+[data-theme="light"] .linear-border {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+[data-theme="light"] .user-message.linear-border {
+    background: var(--color-surface-void);
+    border-color: var(--color-border-default) !important;
+}
+[data-theme="light"] #newChatBtn.linear-border,
+[data-theme="light"] #newBtnExpanded.linear-border {
+    background: var(--color-surface-0);
+    border-color: var(--color-border-default) !important;
+}
+[data-theme="light"] .user-message.linear-border,
+[data-theme="light"] #newChatBtn.linear-border,
+[data-theme="light"] #newBtnExpanded.linear-border {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.user-message.linear-border,
+[data-theme="light"] .user-message.linear-border {
+    box-shadow: var(--shadow-composer-contextual);
+}
+.linear-border:hover,
+#newChatBtnWrap:hover .linear-border {
+    border-color: var(--color-border-hover) !important;
+    background: rgba(255,255,255,0.06);
+}
+#newChatBtn {
+    transition: transform 0.3s cubic-bezier(0.34, 1.12, 0.64, 1), box-shadow 0.2s ease, border-color 0.15s ease, background-color 0.15s ease;
+    will-change: transform;
+}
+#newChatBtnWrap:hover #newChatBtn {
+    transform: scale(1.025);
+    border-color: var(--color-border-hover) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3), 0 0 8px rgba(255,255,255,0.04);
+}
+[data-theme="light"] #newChatBtnWrap:hover #newChatBtn {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+#newChatBtnWrap:hover #newChatBtn span {
+    color: #ffffff;
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.45));
+}
+#newChatBtnWrap:active #newChatBtn {
+    transform: scale(0.97);
+    transition: transform 0.04s cubic-bezier(0, 0, 0.2, 1);
+}
+
+#newBtnExpanded,
+.prompt-composer__send {
+    transition: height 200ms ease, opacity 200ms ease, transform 0.3s cubic-bezier(0.34, 1.12, 0.64, 1) !important;
+    will-change: transform;
+}
+#newBtnExpanded:hover {
+    transform: scale(1.025);
+}
+#newBtnExpanded:active {
+    transform: scale(0.97);
+    transition: height 200ms ease, opacity 200ms ease, transform 0.04s cubic-bezier(0, 0, 0.2, 1) !important;
+}
+
+.sidebar-item {
+    position: relative;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    background: transparent;
+    transition: background-color 600ms ease;
+}
+.sidebar-item .item-menu-btn {
+    position: absolute;
+    right: 6px;
+    top: 8px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+.chat-item-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+.chat-item-status__spinner {
+    flex-shrink: 0;
+    animation: chat-status-spin 900ms linear infinite;
+}
+@keyframes chat-status-spin {
+    to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .chat-item-status__spinner { animation: none; }
+}
+.sidebar-item:hover .item-menu-btn,
+.sidebar-item .item-menu-btn.active {
+    opacity: 1;
+}
+.sidebar-item .item-menu-btn:hover {
+    color: var(--color-text-primary);
+}
+.sidebar-item .truncate {
+    position: relative;
+    overflow: hidden;
+    text-overflow: clip;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+}
+.sidebar-item:hover .truncate,
+.sidebar-item.active .truncate {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 44px), transparent calc(100% - 16px));
+    mask-image: linear-gradient(to right, black calc(100% - 44px), transparent calc(100% - 16px));
+}
+.item-popup {
+    display: none;
+    position: fixed;
+    min-width: 140px;
+    /* Frosted-glass blur. `isolation: isolate` + an explicit
+       `transform: translateZ(0)` force the popup into its own
+       compositor layer so backdrop-filter is honored even when an
+       ancestor (chart wrapper, transformed container, etc.) would
+       otherwise disable it on Safari/Chrome. */
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    padding: 3px;
+    border-radius: 8px;
+    /* Solid-enough fill so tall menus (e.g. tab overflow) match short ones:
+       backdrop-filter samples whatever is behind each row; very low alpha
+       makes a tall panel read greener/lighter over the canvas than over the tab strip. */
+    background: rgba(30, 30, 33, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 9999;
+}
+.item-popup.skill-picker-menu {
+    border-radius: 6px;
+    padding: 4px;
+    background: var(--color-surface-1);
+    border: 1px solid var(--color-border-default);
+}
+.skill-picker-menu--inline {
+    width: 100%;
+    margin-bottom: 0;
+    padding: 4px;
+    border: 1px solid var(--color-border-default);
+    border-radius: 6px;
+    background: var(--color-surface-1);
+    box-shadow: var(--shadow-composer-contextual);
+    box-sizing: border-box;
+}
+.skill-picker-menu__items {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+}
+.item-popup-row {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+.item-popup-row:hover {
+    background-color: #28282c;
+}
+.item-popup-row--delete {
+    color: var(--color-semantic-error);
+}
+.item-popup-row--delete:hover {
+    background-color: rgba(250, 126, 145, 0.08);
+}
+.item-popup-sep {
+    height: 1px;
+    background: var(--color-border-default);
+    margin: 3px 6px;
+}
+.delete-slot .item-popup-row--delete,
+.delete-slot .item-popup-confirm {
+    transition: opacity 120ms ease;
+}
+.item-popup-confirm {
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+.confirm-yes,
+.confirm-no {
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 0 2px;
+    opacity: 0;
+    transform: translateX(-8px);
+}
+.confirm-yes { color: var(--color-semantic-error); }
+.confirm-yes:hover { color: #ff9dac; }
+.confirm-no { color: var(--color-text-primary); }
+.confirm-no:hover { color: #ffffff; }
+.confirm-yes.slide-in {
+    transition: transform 280ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 60ms ease;
+    opacity: 1;
+    transform: translateX(0);
+}
+.confirm-no.slide-in {
+    transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1) 40ms, opacity 60ms ease 40ms;
+    opacity: 1;
+    transform: translateX(0);
+}
+.confirm-yes.slide-out,
+.confirm-no.slide-out {
+    transition: none;
+    opacity: 0;
+    transform: translateX(-8px);
+}
+
+.conv-header { position: relative; }
+.conversation--centered { position: relative; }
+:root {
+    --view-fade-duration: 200ms;
+    --intro-cube-size: 128px;
+    --intro-content-gap: 20px;
+    /* Shared vertical anchor: 225px on a 900px-tall viewport. */
+    --intro-top: max(32px, calc(50dvh - 225px));
+}
+.intro-cube {
+    width: var(--intro-cube-size);
+    height: var(--intro-cube-size);
+    margin: 0 auto var(--intro-content-gap);
+    flex-shrink: 0;
+    user-select: none;
+}
+.new-conversation-cube-mark { pointer-events: none; }
+.canvas-empty-layout {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--intro-top) 16px 88px;
+}
+.canvas-empty-shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(100%, 292px);
+    margin-inline: auto;
+}
+.new-conversation-cube path {
+    fill: var(--color-border-hover);
+}
+.new-conversation-cube,
+.new-conversation-cube svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.conversation--centered #convHeader,
+.conversation--centered #messagesList { display: none !important; }
+.conversation--centered #messagesArea {
+    display: block;
+    min-height: 0;
+    margin-top: 0 !important;
+    margin-bottom: 80px;
+    padding: var(--intro-top) 0 24px !important;
+}
+.conversation--centered #promptDock {
+    position: relative !important;
+    width: min(100%, 640px);
+    margin: 0 auto;
+    flex-shrink: 0;
+}
+/* The shared cube gap lands directly on the card edge, without the normal
+   dock's extra top inset. Other composers keep their existing padding. */
+.conversation--centered .prompt-composer { padding-top: 0; }
+.conversation--centered .prompt-composer__extension { top: -8px; }
+.conversation--sticky-composer #messagesArea {
+    display: flex;
+    flex-direction: column;
+}
+.conversation--sticky-composer #messagesList {
+    flex-shrink: 0;
+}
+.conversation--sticky-composer #promptDock {
+    flex-shrink: 0;
+    margin-top: auto;
+}
+.conversation-opening #promptDock {
+    animation: conversation-composer-enter var(--view-fade-duration) ease both;
+}
+.conversation-opening #convHeader,
+.conversation-opening #messagesList {
+    animation: conversation-content-enter var(--view-fade-duration) ease both;
+}
+.conversation-opening #canvasWrap,
+.conversation-opening #resizeHandle {
+    animation: conversation-panel-enter var(--view-fade-duration) ease both;
+}
+@keyframes conversation-composer-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes conversation-content-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes conversation-panel-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .conversation-opening #promptDock,
+    .conversation-opening #convHeader,
+    .conversation-opening #messagesList,
+    .conversation-opening #canvasWrap,
+    .conversation-opening #resizeHandle { animation: none; }
+}
+.new-conversation-sections {
+    width: min(calc(100% - 32px), 608px);
+    margin: 20px auto 0;
+    /* Match the card's 1px border plus the input content's 17px inset. */
+    padding: 0 18px;
+    box-sizing: border-box;
+    text-align: left;
+    animation: new-suggestions-reveal 500ms ease-out 100ms both;
+}
+@keyframes new-suggestions-reveal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .new-conversation-sections { animation: none; }
+}
+.new-conversation-section {
+    min-width: 0;
+}
+.new-conversation-section__heading {
+    margin-bottom: 8px;
+    color: var(--color-text-tertiary);
+}
+.new-conversation-section__heading h2 {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+}
+.new-conversation-section ul {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.new-conversation-tip-footer {
+    position: absolute;
+    bottom: 32px;
+    left: 0;
+    right: 0;
+    padding: 0 16px;
+    pointer-events: none;
+    user-select: none;
+}
+.new-conversation-tip-footer .prompt-composer__tip { justify-content: center; margin-inline: auto; }
+.new-conversation-section button {
+    display: block;
+    width: calc(100% + 16px);
+    margin-left: -8px;
+    padding: 6px 8px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-weight: 400;
+    line-height: 1.6;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+.new-conversation-section button:hover {
+    background: var(--color-surface-1);
+    color: var(--color-text-primary);
+}
+.new-conversation-section button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+}
+.simulation-task-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 1.5px;
+    background: var(--color-border-default);
+}
+.simulation-task-dot.is-running {
+    background: var(--color-icon-subtle);
+    animation: simulation-thinking 1s ease-in-out infinite alternate;
+}
+@keyframes simulation-thinking { to { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) {
+    .simulation-task-dot.is-running { animation: none; }
+}
+#convHeader {
+    flex-shrink: 0;
+    z-index: 2;
+    isolation: isolate;
+}
+#convHeader::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -11px;
+    z-index: -1;
+    background: linear-gradient(to bottom,
+        var(--conversation-surface, var(--color-surface-0)) calc(100% - 24px),
+        transparent 100%);
+    pointer-events: none;
+}
+.conv-menu-btn {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: auto;
+    transition: color 0.15s ease, background-color 0.1s ease;
+}
+.conv-menu-btn:hover { color: var(--color-text-secondary); }
+
+#convTitle.rename-area {
+    flex: 1;
+    min-width: 0;
+    display: block;
+    cursor: text;
+}
+/* The original prototype used a CSS adjacent-sibling rule here to
+   hide the kebab when the title was being renamed. We now conditionally
+   render different elements (kebab vs. X close) in JSX based on
+   `isRenamingHeader`, so a blanket "+ .conv-menu-btn { display: none }"
+   rule would actually hide the X close button as well. The JSX
+   handles the swap; CSS doesn't need to. */
+
+#newBtnWrap {
+    /* Absolute so the wrapper never participates in railExpandedInner's
+       flex flow. The chat list then sits directly at the top of the inner
+       (y = railExpanded paddingTop = 66 of the rail), and entering search
+       only requires fading the button out — the list doesn't need to
+       slide up to fill collapsed space. left/right extend the gradient
+       to the full rail width (same effect as the previous -18 margins). */
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: -18px;
+    right: -18px;
+    padding: 0 18px 20px;
+    background: linear-gradient(to bottom, var(--color-surface-0) 60%, transparent);
+    transition: opacity 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+#chatList { scrollbar-gutter: stable; }
+#chatList::-webkit-scrollbar { width: 4px; }
+#chatList::-webkit-scrollbar-track { background: transparent; }
+#chatList::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 2px;
+    transition: background 0.3s ease;
+}
+#chatList.scrolling::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+}
+
+#railBottom { transition: opacity 150ms ease; }
+#railBottom::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 32px;
+    background: linear-gradient(to bottom, transparent, var(--color-surface-0));
+    pointer-events: none;
+}
+.rail-bottom-row {
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 10px !important;
+    padding-right: 12px !important;
+    background: transparent;
+    transition: background-color 600ms ease;
+}
+.nav-row {
+    transition: background-color 150ms ease;
+}
+.nav-row:hover {
+    background-color: var(--color-surface-3) !important;
+}
+.sidebar-item:hover div:first-child { color: var(--color-text-primary); }
+.sidebar-item.active { background-color: var(--color-surface-2); }
+.sidebar-item.active div:first-child { color: var(--color-text-primary); }
+.sidebar-item.empty-state div:first-child { color: rgba(160, 160, 170, 0.35); }
+.sidebar-item.empty-state .item-menu-btn { display: none; }
+.sidebar-item .item-close-btn {
+    position: absolute;
+    right: 6px;
+    top: 8px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+.sidebar-item:hover .item-close-btn { opacity: 1; }
+.sidebar-item .item-close-btn:hover { color: var(--color-text-primary); }
+@keyframes renameBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+.rename-area {
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.rename-area .rename-typed {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    white-space: pre;
+}
+.rename-area .rename-cursor {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    width: 1.5px;
+    height: 15px;
+    background: var(--color-text-primary);
+    animation: renameBlink 1s step-end infinite;
+}
+.rename-area .rename-ghost {
+    font-size: 13px;
+    font-weight: 500;
+    color: #4a4a50;
+    white-space: nowrap;
+}
+
+.expanded .rail-bottom-row:hover { background-color: var(--color-surface-3); }
+.expanded .nav-row:hover { background-color: var(--color-surface-3); }
+.tab-pill .tab-close,
+.prompt-composer__tip-dismiss {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    /* Tight pr: CloseIcon uses 16×16 viewBox at 12px — strokes sit ~2–3px inset from svg box; 4px pr aligns optical X to pill edge */
+    min-width: 24px;
+    height: 100%;
+    min-height: 24px;
+    max-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    border-radius: 4px;
+    border: none;
+    padding: 0 4px 0 8px;
+    margin: 0;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    line-height: 0;
+}
+.tab-pill .tab-close svg,
+.prompt-composer__tip-dismiss svg {
+    display: block;
+    flex-shrink: 0;
+    /* Pull strokes toward the pill edge (viewBox has extra air past x=12) */
+    margin-right: -2px;
+}
+.tab-pill .tab-close:hover:not(:disabled),
+.tab-pill .tab-close:focus-visible:not(:disabled),
+.prompt-composer__tip-dismiss:hover,
+.prompt-composer__tip-dismiss:focus-visible {
+    color: var(--color-text-tertiary);
+    background-color: transparent;
+}
+.tab-pill .tab-close:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+@keyframes blockBlink {
+    0%, 50% { background: var(--color-icon-default); color: #0d0d0d; }
+    51%, 100% { background: transparent; color: rgba(160, 160, 170, 0.35); }
+}
+.composer-dock {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 12px, var(--conversation-surface, var(--color-surface-0)) 12px);
+    z-index: 1;
+}
+.conversation-dock-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 12px;
+    height: 52px;
+    transform: translateY(-100%);
+    background: linear-gradient(to top, var(--conversation-surface, var(--color-surface-0)) 0%, var(--conversation-surface, var(--color-surface-0)) 15%, transparent 100%);
+    transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+.prompt-composer__input { caret-color: transparent; }
+.prompt-composer {
+    position: relative;
+    width: 100%;
+    padding: 12px 16px 8px;
+}
+.prompt-composer__extension {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    /* Card starts at 12px; keep an 8px gap above it without adding height. */
+    top: 4px;
+    transform: translateY(-100%);
+    z-index: 2;
+}
+/* Design system frames only; composer visuals remain shared with conversations. */
+.composer-example__description,
+.composer-example__status {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--color-text-tertiary);
+    margin: 0 0 12px;
+}
+.composer-example__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+.composer-example__controls label { display: flex; align-items: center; gap: 6px; }
+.composer-example__control-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font: inherit;
+    cursor: pointer;
+}
+.composer-example__control-button:hover,
+.composer-example__control-button:focus-visible { color: var(--color-text-primary); }
+.composer-example__preview {
+    --conversation-surface: var(--color-surface-0);
+    width: 100%;
+    border: 1px solid var(--color-surface-2);
+    border-radius: 8px;
+    background: var(--conversation-surface);
+    font-size: 13px;
+}
+.composer-example__preview--scroll {
+    height: 360px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.composer-example__preview--scroll > .composer-dock { flex-shrink: 0; margin-top: auto; }
+.composer-example__messages { padding: 16px; flex-shrink: 0; }
+.composer-example__messages p { margin: 0 0 24px; line-height: 1.6; }
+.composer-example__speaker { display: block; color: var(--color-text-tertiary); margin-bottom: 6px; font-size: 11px; }
+.composer-example__status { margin-top: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.prompt-composer__suggestions {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 0;
+    animation: composer-suggestions-enter 240ms ease-out both;
+}
+.prompt-composer:focus-within .prompt-composer__suggestions { display: flex; }
+.prompt-composer__suggestion-pill {
+    padding: 4px 10px;
+    border: 1px solid var(--color-border-default);
+    border-radius: 999px;
+    background: var(--color-surface-1);
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: var(--shadow-composer-contextual);
+    transition: transform 300ms cubic-bezier(0.34, 1.12, 0.64, 1), background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.prompt-composer__suggestion-pill:hover { transform: scale(1.025); }
+.prompt-composer__suggestion-pill:active {
+    transform: scale(0.97);
+    transition: transform 40ms cubic-bezier(0, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+    .prompt-composer__suggestion-pill,
+    .prompt-composer__suggestion-pill:hover,
+    .prompt-composer__suggestion-pill:active { transform: none; transition: none; }
+}
+[data-theme="light"] .prompt-composer__suggestion-pill {
+    background: var(--color-surface-void);
+}
+.prompt-composer__suggestion-pill:hover,
+.prompt-composer__suggestion-pill:focus-visible {
+    border-color: var(--color-border-hover);
+    background: var(--color-surface-2);
+    color: var(--color-text-primary);
+    outline: none;
+}
+@keyframes composer-suggestions-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.prompt-composer__content,
+.prompt-composer__question {
+    position: absolute;
+    inset: 0 0 auto;
+    padding: 10px 12px 10px 17px;
+}
+.prompt-composer__content {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+}
+.prompt-composer__content.is-active {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 220ms ease 100ms;
+}
+.prompt-composer__question {
+    padding: 4px;
+    max-height: calc(100dvh - 200px);
+    overflow-y: auto;
+    animation: plan-question-enter 300ms ease 80ms both;
+}
+@keyframes plan-question-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.prompt-composer__card {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-surface-1);
+    border: 1px solid var(--color-border-default);
+    border-radius: 6px;
+    transition: height 420ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+[data-theme="light"] .prompt-composer__card {
+    background: var(--color-surface-void);
+}
+.prompt-composer__card:focus-within { border-color: var(--color-border-hover); }
+.prompt-composer__editor { position: relative; overflow: hidden; }
+.prompt-composer__input {
+    width: 100%;
+    min-height: 2lh;
+    max-height: 180px;
+    overflow-y: auto;
+    outline: none;
+    font: inherit;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+@keyframes composer-send-confirm {
+    0% { opacity: 0; transform: scale(0.84); }
+    70% { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.prompt-composer__placeholder,
+.prompt-composer__suggestion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+    line-height: 1.6;
+    pointer-events: none;
+}
+.prompt-composer__suggestion { white-space: pre; overflow: hidden; }
+.prompt-composer__placeholder { display: flex; align-items: center; }
+.prompt-composer__cursor {
+    position: absolute;
+    width: 8px;
+    pointer-events: none;
+    animation: composer-cursor-blink 1s step-end infinite;
+}
+.prompt-composer__placeholder-cursor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Keep the same natural glyph width in focused and idle states. */
+    width: auto;
+    height: 18px;
+    animation: composer-cursor-blink 1s step-end infinite;
+}
+.prompt-composer__placeholder-cursor.is-idle {
+    animation: none;
+    background: transparent;
+    color: inherit;
+}
+@keyframes composer-cursor-blink {
+    0%, 50% { background: var(--color-icon-default); color: var(--color-surface-1); }
+    51%, 100% { background: transparent; color: var(--color-text-tertiary); }
+}
+.prompt-composer__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0;
+}
+.prompt-composer__plus,
+.prompt-composer__voice,
+.prompt-composer__send {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.prompt-composer__tools {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    /* Optical alignment: the 10px glyph starts at the text edge. Its invisible
+       24px circular target extends 7px left of that edge. */
+    margin-left: -7px;
+}
+.prompt-composer__plus,
+.prompt-composer__voice {
+    color: var(--color-icon-subtle);
+    background: transparent;
+}
+.prompt-composer__plus,
+.prompt-composer__voice { transition: background-color 140ms ease, color 140ms ease; }
+.prompt-composer__plus:hover,
+.prompt-composer__voice:hover { background: var(--color-surface-2); }
+.prompt-composer__plus:active,
+.prompt-composer__voice:active,
+.prompt-composer__plus[aria-expanded="true"],
+.prompt-composer__voice[aria-pressed="true"] { background: var(--color-surface-3); color: var(--color-text-primary); }
+.prompt-composer__listening {
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    margin-left: 4px;
+    vertical-align: -3px;
+    line-height: 0;
+    user-select: none;
+    pointer-events: none;
+}
+.composer-voice-bars {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    width: 47px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--color-accent);
+}
+.composer-voice-bars > span {
+    width: 2px;
+    height: 12px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: scaleY(0.35);
+}
+.composer-voice-bars.is-audio-reactive > span {
+    transform: scaleY(var(--voice-scale, 0.2));
+    transition: transform 65ms linear;
+}
+.prompt-composer__voice-error { color: var(--color-text-error); font-size: 11px; line-height: 1.6; margin: 8px 4px 0; }
+@media (prefers-reduced-motion: reduce) {
+    .composer-voice-bars > span:nth-child(2n) { transform: scaleY(0.8); }
+    .composer-voice-bars.is-audio-reactive > span { transform: scaleY(0.35); transition: none; }
+    .prompt-composer__plus, .prompt-composer__voice { transition: none; }
+}
+.prompt-composer__send {
+    width: 22px;
+    height: 22px;
+    background: var(--color-text-primary);
+    color: var(--color-surface-0);
+}
+/* Share the New button’s spring timing, with subtler travel for this target. */
+.prompt-composer__send:not(:disabled):hover { transform: scale(1.06); }
+.prompt-composer__send:not(:disabled):active {
+    transform: scale(0.97);
+    transition: opacity 200ms ease, transform 0.04s cubic-bezier(0, 0, 0.2, 1) !important;
+}
+.prompt-composer__send:disabled { opacity: 0.35; cursor: default; }
+.prompt-composer__send.is-confirmed { opacity: 1; }
+.prompt-composer__send.is-confirmed svg {
+    animation: composer-send-confirm 240ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+    .prompt-composer__send { transition: none !important; transform: none !important; }
+    .prompt-composer__send.is-confirmed svg { animation-duration: 1ms; }
+}
+.prompt-composer button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+.prompt-composer__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 1.6em;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 0 4px;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--color-text-tertiary);
+}
+/* Keep the same footer geometry when Plan swaps in its keyboard hint. */
+.prompt-composer--compact-footer { padding-bottom: 4px; }
+.prompt-composer--compact-footer .prompt-composer__footer {
+    min-height: 16px;
+    margin-top: 4px;
+}
+.prompt-composer__context,
+.prompt-composer__usage {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.prompt-composer__context { min-width: 0; }
+.prompt-composer__context.is-hidden { visibility: hidden; }
+.prompt-composer__context-prefix { flex-shrink: 0; }
+.prompt-composer__context-artifact { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.prompt-composer__context-icon { display: flex; flex-shrink: 0; }
+.prompt-composer__context-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prompt-composer__usage {
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 5px;
+    padding: 3px 6px;
+    margin: -3px -6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
+}
+.prompt-composer__usage:hover,
+.prompt-composer__usage:focus-visible {
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+}
+.prompt-composer__usage:active,
+.prompt-composer__usage[aria-expanded="true"] { background: var(--color-surface-3); }
+.feedback-tooltip.composer-context-tooltip {
+    transform: none;
+    line-height: 1.4;
+    overflow: auto;
+}
+.composer-context-tooltip__tokens { margin-top: 2px; font-weight: 400; color: var(--color-text-secondary); }
+.item-popup.context-usage-popover { padding: 12px; overflow-y: auto; font-size: 12px; line-height: 1.5; color: var(--color-text-primary); }
+.context-usage-popover__header,
+.context-usage-popover__totals,
+.context-usage-popover__breakdown > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.context-usage-popover__header { font-weight: 500; margin-bottom: 12px; }
+.context-usage-popover__close { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 4px; background: transparent; color: var(--color-icon-subtle); cursor: pointer; }
+.context-usage-popover__close:hover { background: var(--color-surface-2); color: var(--color-icon-default); }
+.context-usage-popover__totals { color: var(--color-text-secondary); font-size: 11px; }
+.context-usage-popover__bar { display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--color-surface-3); margin: 8px 0 16px; }
+.context-usage-popover__bar > span { flex-shrink: 0; }
+.context-usage-popover__breakdown { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.context-usage-popover__breakdown dt { display: flex; align-items: center; gap: 8px; }
+.context-usage-popover__breakdown dd { margin: 0; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.context-usage-popover__swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.context-usage-popover__compaction { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-border-default); }
+.context-usage-popover__compaction p { color: var(--color-text-secondary); font-size: 11px; margin: 0 0 10px; }
+.context-usage-popover__compact { width: 100%; padding: 7px 10px; border: 1px solid var(--color-border-default); border-radius: 6px; background: var(--color-surface-2); color: var(--color-text-primary); font: inherit; cursor: pointer; }
+.context-usage-popover__compact:hover:not(:disabled) { background: var(--color-surface-3); }
+.context-usage-popover__compact:disabled { opacity: 0.5; cursor: default; }
+.context-usage-popover button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+    .prompt-composer__usage { transition: none; }
+}
+.prompt-composer__tip {
+    display: flex;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-tertiary);
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+    max-width: 320px;
+    pointer-events: auto;
+}
+.prompt-composer__tip-dismiss {
+    align-self: center;
+    flex-shrink: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+}
+.prompt-composer__tip:hover .prompt-composer__tip-dismiss,
+.prompt-composer__tip:focus-within .prompt-composer__tip-dismiss { opacity: 1; pointer-events: auto; }
+.prompt-composer__tip-dismiss:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+@media (hover: none) {
+    .prompt-composer__tip-dismiss { opacity: 1; pointer-events: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .prompt-composer__tip-dismiss { transition: none; }
+}
+.prompt-composer__tip-text {
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    animation: composer-tip-enter 350ms ease-out;
+}
+@keyframes composer-tip-enter {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.prompt-composer__instructions {
+    min-width: 0;
+    white-space: nowrap;
+    font-size: 10px;
+    letter-spacing: -0.15px;
+}
+@media (prefers-reduced-motion: reduce) {
+    .prompt-composer__card,
+    .prompt-composer__content,
+    .prompt-composer__content.is-active { transition: none; }
+    .prompt-composer__question,
+    .prompt-composer__tip-text,
+    .prompt-composer__suggestions { animation: none; }
+}
+.prompt-plus-btn:hover {
+    background: var(--color-surface-2) !important;
+    border-color: var(--color-border-default) !important;
+    color: var(--color-text-primary) !important;
+}
+
+/* Elicitation free-form row: the placeholder needs to read like the
+   muted static label it replaced (var(--color-text-tertiary)). Once the user types, the
+   real text takes the regular var(--color-text-primary) set inline. */
+.elicitation input::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 1;
+}
+
+/* Rename input: when the user clears the field the placeholder shows
+   the original title as a muted "ghost" — same shade the prototype's
+   .rename-ghost span used. Vanishes as soon as the user types. */
+.rename-input::placeholder {
+    color: #4a4a50;
+    opacity: 1;
+}
+.prompt-composer__input:focus { outline: none; }
+#blockCursor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 8px;
+    height: 18px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1;
+    animation: blockBlink 1s step-end infinite;
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.user-message {
+    min-width: 0;
+    overflow: hidden;
+}
+.user-message > span {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.user-message.expanded { height: auto !important; }
+.user-message.expanded > span {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+}
+
+.config-panel {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+textarea:focus { outline: none; }
+
+#searchInput::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 0.5;
+}
+
+#railTooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    isolation: isolate;
+    background: var(--color-surface-void);
+    border: 1px solid var(--color-border-default);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateZ(0) translateY(-50%) translateX(-4px);
+    transition: opacity 150ms ease, transform 150ms ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+#iconRail.collapsed:hover { background-color: var(--color-surface-1); }
+#iconRail.collapsed:hover #railSeparator { background: var(--color-border-hover) !important; }
+#iconRail.collapsed:hover #railHandle { background: var(--color-text-secondary) !important; }
+#iconRail.expanded #railEdge:hover #railSeparator { background: var(--color-border-hover) !important; }
+#iconRail.expanded #railEdge:hover #railHandle {
+    background: var(--color-text-secondary) !important;
+    transform: translateY(-50%) translateX(-4px) !important;
+}
+
+/* Console text response */
+.console-response {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-icon-default);
+}
+.console-response p { margin-bottom: 10px; }
+.console-response p:last-child { margin-bottom: 0; }
+.console-response ul {
+    margin: 4px 0 10px 0;
+    padding-left: 16px;
+    list-style: none;
+}
+.console-response ul li {
+    position: relative;
+    padding-left: 4px;
+    margin-bottom: 4px;
+}
+.console-response ul li::before {
+    content: '•';
+    position: absolute;
+    left: -12px;
+    color: var(--color-text-tertiary);
+}
+.console-response code {
+    font-family: 'SF Mono', 'Fira Code', Menlo, Monaco, monospace;
+    font-size: 12px;
+    background: var(--color-surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--color-icon-default);
+}
+.console-response strong { font-weight: 500; color: var(--color-text-primary); }
+
+/* Task module */
+.task-module {
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 8px 0 0;
+    margin: -8px -2px -8px -2px;
+    transition: border-color 0.2s ease;
+}
+.task-module:hover,
+.task-module.expanded { border-color: var(--color-surface-2); }
+.task-module.expanded:hover { border-color: var(--color-border-hover); }
+.task-header {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+.task-module .task-dot {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+.task-module:hover .task-dot,
+.task-module.expanded .task-dot { opacity: 0; }
+.task-expand-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(calc(-50% - 4px));
+    opacity: 0;
+    color: var(--color-text-tertiary);
+    transition: opacity 0.2s ease;
+}
+.task-module:hover .task-expand-icon,
+.task-module.expanded .task-expand-icon { opacity: 1; }
+.task-subtitle-wrap { position: relative; height: 1.4em; }
+.task-subtitle-default, .task-subtitle-hover { transition: opacity 0.2s ease; }
+.task-subtitle-hover { position: absolute; top: 0; left: 0; }
+.task-module .task-subtitle-default { opacity: 1; }
+.task-module .task-subtitle-hover { opacity: 0; }
+.task-module:not(.expanded):hover .task-subtitle-default { opacity: 0; }
+.task-module:not(.expanded):hover .task-subtitle-hover { opacity: 1; }
+.task-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+.task-header-top { display: flex; align-items: center; gap: 6px; }
+.task-label { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+@keyframes taskShimmer {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+}
+.text-shimmer {
+    background: linear-gradient(90deg, var(--color-text-tertiary) 0%, var(--color-text-tertiary) 40%, var(--color-text-secondary) 50%, var(--color-text-tertiary) 60%, var(--color-text-tertiary) 100%);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: taskShimmer 8s linear infinite;
+}
+.task-name { font-size: 13px; font-weight: 400; -webkit-font-smoothing: antialiased; }
+.task-subtitle {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    padding-left: 2px;
+    -webkit-font-smoothing: antialiased;
+    display: inline-flex;
+    align-items: center;
+}
+.task-tool-calls { position: relative; overflow: hidden; width: 100%; }
+.task-tool-call { position: absolute; top: 0; left: 0; width: 100%; height: 22px; line-height: 22px; }
+.task-tool-call > svg { flex-shrink: 0; }
+.task-tool-call > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-tool-history { padding-left: 18px; margin: 8px 0 0; list-style: decimal; font-size: 13px; line-height: 1.6; color: var(--color-text-tertiary); }
+/* Animates to the content's natural height. A fixed max-height would clip
+   longer task blocks, and sizing it generously makes the easing inconsistent
+   between short and long blocks. */
+.task-detail {
+    display: grid;
+    /* minmax(0, …) overrides the auto track minimum so the inner row's padding
+       and border don't hold the collapsed block open. */
+    grid-template-rows: minmax(0, 0fr);
+    overflow: hidden;
+    transition: grid-template-rows 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.task-module.expanded > .task-detail { grid-template-rows: minmax(0, 1fr); }
+.task-detail > .task-detail-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+.task-detail-inner {
+    padding: 12px 0 18px 0;
+    margin: 0 18px;
+    border-top: 1px solid var(--color-surface-2);
+}
+.task-body-text {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-text-tertiary);
+    margin-top: 12px;
+}
+.task-body-text:first-child { margin-top: 0; }
+/* Inline Menlo/code stays medium weight even though surrounding body text is 400 */
+.task-body-text code { font-weight: 500; }
+
+/* Conversation: thinking indicator */
+@media (prefers-reduced-motion: reduce) {
+    .chat-thinking .think-dot,
+    .chat-thinking .text-shimmer { animation: none; }
+}
+@keyframes thinkPulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.6); }
+    50% { opacity: 1; transform: scale(1); }
+}
+.think-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 2.5px);
+    gap: 2.75px;
+    flex-shrink: 0;
+    width: 13px;
+    justify-content: center;
+}
+.think-dot {
+    width: 2.5px;
+    height: 2.5px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    animation: thinkPulse 1.6s ease-in-out infinite;
+}
+.think-dot:nth-child(1) { animation-delay: 0.0s; animation-duration: 1.8s; }
+.think-dot:nth-child(2) { animation-delay: 0.5s; animation-duration: 1.5s; }
+.think-dot:nth-child(3) { animation-delay: 0.2s; animation-duration: 2.0s; }
+.think-dot:nth-child(4) { animation-delay: 0.7s; animation-duration: 1.4s; }
+.think-dot:nth-child(5) { animation-delay: 0.1s; animation-duration: 1.9s; }
+.think-dot:nth-child(6) { animation-delay: 0.9s; animation-duration: 1.6s; }
+.think-dot:nth-child(7) { animation-delay: 0.4s; animation-duration: 2.1s; }
+.think-dot:nth-child(8) { animation-delay: 1.1s; animation-duration: 1.3s; }
+.think-dot:nth-child(9) { animation-delay: 0.6s; animation-duration: 1.7s; }
+
+/* Console response: link/table extras */
+.console-response a.ext-link {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.console-response a.ext-link:hover { color: var(--color-text-secondary); }
+.console-response table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+}
+.console-response th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    padding: 6px 12px 6px 0;
+    border-bottom: 1px solid var(--color-surface-2);
+}
+.console-response td {
+    padding: 5px 12px 5px 0;
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-surface-2);
+}
+.console-response td a.ext-link {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.console-response td a.ext-link::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: var(--color-text-tertiary);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 1.75C8 1.33579 8.33579 1 8.75 1H14.25C14.6642 1 15 1.33579 15 1.75V7.25C15 7.66421 14.6642 8 14.25 8C13.8358 8 13.5 7.66421 13.5 7.25V3.56066L6.40533 10.6553C6.11244 10.9482 5.63756 10.9482 5.34467 10.6553C5.05178 10.3624 5.05178 9.88756 5.34467 9.59467L12.4393 2.5H8.75C8.33579 2.5 8 2.16421 8 1.75Z' fill='black'/%3E%3Cpath d='M2.5 4.75C2.5 4.05964 3.05964 3.5 3.75 3.5H5.625C6.03921 3.5 6.375 3.16421 6.375 2.75C6.375 2.33579 6.03921 2 5.625 2H3.75C2.23122 2 1 3.23122 1 4.75V12.25C1 13.7688 2.23122 15 3.75 15H11.25C12.7688 15 14 13.7688 14 12.25V10.375C14 9.96079 13.6642 9.625 13.25 9.625C12.8358 9.625 12.5 9.96079 12.5 10.375V12.25C12.5 12.9404 11.9404 13.5 11.25 13.5H3.75C3.05964 13.5 2.5 12.9404 2.5 12.25V4.75Z' fill='black'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 1.75C8 1.33579 8.33579 1 8.75 1H14.25C14.6642 1 15 1.33579 15 1.75V7.25C15 7.66421 14.6642 8 14.25 8C13.8358 8 13.5 7.66421 13.5 7.25V3.56066L6.40533 10.6553C6.11244 10.9482 5.63756 10.9482 5.34467 10.6553C5.05178 10.3624 5.05178 9.88756 5.34467 9.59467L12.4393 2.5H8.75C8.33579 2.5 8 2.16421 8 1.75Z' fill='black'/%3E%3Cpath d='M2.5 4.75C2.5 4.05964 3.05964 3.5 3.75 3.5H5.625C6.03921 3.5 6.375 3.16421 6.375 2.75C6.375 2.33579 6.03921 2 5.625 2H3.75C2.23122 2 1 3.23122 1 4.75V12.25C1 13.7688 2.23122 15 3.75 15H11.25C12.7688 15 14 13.7688 14 12.25V10.375C14 9.96079 13.6642 9.625 13.25 9.625C12.8358 9.625 12.5 9.96079 12.5 10.375V12.25C12.5 12.9404 11.9404 13.5 11.25 13.5H3.75C3.05964 13.5 2.5 12.9404 2.5 12.25V4.75Z' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.console-response td a.ext-link:hover::after {
+    opacity: 1;
+    transform: translateX(0);
+}
+.console-response tr:last-child td { border-bottom: none; }
+
+/* Inline table expand-to-canvas */
+.inline-table-wrap { position: relative; }
+.expand-th {
+    width: 1px;
+    padding-left: 12px;
+    padding-right: 0;
+    white-space: nowrap;
+}
+.inline-table-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+.inline-table-wrap:hover .inline-table-expand-btn { opacity: 1; }
+.inline-table-expand-btn:hover { color: var(--color-text-secondary); }
+
+/* Truncated inline table — wide table that clips on the right.
+   .inline-table-clip has overflow:hidden but no position, so it clips normal-flow
+   table content without clipping the abs-positioned expand button on the outer wrapper. */
+.inline-table-wrap--truncated { /* position: relative already on .inline-table-wrap */ }
+.inline-table-clip {
+    overflow: hidden;
+}
+.inline-table-wrap--truncated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 56px;
+    background: linear-gradient(to right, transparent, var(--color-surface-0));
+    pointer-events: none;
+    z-index: 1;
+}
+/* Button for truncated table: abs-pos on outer wrapper, vertically spans the header row */
+.inline-table-wrap--truncated .inline-table-expand-btn {
+    position: absolute;
+    top: 10px; /* matches .console-response table margin-top */
+    right: 0;
+    height: 30px; /* approx thead height: 6px padding × 2 + 18px line-height */
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    z-index: 2;
+}
+
+/* Code blocks (in task module) */
+.code-block {
+    position: relative;
+    background: var(--color-surface-1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.code-block::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--color-surface-1));
+    border-radius: 0 0 8px 8px;
+    pointer-events: none;
+}
+.code-block-single::after { display: none; }
+.code-block--peek .code-actions { opacity: 0; transition: opacity 0.15s ease; }
+.code-block--peek:hover .code-actions { opacity: 1; }
+.code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-family: 'SF Mono', 'Fira Code', Menlo, Monaco, monospace;
+}
+.code-actions { display: flex; gap: 0; }
+.code-actions button {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.code-actions button:hover {
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+}
+.code-body {
+    position: relative;
+    padding: 0 12px 12px 12px;
+    font-family: 'SF Mono', 'Fira Code', Menlo, Monaco, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    white-space: nowrap;
+}
+.code-body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, var(--color-surface-1));
+    pointer-events: none;
+}
+.code-body .ln {
+    display: inline-block;
+    width: 24px;
+    text-align: right;
+    margin-right: 16px;
+    color: #4a4a50;
+    user-select: none;
+}
+.kw { color: #c678dd; }
+.fn { color: #e5c07b; }
+.str { color: #98c379; }
+.num { color: #d19a66; }
+.op { color: #5c6370; font-style: italic; }
+.code-inline {
+    padding: 8px 12px;
+    background: var(--color-surface-1);
+    border-radius: 8px;
+    font-family: 'SF Mono', 'Fira Code', Menlo, Monaco, monospace;
+    font-size: 12px;
+    line-height: 24px;
+    color: var(--color-text-secondary);
+    margin-top: 10px;
+}
+.task-detail-inner .code-inline { padding-left: 16px; }
+.task-detail-inner .code-header { padding-left: 16px; }
+.task-detail-inner .code-body { padding-left: 1px; }
+.task-chevron {
+    transition: transform 150ms ease;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+}
+.task-module.expanded .task-chevron { transform: rotate(180deg); }
+
+/* Artifact reference pills */
+.artifact-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+.artifact-ref {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    background: var(--color-surface-2);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+.artifact-ref:hover {
+    border-color: var(--color-border-hover);
+    color: var(--color-text-primary);
+}
+[data-theme="light"] .artifact-ref {
+    background: var(--color-surface-2);
+}
+
+/* Launcher → Console handoff: the populated first user message fades and
+   slides up as Console mounts, so the transition from the Dashboard launcher
+   reads as one continuous motion rather than an abrupt page swap. */
+@keyframes launcherHandoffIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dashboard selection ring/fill: soft fade + settle when a tile is selected. */
+@keyframes selectRingIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Launcher placeholder rotation — a vertical carousel: the outgoing hint
+   slides up and fades, the incoming hint rises from below and fades in. */
+@keyframes phraseOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-45%); }
+}
+@keyframes phraseIn {
+    from { opacity: 0; transform: translateY(45%); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Block cursor blink animation — animates bg/color so the character
+   inside stays readable in both phases: inverted on cursor-on,
+   ghost-text color on cursor-off. Never opacity so the char never vanishes. */
+@keyframes cursor-blink {
+    0%, 100% {
+        background-color: var(--color-icon-default);
+        color: var(--color-text-tertiary);
+    }
+    50% {
+        background-color: transparent;
+        color: rgba(160, 160, 170, 0.35);
+    }
+}
+
+/* Blinking block cursor — used in both the empty-state overlay and as
+   an absolutely-positioned typed-state cursor inside the prompt row.
+   bg: var(--color-icon-default) (Icon/Default token), char color: var(--color-text-tertiary) (Text/Tertiary). */
+#blockCursor {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+    min-width: 8px;
+    animation: cursor-blink 1s step-end infinite;
+}
+
+/* @mention chip base — shared by both variants */
+.mention-chip {
+    display: inline;
+    font-weight: 500;
+    white-space: nowrap;
+    user-select: all;
+    cursor: default;
+}
+
+/* Variant A: inline colored text (default) */
+.mention-input--inline .mention-chip {
+    color: var(--color-text-secondary);
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: inherit;
+    line-height: inherit;
+    vertical-align: baseline;
+}
+
+/* Variant B: pill chip treatment for inline mention chips */
+.mention-input--chip .mention-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-secondary);
+    background: var(--color-surface-2);
+    border: 1px solid #2a2a2e;
+    border-radius: 5px;
+    padding: 0 6px 0 5px;
+    font-size: 12px;
+    line-height: 1.7;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+
+.mention-input--chip .mention-chip svg {
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+
+.skill-chip {
+    display: inline;
+    font-weight: 500;
+    white-space: nowrap;
+    user-select: all;
+    cursor: default;
+    color: #B8B8C8;
+}
+
+/* Anchored prompt bar (sticky bottom when content fills viewport) */
+#promptBarAnchored {
+    display: none;
+    flex-shrink: 0;
+    align-items: flex-start;
+    padding: 16px;
+    border-top: 1px solid var(--color-surface-2);
+    background: var(--color-surface-0);
+}
+
+/* Canvas tab content visibility */
+.tab-content { display: none; }
+.tab-content.active { display: flex; flex-direction: column; flex: 1; }
+
+/* Canvas: charts — full width (align-self: stretch), height hugs content; plot has fixed height, SVG width tracks container. */
+.chart-shell {
+    display: flex;
+    padding: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    align-self: stretch;
+    border-radius: 6px;
+    background: var(--color-surface-0);
+    border: 1px solid var(--color-border-subtle);
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    flex: 0 0 auto;
+    min-height: 0;
+    position: relative;
+    transition: background-color 0.15s ease;
+}
+[data-theme="light"] .chart-shell {
+    border-color: var(--color-border-default);
+}
+
+
+.chart-shell__header {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    padding-right: 36px;
+}
+.chart-shell__headerText {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.chart-shell__title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.chart-shell__subtitle {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    line-height: normal;
+    overflow-wrap: anywhere;
+}
+.chart-shell__menuBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease, color 0.12s ease;
+}
+.chart-shell:hover .chart-shell__menuBtn,
+.chart-shell:focus-within .chart-shell__menuBtn,
+.chart-shell.chart-shell--menu-open .chart-shell__menuBtn {
+    opacity: 1;
+    pointer-events: auto;
+}
+.chart-shell__menuBtn:hover,
+.chart-shell.chart-shell--menu-open .chart-shell__menuBtn {
+    color: var(--color-text-primary);
+}
+.chart-shell__chartBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+.chart-area {
+    position: relative;
+    flex: 0 0 auto;
+    width: 100%;
+    height: 264px;
+    min-width: 0;
+}
+.chart-area--plot-hero {
+    height: 280px;
+}
+.chart-area--plot-half {
+    height: 220px;
+}
+.chart-area--line,
+.chart-area--bar {
+    min-height: 0;
+}
+.chart-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+}
+
+.multi-chart-dnd {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    min-width: 0;
+}
+/* Multi-chart tab: 2 stacked, 3 hero + two-up, 4 as 2×2.
+   Narrow canvas (container) or small viewport: Multi · 3 → 3 full-width rows;
+   Multi · 4 → 4 full-width rows (was 2×2). */
+.multi-chart-root {
+    width: 100%;
+    align-self: stretch;
+    flex: 0 0 auto;
+    min-width: 0;
+    position: relative;
+}
+@keyframes multi-chart-cell-remove {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+.multi-chart-cell--removing {
+    animation: multi-chart-cell-remove 160ms ease-out forwards;
+    pointer-events: none;
+}
+.multi-chart-root--2 {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+}
+/* Wrapper is the query container so @container rules can target the inner grid (an element cannot query-style itself). */
+.multi-chart-cq-wrap {
+    width: 100%;
+    align-self: stretch;
+    flex: 0 0 auto;
+    min-width: 0;
+    container-type: inline-size;
+    container-name: multichart;
+}
+.multi-chart-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+}
+.multi-chart-row-group {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.multi-chart-row {
+    display: flex;
+    gap: 20px;
+    min-width: 0;
+}
+.multi-chart-row > .multi-chart-cell {
+    flex: 1;
+    min-width: 0;
+}
+.multi-chart-root--3,
+.multi-chart-root--4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    position: relative;
+}
+.multi-chart-root--3 .multi-chart-cell--hero {
+    grid-column: 1 / -1;
+}
+.multi-chart-root--4-split {
+    grid-template-rows: auto auto;
+}
+/* 2 full-width charts on top, 2 side-by-side on bottom */
+.multi-chart-root--4-two-full > *:nth-child(1),
+.multi-chart-root--4-two-full > *:nth-child(2) {
+    grid-column: 1 / -1;
+}
+.multi-chart-cell {
+    position: relative;
+    min-width: 0;
+}
+
+/* Narrow canvas column: stack side-by-side charts (Multi · 3 and Multi · 4). */
+@container multichart (max-width: 640px) {
+    .multi-chart-cq-wrap .multi-chart-row {
+        flex-direction: column;
+    }
+    .multi-chart-cq-wrap .multi-chart-row .chart-area--plot-half {
+        height: 264px;
+    }
+    .multi-chart-cq-wrap .multi-chart-root--3,
+    .multi-chart-cq-wrap .multi-chart-root--4 {
+        grid-template-columns: 1fr;
+    }
+    .multi-chart-cq-wrap .multi-chart-root--3 .multi-chart-cell--hero {
+        grid-column: auto;
+    }
+    /* Multi · 3: full-width stack — uniform plot height (was hero + half). */
+    .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-half,
+    .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-hero {
+        height: 264px;
+    }
+    body[data-layout="large"] .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-half,
+    body[data-layout="large"] .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-hero {
+        height: 280px !important;
+        min-height: 220px !important;
+        max-height: 300px !important;
+    }
+    /* Multi · 4: four full-width rows — match standard chart plot height. */
+    .multi-chart-cq-wrap .multi-chart-root--4 .chart-area {
+        height: 264px;
+        min-height: 0;
+        max-height: none;
+    }
+    body[data-layout="large"] .multi-chart-cq-wrap .multi-chart-root--4 .chart-area {
+        height: 280px !important;
+        min-height: 220px !important;
+        max-height: 300px !important;
+    }
+}
+
+/* Small viewport: stack when canvas track is still wide (container query is primary for narrow canvas). */
+@media (max-width: 768px) {
+    .multi-chart-cq-wrap .multi-chart-row {
+        flex-direction: column;
+    }
+    .multi-chart-cq-wrap .multi-chart-row .chart-area--plot-half {
+        height: 264px;
+    }
+    .multi-chart-cq-wrap .multi-chart-root--3,
+    .multi-chart-cq-wrap .multi-chart-root--4 {
+        grid-template-columns: 1fr;
+    }
+    .multi-chart-cq-wrap .multi-chart-root--3 .multi-chart-cell--hero {
+        grid-column: auto;
+    }
+    .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-half,
+    .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-hero {
+        height: 264px;
+    }
+    body[data-layout="large"] .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-half,
+    body[data-layout="large"] .multi-chart-cq-wrap .multi-chart-root--3 .chart-area--plot-hero {
+        height: 280px !important;
+        min-height: 220px !important;
+        max-height: 300px !important;
+    }
+    .multi-chart-cq-wrap .multi-chart-root--4 .chart-area {
+        height: 264px;
+        min-height: 0;
+        max-height: none;
+    }
+    body[data-layout="large"] .multi-chart-cq-wrap .multi-chart-root--4 .chart-area {
+        height: 280px !important;
+        min-height: 220px !important;
+        max-height: 300px !important;
+    }
+}
+
+.chart-grid-line {
+    stroke: var(--color-surface-2);
+    stroke-width: 1;
+}
+.chart-grid-line--baseline {
+    stroke: #95a4ba;
+}
+.chart-y-label {
+    font-size: 11px;
+    fill: var(--color-text-tertiary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.chart-x-tick {
+    stroke: #95a4ba;
+    stroke-width: 1;
+}
+.chart-x-label {
+    font-size: 11px;
+    fill: var(--color-text-tertiary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.chart-line {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.chart-line--cat1 {
+    stroke: #9966ff;
+}
+.chart-line--cat2 {
+    stroke: #0055bc;
+}
+.chart-needle {
+    stroke: var(--color-text-tertiary);
+    stroke-width: 1;
+    opacity: 0;
+}
+.chart-needle--visible {
+    opacity: 1;
+    stroke-dasharray: 3 2;
+}
+.chart-dot {
+    opacity: 0;
+    fill: var(--color-surface-1);
+    stroke-width: 2;
+}
+.chart-dot--visible {
+    opacity: 1;
+}
+.chart-dot--cat1 {
+    stroke: #9966ff;
+}
+.chart-dot--cat2 {
+    stroke: #0055bc;
+}
+.chart-tooltip {
+    pointer-events: none;
+    z-index: 40;
+}
+.chart-tooltip--spec {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(30, 30, 33, 0.4);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    isolation: isolate;
+    transform: translateZ(0);
+    visibility: hidden;
+    opacity: 1;
+    transition: opacity 0.18s ease;
+    position: absolute;
+    /* Size to content and never wrap — the tooltip may extend beyond the chart
+       perimeter (see computeTooltipPos), which is preferred over wrapping. */
+    max-width: none;
+    width: max-content;
+    box-sizing: border-box;
+}
+.chart-tooltip--spec.visible {
+    visibility: visible;
+}
+.chart-tooltip__date {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin: 0;
+    white-space: nowrap;
+}
+.chart-tooltip__body {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 32px;
+}
+.chart-tooltip__col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.chart-tooltip__col--values {
+    align-items: flex-end;
+    text-align: right;
+}
+.chart-tooltip__series {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+.chart-tooltip__swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.chart-tooltip__swatch--cat1 {
+    background: #9966ff;
+}
+.chart-tooltip__swatch--cat2 {
+    background: #0055bc;
+}
+.chart-tooltip__seriesLabel {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+.chart-tooltip__value {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+.chart-legend {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+.chart-legend-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.chart-legend--line .chart-legend-swatch {
+    width: 16px;
+    height: 2px;
+    border-radius: 1px;
+}
+.chart-legend-swatch--cat1 {
+    background: #9966ff;
+}
+.chart-legend-swatch--cat2 {
+    background: #0055bc;
+}
+.chart-bar {
+    fill: #9966ff;
+}
+
+/* Canvas: data table */
+.canvas-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-weight: 500;
+}
+.canvas-table thead { z-index: 1; }
+.canvas-table th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    padding: 8px 16px 8px 0;
+    border-bottom: 1px solid var(--color-surface-2);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease;
+}
+.canvas-table th:hover { color: var(--color-text-secondary); }
+.canvas-table th .sort-arrow {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.canvas-table th.sorted .sort-arrow { opacity: 1; }
+.canvas-table th.sorted { color: var(--color-text-secondary); }
+.canvas-table tbody tr {
+    height: 32px;
+    transition: background-color 0.2s ease;
+}
+.canvas-table tbody tr:hover { background-color: rgba(23, 23, 25, 0.2); }
+.canvas-table td {
+    padding: 0 16px 0 0;
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-surface-2);
+    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1;
+    vertical-align: middle;
+}
+.canvas-table tr:last-child td { border-bottom: 1px solid var(--color-surface-2); }
+.canvas-table .col-amount { font-variant-numeric: tabular-nums; }
+.canvas-table .col-link {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s ease;
+}
+.canvas-table .col-link::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: var(--color-text-tertiary);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 1.75C8 1.33579 8.33579 1 8.75 1H14.25C14.6642 1 15 1.33579 15 1.75V7.25C15 7.66421 14.6642 8 14.25 8C13.8358 8 13.5 7.66421 13.5 7.25V3.56066L6.40533 10.6553C6.11244 10.9482 5.63756 10.9482 5.34467 10.6553C5.05178 10.3624 5.05178 9.88756 5.34467 9.59467L12.4393 2.5H8.75C8.33579 2.5 8 2.16421 8 1.75Z' fill='black'/%3E%3Cpath d='M2.5 4.75C2.5 4.05964 3.05964 3.5 3.75 3.5H5.625C6.03921 3.5 6.375 3.16421 6.375 2.75C6.375 2.33579 6.03921 2 5.625 2H3.75C2.23122 2 1 3.23122 1 4.75V12.25C1 13.7688 2.23122 15 3.75 15H11.25C12.7688 15 14 13.7688 14 12.25V10.375C14 9.96079 13.6642 9.625 13.25 9.625C12.8358 9.625 12.5 9.96079 12.5 10.375V12.25C12.5 12.9404 11.9404 13.5 11.25 13.5H3.75C3.05964 13.5 2.5 12.9404 2.5 12.25V4.75Z' fill='black'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 1.75C8 1.33579 8.33579 1 8.75 1H14.25C14.6642 1 15 1.33579 15 1.75V7.25C15 7.66421 14.6642 8 14.25 8C13.8358 8 13.5 7.66421 13.5 7.25V3.56066L6.40533 10.6553C6.11244 10.9482 5.63756 10.9482 5.34467 10.6553C5.05178 10.3624 5.05178 9.88756 5.34467 9.59467L12.4393 2.5H8.75C8.33579 2.5 8 2.16421 8 1.75Z' fill='black'/%3E%3Cpath d='M2.5 4.75C2.5 4.05964 3.05964 3.5 3.75 3.5H5.625C6.03921 3.5 6.375 3.16421 6.375 2.75C6.375 2.33579 6.03921 2 5.625 2H3.75C2.23122 2 1 3.23122 1 4.75V12.25C1 13.7688 2.23122 15 3.75 15H11.25C12.7688 15 14 13.7688 14 12.25V10.375C14 9.96079 13.6642 9.625 13.25 9.625C12.8358 9.625 12.5 9.96079 12.5 10.375V12.25C12.5 12.9404 11.9404 13.5 11.25 13.5H3.75C3.05964 13.5 2.5 12.9404 2.5 12.25V4.75Z' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.canvas-table .col-link:hover::after { opacity: 1; transform: translateX(0); }
+.canvas-table .col-link:hover { color: var(--color-text-secondary); text-decoration-color: var(--color-text-tertiary); }
+.canvas-table .row-menu {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.canvas-table tbody tr:hover .row-menu { opacity: 1; }
+.canvas-table .row-menu:hover { color: var(--color-text-secondary); }
+.canvas-table td:last-child { position: relative; padding-right: 36px; }
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 500;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 5px;
+}
+.status-badge.failed { background: #2B141A; color: #F34E69; }
+.status-badge.succeeded { background: #10241D; color: var(--color-semantic-success); }
+
+/* Canvas: code view (CodeView.jsx) */
+.cv-root {
+    font-family: 'Menlo', 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    flex: 1;
+    min-height: 0;
+    padding: 24px 32px 40px 0;
+    outline: none;
+}
+.cv-line {
+    display: flex;
+    align-items: center;
+    /* 32px matches Figma pl-[32px]; number gutter spans 32–47px */
+    padding-left: 32px;
+    gap: 16px; /* indent 0: gap-[16px] per Figma */
+    min-height: 18px;
+}
+.cv-line[data-indent="1"] { gap: 40px; }
+.cv-line[data-indent="2"] { gap: 56px; }
+.cv-line[data-indent="3"] { gap: 72px; }
+.cv-ln {
+    display: inline-block;
+    width: 15px;
+    min-width: 15px;
+    text-align: right;
+    color: var(--color-text-tertiary);
+    user-select: none;
+    flex-shrink: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.cv-code {
+    flex: 1;
+    min-width: 0;
+    white-space: pre;
+}
+/* Syntax tokens — colors from Figma node 15962-47139 */
+.syn-kw      { color: #b68aff; }
+.syn-fn      { color: #f44bcc; }
+.syn-op      { color: #ff6118; }
+.syn-const   { color: #ffc01f; }
+.syn-num     { color: #2b9df6; }
+.syn-comment { color: var(--color-text-tertiary); }
+.syn-id      { color: var(--color-text-primary); }
+.syn-str     { color: #c3e88d; }
+.syn-type    { color: #ffcb6b; }
+
+/* Canvas: code editor — gutter + overlay (highlighted pre + transparent textarea) */
+.cv-editor-wrap {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    font-family: 'Menlo', 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+}
+/* Gutter: 32px left-pad + 15px number column = 47px total */
+.cv-editor-gutter {
+    width: 47px;
+    flex-shrink: 0;
+    overflow: hidden;
+    padding: 24px 0 40px 32px;
+    text-align: right;
+    color: var(--color-text-tertiary);
+    user-select: none;
+}
+.cv-editor-line-num {
+    height: 18px;
+    font-size: 12px;
+    line-height: 18px;
+}
+/* Scrollable body — defines the scroll area */
+.cv-editor-body {
+    flex: 1;
+    overflow: auto;
+    min-width: 0;
+    position: relative;
+}
+/* Highlighted backdrop */
+.cv-editor-pre {
+    margin: 0;
+    padding: 24px 32px 40px 16px;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: var(--color-text-primary);
+    white-space: pre;
+    min-width: max-content;
+    pointer-events: none;
+    user-select: none;
+}
+/* Transparent textarea overlaid on pre */
+.cv-editor-textarea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 24px 32px 40px 16px;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    color: transparent;
+    caret-color: #fff;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre;
+    overflow: hidden;
+    tab-size: 4;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Task block: "Open artifact" text+icon button */
+.code-actions .code-action-open {
+    width: auto;
+    padding: 0 8px;
+    gap: 4px;
+    font-size: 11px;
+    font-family: inherit;
+    font-weight: 500;
+}
+.code-actions .code-action-expand {
+    width: auto;
+    padding: 2px;
+    background: none;
+    border-color: transparent;
+}
+
+/* Canvas: text file viewer */
+.text-file-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 36px;
+    padding: 0 8px;
+    background: var(--color-surface-2);
+    border: none;
+    border-radius: 8px;
+    margin: 0 -8px 20px;
+}
+.text-file-bar .file-name { font-size: 12px; font-weight: 500; color: var(--color-text-tertiary); }
+.text-file-bar .view-toggles { display: flex; align-items: center; gap: 2px; }
+.text-file-bar .view-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+.text-file-bar .view-toggle:hover { color: var(--color-text-secondary); }
+.text-file-bar .view-toggle.active { color: var(--color-text-primary); }
+.text-code-view {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+    counter-reset: line;
+}
+.text-code-view .code-line { display: flex; min-height: 22px; }
+.text-code-view .line-num {
+    display: inline-block;
+    width: 32px;
+    text-align: right;
+    padding-right: 16px;
+    color: #3a3a3e;
+    user-select: none;
+    flex-shrink: 0;
+}
+.text-code-view .line-content {
+    flex: 1;
+    min-width: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.text-code-view .md-heading { color: var(--color-text-primary); font-weight: 600; }
+.text-code-view .md-bullet { color: var(--color-text-tertiary); }
+.text-rendered-view { font-size: 13px; line-height: 1.7; color: var(--color-text-primary); }
+/* Markdown headings use a real visual hierarchy in the rendered preview.
+   The original prototype set both h1/h2 to 13px which made the preview
+   indistinguishable from code view at the heading rows; bumping these
+   gives the preview an actual document feel. */
+.text-rendered-view h1 {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+    color: var(--color-text-primary);
+    margin-bottom: 16px;
+}
+.text-rendered-view h2 {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-text-primary);
+    margin-top: 24px;
+    margin-bottom: 8px;
+}
+.text-rendered-view h1:first-child,
+.text-rendered-view h2:first-child { margin-top: 0; }
+.text-rendered-view p { margin-bottom: 16px; }
+/* Custom markers so list bullets/numbers align exactly with the blockquote:
+   - marker at x=16px  → the blockquote vertical rule (blockquote margin-left)
+   - text   at x=35px  → the blockquote text inset (margin 16 + border 3 + padding 16) */
+.text-rendered-view ol, .text-rendered-view ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 16px;
+}
+.text-rendered-view ol { counter-reset: md-ol; }
+.text-rendered-view li {
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 4px;
+    color: var(--color-text-primary);
+}
+.text-rendered-view ul > li::before {
+    content: '•';
+    position: absolute;
+    left: 16px;
+    color: var(--color-text-tertiary);
+}
+.text-rendered-view ol > li { counter-increment: md-ol; }
+.text-rendered-view ol > li::before {
+    content: counter(md-ol) '.';
+    position: absolute;
+    left: 16px;
+    color: var(--color-text-tertiary);
+}
+.text-rendered-view hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 24px 0;
+}
+.text-rendered-view blockquote {
+    border-left: 3px solid rgba(255, 255, 255, 0.14);
+    padding: 2px 0 2px 16px;
+    /* Left margin matches the code-block line-number inset (.md-code-block
+       padding-left: 16px) so the vertical rule lines up with the bullets
+       above and the code line numbers (01, 02…) below. */
+    margin: 0 0 16px 16px;
+    color: var(--color-text-secondary);
+}
+.text-rendered-view blockquote p { margin-bottom: 0; }
+.text-rendered-view--guide {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 24px 0 40px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    counter-reset: guide-step;
+}
+.text-rendered-view--guide h1 {
+    font-size: 26px;
+    letter-spacing: -0.6px;
+    margin-bottom: 8px;
+}
+.text-rendered-view--guide h1 + p {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    margin-bottom: 24px;
+}
+.text-rendered-view--guide h1 + p + p {
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+.text-rendered-view--guide h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 28px;
+    margin-bottom: 10px;
+}
+.text-rendered-view--guide h2::before {
+    counter-increment: guide-step;
+    content: counter(guide-step);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--color-border-default);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+}
+.text-rendered-view--guide strong {
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+.text-rendered-view--guide li {
+    padding-left: 22px;
+    margin-bottom: 8px;
+    color: var(--color-text-secondary);
+}
+.text-rendered-view--guide ul > li::before,
+.text-rendered-view--guide ol > li::before { left: 0; }
+.text-rendered-view--guide blockquote {
+    margin: 12px 0 24px;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border-default);
+    border-radius: 6px;
+    background: var(--color-surface-1);
+}
+.text-rendered-view--guide hr {
+    border-color: var(--color-border-default);
+    margin: 32px 0;
+}
+.text-rendered-view--guide code {
+    font-size: 12px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--color-surface-1);
+    color: var(--color-text-primary);
+}
+.md-code-block {
+    background: var(--color-surface-1);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+.md-code-block__lang {
+    font-family: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    margin-bottom: 4px;
+}
+.md-code-block pre {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.md-code-block__line {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+}
+.md-code-block__ln {
+    font-family: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    user-select: none;
+    min-width: 20px;
+    flex-shrink: 0;
+}
+.md-code-block code {
+    font-family: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+}
+.syn-kw { color: #c678dd; }
+.syn-str { color: #98c379; }
+.syn-obj { color: #e5c07b; }
+.syn-fn { color: #e5c07b; }
+.syn-plain { color: var(--color-text-primary); }
+/* Code view additions */
+.text-code-view .md-quote { color: var(--color-text-secondary); }
+.text-code-view .md-quote-marker { color: var(--color-text-tertiary); margin-right: 4px; }
+.text-code-view .md-hr { color: var(--color-text-tertiary); }
+.text-code-view .md-code-fence { color: var(--color-text-tertiary); }
+.text-code-view .md-code { color: var(--color-text-primary); }
+
+/* Canvas: Small/Large layout variants */
+body[data-layout="default"] #canvasContent {
+    /* Right inset 24px matches #tabBar and #canvasContentHeader for one vertical edge. */
+    padding: 16px 24px 0 24px !important;
+}
+/* Code tabs and markdown-in-code-view: no container padding — cv-editor owns all spacing */
+body[data-layout] #canvas[data-artifact-type="code"] #canvasContent,
+body[data-layout] #canvas[data-artifact-type="markdown"][data-view-mode="code"] #canvasContent {
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+}
+body[data-layout="default"] #tabBar {
+    /* 20px + first .tab-pill 4px left = 24px to icon; 24px right aligns with header + body. */
+    padding-left: 20px !important;
+    padding-right: 24px !important;
+}
+body[data-layout="default"] .tab-pill {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+}
+body[data-layout="default"] .tab-bar-more { padding-left: 4px !important; padding-right: 4px !important; }
+body[data-layout="large"] #tabBar {
+    /* 20px + .tab-pill 4px left = 24px to icon, matching #canvasContentHeader */
+    padding-left: 20px !important;
+    padding-right: 24px !important;
+}
+body[data-layout="large"] #canvasContent {
+    /* Keep large left inset; right 24px aligns tab bar, stamp, and chart shell. */
+    padding: 16px 24px 0 56px !important;
+}
+body[data-layout="large"] #canvasHeading {
+    font-size: 20px !important;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+}
+body[data-layout="large"] .chart-shell__title {
+    font-size: 13px !important;
+    font-weight: 500;
+}
+body[data-layout="large"] .chart-shell__subtitle {
+    font-size: 13px !important;
+}
+body[data-layout="large"] .chart-shell {
+    gap: 24px !important;
+}
+body[data-layout="large"] .chart-area {
+    height: 280px !important;
+    min-height: 220px !important;
+    max-height: 300px !important;
+}
+body[data-layout="large"] .chart-area--plot-hero {
+    height: 292px !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+body[data-layout="large"] .chart-area--plot-half {
+    height: 236px !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+body[data-layout="large"] .canvas-table th { font-size: 13px !important; }
+body[data-layout="large"] .canvas-table td {
+    font-size: 13px !important;
+    height: 32px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+body[data-layout="large"] .chart-legend-item {
+    font-size: 12px !important;
+}
+
+/* Config panel toggles */
+#configTrigger:hover {
+    color: var(--color-text-secondary);
+    border-color: var(--color-border-rail);
+}
+#configClose:hover { color: var(--color-text-primary); }
+#configTrigger.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+#configPanel.open {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+.config-toggle {
+    background: transparent;
+    color: var(--color-text-tertiary);
+}
+.config-toggle:hover { color: var(--color-text-secondary); }
+.config-toggle.active {
+    background: var(--color-surface-3);
+    color: var(--color-text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* ── Chat keyboard navigation ───────────────────────────────── */
+[data-chat-nav].chat-nav-focused {
+    box-shadow: 0 0 0 1.5px var(--color-accent);
+    border-radius: 6px;
+    outline: none;
+}
+/* Artifact pills keep their own border-radius; box-shadow follows it naturally */
+.artifact-ref[data-chat-nav].chat-nav-focused {
+    border-radius: inherit;
+}
+/* Hide the square indicator dot when its parent assistant row is focused */
+[data-chat-nav].chat-nav-focused .message-indicator {
+    opacity: 0;
+}
+
+
+.cmdl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: rgba(112, 106, 231, 0.14);
+    border: 1px solid rgba(112, 106, 231, 0.28);
+    color: #b3b0f0;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    user-select: all;
+    cursor: pointer;
+    vertical-align: middle;
+    line-height: 1.5;
+}
+.cmdl-chip--capture .cmdl-capture-thumb {
+    display: inline-block;
+    width: 20px;
+    height: 13px;
+    border-radius: 2px;
+    background: rgba(112, 106, 231, 0.2);
+    border: 1px solid rgba(112, 106, 231, 0.3);
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* ─── Cmd-hold hint pill ──────────────────────────────────────────────────── */
+.canvas-cmd-hint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(28, 28, 31, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.32);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 12px;
+    font-weight: 450;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 50;
+    animation: canvas-cmd-hint-in 0.18s ease both;
+}
+.canvas-cmd-hint__key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 12px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.9);
+}
+@keyframes canvas-cmd-hint-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Response feedback thumbs — hidden until the message row is hovered, then
+   fade in smoothly. Layout matches the Figma spec: 36px-wide row with two
+   12px icons spaced apart, right-aligned in the response footer. */
+.feedback-thumbs {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+/* Inter-thumb spacing lives on the second thumb (not flex gap) so that when one
+   thumb collapses in "Consolidate" mode the surviving thumb can slide flush to
+   the right margin without a leftover gap. */
+.feedback-thumb + .feedback-thumb {
+    margin-left: 8px;
+}
+
+/* Consolidate (with Feedback right): keep the chosen thumb pinned at the right
+   margin and collapse + fade the other one away. Thumbs-up is the left icon, so
+   collapsing thumbs-down lets it slide right; thumbs-down is already flush right. */
+.feedback-thumbs--consolidate-up .feedback-thumb--up,
+.feedback-thumbs--consolidate-down .feedback-thumb--down {
+    opacity: 1 !important;
+    pointer-events: auto;
+}
+.feedback-thumbs--consolidate-down .feedback-thumb--down {
+    margin-left: 0;
+}
+.feedback-thumbs--consolidate-up .feedback-thumb--down,
+.feedback-thumbs--consolidate-down .feedback-thumb--up {
+    width: 0;
+    margin: 0;
+    opacity: 0 !important;
+    overflow: hidden;
+    pointer-events: none !important;
+    /* Orchestrated exit: the glyph fades first, then the box collapses (slightly
+       delayed) so the surviving thumb slides over smoothly rather than snapping.
+       A long duration + deep ease-out (easeOutExpo-style) makes the slide read as
+       a graceful glide rather than a quick snap. */
+    transition:
+        opacity 0.6s ease,
+        width 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.08s,
+        margin 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
+}
+/* The surviving thumb eases as it slides to the right margin, matching the
+   collapse curve so the pair moves as one continuous motion. */
+.feedback-thumbs--consolidate-up .feedback-thumb--up,
+.feedback-thumbs--consolidate-down .feedback-thumb--down {
+    transition: opacity 0.6s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.feedback-thumb {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    /* width/margin are transitioned so that when a consolidated thumb is
+       un-selected the collapsed thumb expands back smoothly instead of snapping
+       (mirrors the collapse curve above). */
+    transition: opacity 0.2s ease, color 0.15s ease,
+        width 0.9s cubic-bezier(0.16, 1, 0.3, 1), margin 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Tooltip above the thumb — Console Spec (Figma 19097:34560). Rendered in a
+   portal on <body> with fixed positioning so it always sits above all console
+   content and is never clipped by scroll/canvas overflow. `left`/`top` are set
+   inline from the thumb's bounding rect; the transform centers it and lifts it
+   above the icon. */
+.feedback-tooltip {
+    position: fixed;
+    transform: translate(-50%, -100%);
+    /* Type treatment + padding match the nav rail tooltip (#railTooltip). */
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border-default);
+    background: var(--color-surface-void);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 2147483000;
+    opacity: 0;
+    /* Fade-out (transition toward this hidden state) is slower/smoother. */
+    transition: opacity 0.32s ease;
+}
+.feedback-tooltip.is-visible {
+    opacity: 1;
+    /* Fade-in stays quick. */
+    transition: opacity 0.12s ease;
+}
+/* Reveal thumbs when the message row is hovered. Resting = icon subtle. */
+.flex.items-start.w-full:hover .feedback-thumb {
+    opacity: 1;
+    pointer-events: auto;
+    /* Slower, gentler fade-in on hover (fade-out keeps the base timing). */
+    transition: opacity 0.45s ease, color 0.15s ease;
+}
+/* Direct hover brightens icon subtle -> icon default. */
+.flex.items-start.w-full:hover .feedback-thumb:hover {
+    color: var(--color-icon-default);
+}
+/* Remembered choice: still only appears on row hover, but its RESTING color
+   becomes icon default (brighter) so it reads as the selected one. */
+.flex.items-start.w-full:hover .feedback-thumb--selected {
+    color: var(--color-icon-default);
+}
+/* Pinned: once a choice is made, BOTH thumbs stay visible in perpetuity (not
+   just on row hover) until the choice is toggled back off. After the click's
+   white flash they settle knocked back to 50% opacity — staying quiet even when
+   the row is hovered — and only a direct hover on an icon brings full opacity.
+   The chosen thumb rests at icon default; the other stays icon subtle. */
+.feedback-thumbs--pinned .feedback-thumb,
+.flex.items-start.w-full:hover .feedback-thumbs--pinned .feedback-thumb {
+    opacity: 0.5;
+    pointer-events: auto;
+    /* Settle from the held full opacity down to 50% on the SAME duration + curve
+       as the right-aligned text fade-out, so the icons and text dim in concert. */
+    transition: opacity 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), color 0.15s ease;
+}
+.feedback-thumbs--pinned .feedback-thumb:hover,
+.flex.items-start.w-full:hover .feedback-thumbs--pinned .feedback-thumb:hover {
+    opacity: 1;
+}
+.feedback-thumbs--pinned .feedback-thumb--selected {
+    color: var(--color-icon-default);
+}
+/* Hold both thumbs at full opacity while the click's white flash plays, so the
+   flash reads clearly before they settle back to the pinned 50%. */
+.feedback-thumbs--flashing .feedback-thumb {
+    opacity: 1 !important;
+}
+/* Consolidate: a clicked thumb does NOT take on the brighter "selected" resting
+   color — it stays icon-subtle and only brightens on direct hover, like an
+   unselected icon. */
+.flex.items-start.w-full:hover .feedback-thumbs--consolidate-up .feedback-thumb--selected,
+.flex.items-start.w-full:hover .feedback-thumbs--consolidate-down .feedback-thumb--selected {
+    color: var(--color-text-tertiary);
+}
+.flex.items-start.w-full:hover .feedback-thumbs--consolidate-up .feedback-thumb--selected:hover,
+.flex.items-start.w-full:hover .feedback-thumbs--consolidate-down .feedback-thumb--selected:hover {
+    color: var(--color-icon-default);
+}
+/* Just deselected: hold icon subtle even while the cursor stays on the icon,
+   overriding the hover-brighten so there's no flicker back to icon default. */
+.flex.items-start.w-full:hover .feedback-thumb--suppress-hover,
+.flex.items-start.w-full:hover .feedback-thumb--suppress-hover:hover {
+    color: var(--color-text-tertiary);
+}
+/* Click feedback: briefly flash the icon to pure white and back to icon
+   default. Re-mounting the span (via a changing key) restarts this on every
+   click. During the animation, `color` overrides the resting/hover color; it
+   reverts to the inherited color once the animation ends. */
+.feedback-thumb__flash {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: feedback-thumb-flash 1200ms linear;
+}
+@keyframes feedback-thumb-flash {
+    /* Gentle, unhurried rise to a softened near-white (not full #fff) — slightly
+       lower intensity so the pulse reads calmer. */
+    0% { color: var(--color-icon-default); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    30% { color: #ececec; animation-timing-function: linear; }
+    /* Long hold on the softened white, then a smooth fade back to icon default. */
+    60% { color: #ececec; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    100% { color: var(--color-icon-default); }
+}
+/* Deactivation: smoothly fade the icon from icon default back to icon subtle. */
+.feedback-thumb__fade {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: feedback-thumb-fade 400ms ease;
+}
+@keyframes feedback-thumb-fade {
+    0% { color: var(--color-icon-default); }
+    100% { color: var(--color-text-tertiary); }
+}
+
+/* Blurple selected-color mode. Resting/hover behavior is unchanged (icon subtle
+   -> icon default on hover); only the SELECTED resting color becomes Blurple 75,
+   and activation/deactivation transition smoothly to/from blurple instead of the
+   white flash. */
+.flex.items-start.w-full:hover .feedback-thumbs--blurple .feedback-thumb--selected,
+.flex.items-start.w-full:hover .feedback-thumbs--blurple .feedback-thumb--selected:hover {
+    color: var(--color-accent);
+}
+/* Activation in blurple mode: smooth ease from icon default into blurple. */
+.feedback-thumbs--blurple .feedback-thumb__flash {
+    animation: feedback-thumb-blurple-in 450ms ease;
+}
+@keyframes feedback-thumb-blurple-in {
+    0% { color: var(--color-icon-default); }
+    100% { color: var(--color-accent); }
+}
+/* Deactivation in blurple mode: smooth ease from blurple back to icon subtle. */
+.feedback-thumbs--blurple .feedback-thumb__fade {
+    animation: feedback-thumb-blurple-out 400ms ease;
+}
+@keyframes feedback-thumb-blurple-out {
+    0% { color: var(--color-accent); }
+    100% { color: var(--color-text-tertiary); }
+}
+
+/* Persistent mode: feedback icons stay visible at the bottom of every message,
+   not only on row hover. Resting = icon subtle; direct hover brightens to icon
+   default; selected icons show their selected color even without row hover. */
+.feedback-thumbs--persistent .feedback-thumb,
+/* Keep them knocked back even when the message ROW is hovered, AND keep the
+   selected icon knocked back too — persistent icons should stay quiet so they
+   aren't distracting. Only a direct hover on the icon brings full opacity. */
+.flex.items-start.w-full:hover .feedback-thumbs--persistent .feedback-thumb,
+.feedback-thumbs--persistent .feedback-thumb--selected,
+.flex.items-start.w-full:hover .feedback-thumbs--persistent .feedback-thumb--selected {
+    opacity: 0.5;
+    pointer-events: auto;
+}
+.feedback-thumbs--persistent .feedback-thumb:hover,
+.flex.items-start.w-full:hover .feedback-thumbs--persistent .feedback-thumb:hover {
+    opacity: 1;
+}
+.feedback-thumbs--persistent .feedback-thumb:hover {
+    color: var(--color-icon-default);
+}
+.feedback-thumbs--persistent .feedback-thumb--selected,
+.feedback-thumbs--persistent .feedback-thumb--selected:hover {
+    color: var(--color-icon-default);
+}
+.feedback-thumbs--persistent.feedback-thumbs--blurple .feedback-thumb--selected,
+.feedback-thumbs--persistent.feedback-thumbs--blurple .feedback-thumb--selected:hover {
+    color: var(--color-accent);
+}
+/* Just-deselected: hold icon subtle even while hovered (no flicker). */
+.feedback-thumbs--persistent .feedback-thumb--suppress-hover,
+.feedback-thumbs--persistent .feedback-thumb--suppress-hover:hover {
+    color: var(--color-text-tertiary);
+}
+
+/* Attribution crossfade: the source attribution line and a
+   transient feedback acknowledgement occupy the same slot and crossfade. The
+   default layer defines the size (normal flow); the ack layer overlays it. */
+/* Single attribution element that fades out, swaps its text while invisible,
+   and fades back in. Being one element guarantees the default and feedback
+   strings render in the EXACT same position/baseline, and the fade-through
+   (no overlap) reads clean and elegant. The text swap happens at opacity 0, so
+   there's no ghosting; the right-aligned icons never move. */
+/* Reserve a constant row height so swapping the attribution text (Computed by
+   Console <-> feedback acknowledgement) never reflows the chat — even on
+   messages without source attribution. 11px * 1.6
+   line-height ≈ 17.6px; the thumbs are shorter, so this fixes the row height in
+   every state and the input field stays put. */
+.computed-by-console {
+    min-height: 18px;
+}
+.attribution-line {
+    display: inline-block;
+    white-space: nowrap;
+    opacity: 1;
+    /* Fade IN: gentle ease-out for a soft, unhurried arrival. */
+    transition: opacity 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: opacity;
+}
+.attribution-line.is-hidden {
+    opacity: 0;
+    /* Fade OUT: slightly quicker ease-in so the swap feels like one continuous
+       crossfade rather than two separate blinks. */
+    transition: opacity 240ms cubic-bezier(0.4, 0, 0.6, 1);
+}
+/* Fade IN: slower, gentler ease-out so "Thank you." / "Provide feedback?"
+   arrives softly rather than popping in. */
+.feedback-right-msg {
+    transition: opacity 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Gentle entrance for appended conversation turns so a newly-sent message
+   eases in rather than popping. */
+@keyframes simTurnEnter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.sim-turn-enter {
+    animation: simTurnEnter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Feedback elicitation free-form input reuses the prompt's block-cursor
+   treatment: the native caret is hidden and a blinking block overlay stands
+   in (see .block-cursor + the overlay rendered in FeedbackElicitation). */
+.feedback-elicitation__input { caret-color: transparent; }
+
+/* Shared thick blinking block cursor (mirrors #blockCursor) so inputs beyond
+   the main prompt can adopt the same terminal treatment. Width is intentionally
+   left to size to its glyph so the highlight hugs the first letter exactly
+   (rather than a fixed 8px), keeping it aligned with the typed text. */
+/* Feedback field blink: off phase uses Text/Tertiary (var(--color-text-tertiary)) so the first
+   letter matches the ghost placeholder ("think that...") between blinks. */
+@keyframes blockBlinkTertiary {
+    0%, 50% { background: var(--color-icon-default); color: #0d0d0d; }
+    51%, 100% { background: transparent; color: var(--color-text-tertiary); }
+}
+.block-cursor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: 18px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1;
+    animation: blockBlinkTertiary 1s step-end infinite;
+    pointer-events: none;
+    flex-shrink: 0;
+}
+/* Unfocused: stop blinking and render the glyph as plain ghost text so the
+   overlay reads as a normal placeholder — identical geometry, no jump. */
+.block-cursor.is-idle {
+    animation: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+}
+/* A hidden acknowledgement shouldn't intercept clicks (the link sits over the
+   row even when invisible). */
+.feedback-right-msg.is-hidden {
+    pointer-events: none;
+    /* Fade OUT in concert with the thumbs settling to 50% — same duration +
+       curve so the text and icons dim together as one elegant motion. */
+    transition: opacity 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+/* "Feedback right": after the timed fade-out, the acknowledgement reappears
+   whenever the message row is hovered (thumbs down always; thumbs up in
+   Consolidate mode). */
+.flex.items-start.w-full:hover .feedback-right-msg--hoverable {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* Consolidate: the acknowledgement glides in/out on a longer, deeper ease-out so
+   it stays in step with the icon collapse (0.6s) rather than snapping. */
+.feedback-right-msg--consolidate {
+    transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.feedback-right-msg--consolidate.is-hidden {
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Source attribution */
+.see-how-link {
+    color: var(--color-text-tertiary);
+    text-decoration: underline;
+    text-decoration-color: #2A2A2E;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+.see-how-link:hover {
+    color: var(--color-text-secondary);
+    text-decoration-color: #4a4a52;
+}
+.see-how-link svg {
+    display: inline-block;
+    vertical-align: -1px;
+    margin-right: 3px;
+}
+
+/* Source tooltip popover — canvas form factor */
+.source-tooltip-popover::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 8px;
+}
+/* Opens downward from the canvas stamp, so the hover bridge sits above it. */
+.source-tooltip-popover--below::after {
+    top: auto;
+    bottom: 100%;
+}
+.source-tooltip-popover {
+    min-width: 200px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border-default);
+    background: var(--color-surface-2);
+    font-size: 12px;
+    line-height: 1.6;
+    z-index: 99999;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+.source-tooltip-header {
+    color: var(--color-text-tertiary);
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+.source-tooltip-item a {
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-border-default);
+    text-underline-offset: 2px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.source-tooltip-item a:hover {
+    color: var(--color-text-primary);
+}
+.source-tooltip-item + .source-tooltip-item {
+    margin-top: 6px;
+}
+
+/* Source expand section — conversation form factor */
+.source-expand-section {
+    margin-top: 8px;
+    border: 2px solid var(--color-surface-2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.source-expand-section--inline {
+    border: none;
+    border-radius: 0;
+    padding: 2px 0 0 0;
+    margin-top: 4px;
+}
+.source-expand-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--expand-font-size, 11px);
+    line-height: 1.6;
+}
+.source-expand-icon {
+    flex-shrink: 0;
+    color: var(--color-text-tertiary);
+    display: flex;
+    align-items: center;
+}
+.source-expand-item a {
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-border-default);
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+.source-expand-item a:hover {
+    color: var(--color-text-primary);
+}
+.expand-hover-icon:hover svg {
+    color: var(--color-text-secondary);
+}

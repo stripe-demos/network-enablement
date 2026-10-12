@@ -1,0 +1,3269 @@
+@import "tailwindcss" source(".");
+
+@keyframes dashboardLoaderPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.88); }
+}
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 240 5.9% 10%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 240 4.9% 83.9%;
+}
+
+.dashboard-root,
+.dashboard-root * {
+  border-color: hsl(var(--border));
+}
+
+.dashboard-root {
+  --dash-workbench-height: 48px;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Dashboard typography is independent of the Console entry point. */
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Abstract landing-page shell ─────────────────────────────────────────── */
+.landing-stage {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.app-window {
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 316px 1fr;
+  overflow: hidden;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
+.app-sidebar {
+  position: relative;
+  z-index: 1;
+  height: calc(100vh - 24px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 12px 0 12px 12px;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgba(246, 246, 248, 0.96);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.72),
+    inset -1px 0 0 rgba(0, 0, 0, 0.04),
+    16px 0 36px rgba(30, 30, 30, 0.06);
+}
+
+.sidebar-search {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 26px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: #8f8f94;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 11px;
+}
+
+.sidebar-nav-item {
+  height: 42px;
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border-radius: 9px;
+  color: #7f7f84;
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.sidebar-nav-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-nav-item strong {
+  color: #4d4d51;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sidebar-nav-item--active {
+  color: #007aff;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.landing-canvas {
+  position: relative;
+  min-width: 0;
+  background: #fff;
+}
+
+.preview-slot {
+  position: absolute;
+  top: 82px;
+  left: 50%;
+  width: 430px;
+  height: min(760px, calc(100vh - 190px));
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+
+.preview-source-frame {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 1440px;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.preview-slot--search {
+  top: 50%;
+  width: min(840px, calc(100vw - 500px));
+  height: 482px;
+  min-height: 482px;
+  transform: translate(-50%, -50%);
+}
+
+.preview-slot--search .preview-source-frame {
+  width: 1440px;
+  height: 850px;
+  transform: translate(-244px, -5px);
+  transform-origin: top left;
+}
+
+.preview-slot--sidebar {
+  top: 50%;
+  width: min(840px, calc(100vw - 500px));
+  height: min(760px, calc(100vh - 190px));
+  min-height: 520px;
+  transform: translate(-50%, -50%);
+}
+
+.preview-slot--sidebar .preview-source-frame {
+  width: 1440px;
+  height: 900px;
+}
+
+.preview-slot--back-to-dash {
+  width: min(880px, calc(100vw - 500px));
+}
+
+.preview-slot--chrome-search {
+  top: 50%;
+  width: min(980px, calc(100vw - 500px));
+  height: min(760px, calc(100vh - 190px));
+  min-height: 620px;
+  transform: translate(-50%, -50%);
+}
+
+.preview-slot--chrome-search .preview-source-frame {
+  width: 980px;
+  height: 760px;
+}
+
+.dashboard-app-chrome {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  margin-right: 0;
+  padding: 0 3px 0 10px;
+  border: 1px solid #DCE4EE;
+  border-radius: 999px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(33, 37, 44, 0.03);
+}
+
+.dashboard-app-chrome__tile {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  border-radius: 5px;
+  overflow: visible;
+}
+
+.dashboard-app-chrome__tile img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.dashboard-app-chrome__tile--primary {
+  width: 22px;
+  height: 22px;
+  flex-basis: 22px;
+  border-radius: 6px;
+  background: #2B105F;
+}
+
+.dashboard-app-chrome__tile--primary img {
+  width: 22px;
+  height: 22px;
+}
+
+.dashboard-app-chrome__tile--zapier {
+  background: #FF4F00;
+  color: #FFFFFF;
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  line-height: 1;
+}
+
+.dashboard-app-chrome__dot {
+  width: 7px;
+  height: 7px;
+  margin-left: -8px;
+  align-self: flex-start;
+  transform: translateY(5px);
+  border-radius: 50%;
+  background: #B7A5FF;
+  box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+.dashboard-app-chrome__grid {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #474E5A;
+  cursor: pointer;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.dashboard-app-chrome__grid:hover,
+.dashboard-app-chrome__grid[aria-expanded='true'] {
+  background: #F5F6F8;
+}
+
+.dashboard-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dashboard-toolbar-action {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dashboard-toolbar-action > img {
+  position: relative;
+  z-index: 1;
+}
+
+/* Keeps the hover circle while the button's dropdown is open. */
+.dashboard-toolbar-action--open > div:first-child { background: #F5F6F8; /* Sail color.neutral.25 */ }
+
+.dashboard-toolbar-action--notifications::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  z-index: 2;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #655DFF;
+  box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+.dashboard-toolbar-action--create {
+  width: 32px;
+  height: 32px;
+  margin-left: 0;
+}
+
+.dashboard-toolbar-action--create img {
+  width: 20px;
+  height: 20px;
+}
+
+.dashboard-toolbar--chrome {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.dashboard-toolbar-sticky-search {
+  width: var(--dashboard-toolbar-search-width, min(560px, calc(100vw - 560px)));
+  min-width: 360px;
+  position: relative;
+  z-index: 270;
+  transition: width var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1));
+}
+
+.dashboard-toolbar-sticky-search:focus-within,
+.dashboard-toolbar-sticky-search:has(.home-search-wrapper--open) {
+  width: var(--dashboard-toolbar-search-active-width, var(--dashboard-toolbar-search-width, min(560px, calc(100vw - 560px))));
+}
+
+html[data-prototype-search-input-grow-on-click="false"] .dashboard-toolbar-sticky-search:focus-within,
+html[data-prototype-search-input-grow-on-click="false"] .dashboard-toolbar-sticky-search:has(.home-search-wrapper--open) {
+  width: var(--dashboard-toolbar-search-width, min(560px, calc(100vw - 560px)));
+}
+
+.dashboard-toolbar-sticky-search .home-search-wrapper {
+  width: 100% !important;
+}
+
+.dashboard-toolbar-sticky-search .home-search-bar--hero {
+  background-color: var(--prototype-search-input-color, rgba(255, 255, 255, 0.92));
+  border-color: var(--prototype-search-input-border-color, #EBEEF1);
+  box-shadow: var(--prototype-search-input-shadow, 0 1px 4px rgba(33, 37, 44, 0.04), 0 0.5px 1px rgba(33, 37, 44, 0.02));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero,
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero:hover,
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero:focus-within,
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero.home-search-bar--open {
+  box-shadow: none;
+}
+
+.dashboard-toolbar-sticky-search .home-search-bar--chrome-grey,
+.dashboard-toolbar-sticky-search .home-search-bar--chrome-grey:hover,
+.dashboard-toolbar-sticky-search .home-search-bar--chrome-grey:focus-within,
+.dashboard-toolbar-sticky-search .home-search-bar--chrome-grey.home-search-bar--open {
+  background-color: #F5F7FA;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.sidebar-settings {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.sidebar-settings::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-settings :where(button, input, select) {
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+}
+
+.sidebar-settings .dialkit-root {
+  min-height: 100%;
+  --dial-glass-bg: transparent;
+  --dial-dropdown-bg: rgba(255, 255, 255, 0.98);
+  --dial-surface: rgba(0, 0, 0, 0.045);
+  --dial-surface-hover: rgba(0, 0, 0, 0.07);
+  --dial-surface-active: rgba(0, 122, 255, 0.14);
+  --dial-surface-subtle: rgba(0, 0, 0, 0.08);
+  --dial-border: rgba(0, 0, 0, 0.08);
+  --dial-border-hover: rgba(0, 122, 255, 0.28);
+  --dial-text-root: #1d1d1f;
+  --dial-text-section: rgba(60, 60, 67, 0.72);
+  --dial-text-label: rgba(60, 60, 67, 0.78);
+  --dial-text-focus: #111114;
+  --dial-text-primary: rgba(18, 18, 20, 0.92);
+  --dial-text-secondary: rgba(60, 60, 67, 0.66);
+  --dial-text-tertiary: rgba(60, 60, 67, 0.42);
+  --dial-radius: 8px;
+  --dial-row-height: 30px;
+  --dial-shadow: none;
+  --dial-shadow-dropdown: 0 10px 32px rgba(0, 0, 0, 0.16);
+  --dial-backdrop-blur: 0px;
+}
+
+.sidebar-settings .dialkit-panel,
+.sidebar-settings .dialkit-panel[data-mode="inline"] {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.sidebar-settings .dialkit-panel-inner {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  padding: 8px 8px 16px;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.sidebar-settings .dialkit-panel-inline,
+.sidebar-settings .dialkit-panel[data-mode="inline"] .dialkit-panel-wrapper,
+.sidebar-settings .dialkit-panel-wrapper {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.sidebar-settings .dialkit-panel-header {
+  display: flex;
+}
+
+.sidebar-settings .dialkit-panel-header > .dialkit-folder-header-top {
+  display: none;
+}
+
+.sidebar-settings .dialkit-folder-inner {
+  gap: 5px;
+}
+
+.sidebar-settings .dialkit-folder,
+.sidebar-settings .dialkit-folder-root,
+.sidebar-settings .dialkit-folder-header {
+  border-top-color: transparent !important;
+}
+
+.sidebar-settings .dialkit-folder-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.sidebar-settings .dialkit-folder-title-root {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sidebar-settings .dialkit-slider-label,
+.sidebar-settings .dialkit-slider-value,
+.sidebar-settings .dialkit-slider-input,
+.sidebar-settings .dialkit-labeled-control-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.sidebar-settings .dialkit-slider,
+.sidebar-settings .dialkit-segmented,
+.sidebar-settings .dialkit-select-trigger,
+.sidebar-settings .dialkit-button {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+.sidebar-settings .dialkit-slider-handle {
+  width: 2px;
+  height: 16px;
+  background: #007aff;
+}
+
+.sidebar-settings .dialkit-button {
+  min-height: 30px;
+  border-radius: 8px;
+  color: #1d1d1f;
+  background: rgba(0, 0, 0, 0.045);
+}
+
+.sidebar-settings .dialkit-button:hover {
+  background: rgba(0, 122, 255, 0.1);
+}
+
+.sidebar-settings .dialkit-toolbar-copy,
+.sidebar-settings .dialkit-toolbar-add,
+.sidebar-settings .dialkit-preset-trigger,
+.sidebar-settings .dialkit-folder-copy {
+  color: rgba(60, 60, 67, 0.72);
+}
+
+.sidebar-settings .dialkit-panel-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.object-links {
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  bottom: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 13px;
+  border-top: 1px solid #e5e5e7;
+  color: #77777d;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.object-links span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.object-links a {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.object-links button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.object-links a[aria-current="page"] {
+  color: #343438;
+}
+
+.object-links b {
+  color: #a4a4aa;
+  font-weight: 400;
+}
+
+.object-links-more {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.object-links-more__button[aria-expanded="true"] {
+  color: #343438;
+}
+
+.object-links-more__menu {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: 118px;
+  display: grid;
+  gap: 1px;
+  padding: 5px;
+  border: 1px solid #e5e5e7;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 30px rgba(33, 37, 44, 0.12), 0 2px 8px rgba(33, 37, 44, 0.08);
+  transform: translateX(-50%);
+}
+
+.object-links-more__menu a {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 5px;
+  color: #77777d;
+  white-space: nowrap;
+}
+
+.object-links-more__menu a:hover,
+.object-links-more__menu a[aria-current="page"] {
+  color: #343438;
+  background: #f5f5f7;
+}
+
+@media (max-width: 820px) {
+  .landing-stage {
+    padding: 0;
+  }
+
+  .app-window {
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    grid-template-columns: 296px 1fr;
+    border-radius: 0;
+  }
+
+  .sidebar-nav-item,
+  .sidebar-search,
+  .settings-row,
+  .settings-radio-row,
+  .settings-group-title {
+    font-size: 12px;
+  }
+
+  .object-links {
+    left: 24px;
+    right: 24px;
+  }
+
+  .preview-slot {
+    top: 64px;
+    width: min(380px, calc(100vw - 260px));
+    height: min(680px, calc(100vh - 160px));
+    min-height: 420px;
+  }
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+/* ── Animatable CSS variables — enables endcap gradients to transition ───── */
+@property --bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #FFFFFF;
+}
+@property --bg-t {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+/* ── Row backgrounds: both <tr> and <td> driven by --bg ─────────────────── */
+/* No inline backgroundColor on tr/td — CSS owns all row background state.  */
+tbody tr[data-row-bg="white"]    { --bg: #FFFFFF;  --bg-t: rgba(255,255,255,0); }
+tbody tr[data-row-bg="zebra"]    { --bg: #F8F9FB;  --bg-t: rgba(248,249,251,0); }
+tbody tr[data-row-bg="selected"] { --bg: #F7F5FD;  --bg-t: rgba(247,245,253,0); cursor: pointer; }
+tbody tr[data-row-bg],
+tbody tr[data-row-bg] td { background-color: var(--bg); }
+
+/* ── Transition lives on <tr> only; <td> inherits the already-transitioning  */
+/* --bg value each frame via @property inherits:true, so they stay in sync.  */
+/* tbody tr { transition: --bg 30ms cubic-bezier(0.2, 0, 0.1, 1), --bg-t 30ms cubic-bezier(0.2, 0, 0.1, 1); } */
+tbody tr[data-row-bg="selected"] { transition: none; }
+
+/* ── Row hover — no !important needed (background is CSS-driven, not inline) */
+tbody tr.row-hoverable:hover,
+tbody tr.row-force-hover { --bg: #F8F9FB; --bg-t: rgba(248,249,251,0); cursor: pointer; }
+
+/* ── Hover rounded corners — !important beats the inline 0px on non-selected cells ── */
+tbody tr.row-hoverable:hover td:first-child,
+tbody tr.row-force-hover td:first-child { border-top-left-radius: 8px !important; border-bottom-left-radius: 8px !important; }
+tbody tr.row-hoverable:hover td:last-child,
+tbody tr.row-force-hover td:last-child  { border-top-right-radius: 8px !important; border-bottom-right-radius: 8px !important; }
+
+/* ── Hide bottom border on hovered row and the row immediately before it ── */
+tbody tr.row-hoverable:hover td,
+tbody tr.row-force-hover td { border-bottom-color: transparent !important; }
+tbody tr.row-hoverable:has(+ tr.row-hoverable:hover) td,
+tbody tr:has(+ tr.row-force-hover) td { border-bottom-color: transparent !important; }
+
+/* ── Hide bottom border on the row immediately above a selected row ──────── */
+tbody tr:has(+ tr[data-row-bg="selected"]) td { border-bottom-color: transparent !important; }
+
+/* ── Hide header bottom border when first tbody row is hovered or selected ── */
+.data-table:has(tbody tr:first-child.row-hoverable:hover) thead th,
+.data-table:has(tbody tr:first-child.row-force-hover) thead th,
+.data-table:has(tbody tr:first-child[data-row-bg="selected"]) thead th { border-bottom-color: transparent !important; }
+
+/* ── Selected row bottom border — divider only between consecutive selected  */
+/* rows (internal), transparent when exiting the selected block (last row).  */
+tbody tr[data-row-bg="selected"] td { border-bottom-color: white !important; }
+tbody tr[data-row-bg="selected"]:has(+ tr[data-row-bg="selected"]) td { border-bottom-color: #fff !important; }
+
+tbody tr[data-row-bg="selected"]:hover { --bg: #EFECFC; --bg-t: rgba(239,236,252,0); }
+
+/* ── Suppress hover during column drag ──────────────────────────────────── */
+/* --bg: unset drops the hover override; cascade falls back to data-row-bg.  */
+.no-row-hover tbody tr.row-hoverable:hover { --bg: unset; --bg-t: unset; transition: none; }
+
+/* ── Endcap scrims — 3-layer scaleX approach (eliminates opacity flash) ───── */
+/* Each endcap has: L1=white blocker, L2=perma rounded cap, L3=scrim gradient */
+/* The scrim is always rendered — just scaleX-compressed to ~8px when idle.   */
+/* Because a rounded cap is always present, the JS class timing gap is hidden. */
+
+.left-scrim, .header-left-scrim {
+  transform: scaleX(calc(12 / 88));
+  transform-origin: left center;
+  transition: transform 200ms cubic-bezier(0.2, 0, 0.1, 1);
+  pointer-events: none;
+}
+.left-scrim        { background: linear-gradient(to right, var(--bg) 40%, var(--bg-t) 100%); }
+.header-left-scrim { background: linear-gradient(to right, #fff 40%, rgba(255,255,255,0) 100%); }
+.scroll-left .left-scrim,
+.scroll-left .header-left-scrim { transform: scaleX(1); }
+
+.right-scrim, .header-right-scrim {
+  transform: scaleX(calc(12 / 88));
+  transform-origin: right center;
+  transition: transform 200ms cubic-bezier(0.2, 0, 0.1, 1);
+  pointer-events: none;
+}
+.right-scrim        { background: linear-gradient(to left, var(--bg) 0%, var(--bg-t) 100%); }
+.header-right-scrim { background: linear-gradient(to left, #fff 40%, rgba(255,255,255,0) 100%); }
+.scroll-right .right-scrim,
+.scroll-right .header-right-scrim { transform: scaleX(1); }
+
+/* Hover expands the right scrim and restores the 40% solid stop */
+tbody tr.row-hoverable:hover .right-scrim,
+tbody tr.row-force-hover .right-scrim               { transform: scaleX(1); background: linear-gradient(to left, var(--bg) 40%, var(--bg-t) 100%); }
+.no-row-hover tbody tr.row-hoverable:hover .right-scrim { transform: scaleX(calc(12 / 88)); }
+
+/* ── Toggle switch ──────────────────────────────────────────────────────── */
+.toggle-switch {
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: #D1D9E0;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 250ms cubic-bezier(0.2, 0, 0.1, 1);
+  border: none;
+  outline: none;
+}
+.toggle-switch.on { background: #675DFF; }
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  transition: transform 250ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.toggle-switch.on::after { transform: translateX(14px); }
+
+/* ── Column resize cursor override (beats any child cursor: pointer) ─────── */
+body.col-resizing, body.col-resizing * { cursor: col-resize !important; }
+
+/* ── Fixed phantom horizontal scrollbar ─────────────────────────────────── */
+.table-scroll-hidden-native {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE / Edge */
+}
+.table-scroll-hidden-native::-webkit-scrollbar { display: none; } /* Chrome / Safari */
+.no-search-chip-scroll::-webkit-scrollbar { display: none; }
+
+/* Docs page TOC links */
+.docs-toc-link {
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.1px;
+  color: #6A7383;
+  text-decoration: none;
+  padding: 2px 0;
+  display: block;
+  transition: color 150ms;
+}
+.docs-toc-link:hover { color: #1A2C44; }
+
+.fixed-scrollbar {
+  position: fixed;
+  bottom: 0;
+  height: 16px;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+  z-index: 10001;  /* above GlobalFooter (9999) and floating action bar (10000) */
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.fixed-scrollbar-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  cursor: grab;
+  transition: background 150ms;
+  will-change: transform, width;
+}
+.fixed-scrollbar-thumb:hover  { background: rgba(0, 0, 0, 0.4); }
+.fixed-scrollbar-thumb:active { background: rgba(0, 0, 0, 0.5); cursor: grabbing; }
+
+/* ── Search bar ──────────────────────────────────────────────────────────── */
+.search-bar {
+  box-shadow: inset 0 0 0 1px #ECF1F6;
+  transition: box-shadow 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.search-bar:hover { box-shadow: inset 0 0 0 1px #D4DEE9; }
+.search-bar:focus-within { box-shadow: inset 0 0 0 1.5px #C7D3E0; }
+
+.search-clear-btn {
+  background: none;
+  transition: background 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.search-clear-btn:hover { background: #F0F2F5; }
+.search-clear-btn circle { fill: #8C95A6; transition: fill 100ms cubic-bezier(0.2, 0, 0.1, 1); }
+.search-clear-btn:hover circle { fill: #474E5A; }
+
+/* ── Table settings button ───────────────────────────────────────────────── */
+.table-settings-btn {
+  outline: 1px solid #EBEEF1;
+  outline-offset: 0px;
+  transition: outline-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.table-settings-btn:hover { outline-color: #D4DEE9; }
+
+/* ── Table header cell hover ────────────────────────────────────────────── */
+thead th.col-header { background-color: #FFFFFF; cursor: pointer; color: #596171; transition: color 150ms cubic-bezier(0.2, 0, 0.1, 1); border-bottom: 1px solid #ECF1F6; }
+thead th.col-header:hover { color: #1A2C44; }
+.no-row-hover thead th.col-header:hover { color: #596171; }
+
+
+/* ── First data column: no left padding (butts against checkbox) ─────────
+   Placed outside @layer so it wins over @layer utilities (Tailwind classes).
+   nth-child(2) is always the first data cell/header because React reorders
+   actual DOM nodes when columns are rearranged. */
+.data-table tbody tr td:nth-child(2) { padding-left: 0; }
+.data-table thead tr th:nth-child(2) { padding-left: 0; }
+
+/* ── More icon visibility ───────────────────────────────────────────────── */
+.more-icon-container {
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+tbody tr.row-hoverable:hover .more-icon-container,
+tbody tr.row-force-hover .more-icon-container             { opacity: 1; pointer-events: auto; }
+.no-row-hover tbody tr.row-hoverable:hover .more-icon-container { opacity: 0; pointer-events: none; }
+
+/* Custom base styles */
+@layer base {
+  .font-sf-pro {
+    font-family: 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  .font-mono {
+    font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  }
+
+}
+
+/* List management popover row hover — CSS :hover updates in sync with layout
+   so hover states are instant when rows reorder (unlike React onMouseEnter/Leave) */
+.view-row:not(.view-row-renaming):hover { background-color: #F4F7FA; }
+
+/* ── Data cell vertical padding — rows size to content, min-height from tr ── */
+td[data-col-id] { padding-top: 8px; padding-bottom: 8px; vertical-align: middle; }
+
+/* ── Link icon and copy icon (M1.5 columns) ─────────────────────────────── */
+.link-icon  { opacity: 0; transform: scale(0.95); transition: none; flex-shrink: 0; }
+.copy-icon  { opacity: 0; transform: scale(0.95); transition: none; flex-shrink: 0; padding: 2px; }
+tbody tr.row-hoverable:hover .link-icon,
+tbody tr.row-force-hover .link-icon  { opacity: 1; transform: scale(1); }
+tbody tr.row-hoverable:hover .copy-icon,
+tbody tr.row-force-hover .copy-icon  { opacity: 1; transform: scale(1); }
+.no-row-hover tbody tr.row-hoverable:hover .link-icon { opacity: 0; transform: scale(0.95); }
+.no-row-hover tbody tr.row-hoverable:hover .copy-icon { opacity: 0; transform: scale(0.95); }
+
+/* ── Home / landing page ─────────────────────────────────────────────────── */
+.dashboard-content-column--home {
+  position: relative;
+}
+
+.dash-sidebar-nav::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: 0;
+  z-index: 2;
+  width: 1px;
+  height: 48px;
+  background: #1B1F27;
+  pointer-events: none;
+}
+
+.dash-sidebar-nav[data-collapsed="true"] svg {
+  opacity: var(--prototype-collapsed-icon-opacity, 1);
+}
+
+.dashboard-content-column--home > .dashboard-toolbar--home {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 300;
+  height: 60px;
+  pointer-events: none;
+  background: transparent;
+}
+
+.dashboard-content-column--home > .dashboard-toolbar--home::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: none;
+}
+
+.dashboard-content-column--home > .dashboard-toolbar--home > * {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.dashboard-main--home {
+  position: relative;
+}
+
+.dashboard-developers-content-bar {
+  height: var(--dash-workbench-height, 48px);
+  flex: 0 0 var(--dash-workbench-height, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 16px;
+  border-top: 1px solid #2B303B;
+  background: #1B1F27;
+}
+
+@keyframes dash-popover-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.dash-more-dropdown {
+  position: fixed;
+  z-index: 10000;
+  min-width: 220px;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #FFFFFF;
+  border: 1px solid #D8DEE4;
+  border-radius: 8px;
+  box-shadow: 0px 15px 35px 0px rgba(48, 49, 61, 0.08), 0px 5px 15px 0px rgba(0, 0, 0, 0.12);
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  animation: dash-popover-in 150ms cubic-bezier(0.2, 0, 0.1, 1) both;
+  transform-origin: top left;
+}
+
+.dash-more-dropdown--up {
+  transform-origin: bottom left;
+}
+
+/* Full-bleed: the sections carry the horizontal padding, not the container. */
+.dash-more-dropdown__divider {
+  height: 1px;
+  margin: 0;
+  background: #EBEEF1;
+}
+
+.dash-more-dropdown__section {
+  padding: 6px 0;
+}
+
+.dash-more-dropdown__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.dash-more-dropdown__row--switch {
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.dash-more-dropdown__row--switch:hover {
+  background: #F5F6F8;
+}
+
+.dash-more-dropdown__title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #1A2C44;
+  white-space: nowrap;
+}
+
+/* The section heading doubles as the link into its variant, so it carries the
+   brand colour the old "View" button used to. */
+.dash-more-dropdown__title-link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #533AFD;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.dash-more-dropdown__title-link:hover {
+  color: #3D2BC9;
+}
+
+.dash-more-dropdown__subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #596171;
+  white-space: nowrap;
+}
+
+/* Sub-group label inside a section — a quiet uppercase caption that gathers the
+   rows beneath it without reading as another top-level option. */
+.dash-more-dropdown__row--group {
+  height: 28px;
+  align-items: flex-end;
+  padding-bottom: 4px;
+}
+
+/* A group that follows a switch opens a new section, so it gets a clear gap
+   above it to set the three apart. The first group sits under the section title
+   instead, so it keeps its natural spacing. */
+.dash-more-dropdown__row--switch + .dash-more-dropdown__row--group {
+  margin-top: 14px;
+}
+
+.dash-more-dropdown__group-title {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #8A94A6;
+  white-space: nowrap;
+}
+
+.dash-more-dropdown__view {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #533AFD;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.dash-more-dropdown__view:hover {
+  color: #3B23D4;
+}
+
+/* Stripe form switch, matching the one in the home input field. */
+.dash-switch {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: #ECF1F6;
+  box-shadow:
+    inset 0 0 0 1px #D4DEE9,
+    0px 1px 1px 0px rgba(33, 37, 44, 0.16);
+  transition:
+    background-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.dash-switch__thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px #D4DEE9;
+  transform-origin: center;
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.dash-switch--on {
+  background-color: #533AFD;
+  box-shadow:
+    inset 0 0 0 1px #533AFD,
+    0px 1px 1px 0px rgba(33, 37, 44, 0);
+}
+
+.dash-switch--on .dash-switch__thumb {
+  transform: translateX(16px) scale(0.8889);
+}
+
+/* Nested menu rows step the control down alongside their smaller label. */
+.dash-switch--sm {
+  width: 26px;
+  height: 14px;
+}
+
+.dash-switch--sm .dash-switch__thumb {
+  width: 14px;
+  height: 14px;
+}
+
+.dash-switch--on.dash-switch--sm .dash-switch__thumb {
+  transform: translateX(12px) scale(0.857);
+}
+
+.dashboard-home-hero-heading {
+  position: relative;
+  z-index: 270;
+  padding-top: calc(var(--home-hero-align-top, 76px) + 24px);
+}
+
+.dashboard-home-scroll-context {
+  position: relative;
+}
+
+.dashboard-home-page-content {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-home-search-spacer {
+  height: 16px;
+  pointer-events: none;
+}
+
+.dashboard-home-console-input {
+  position: relative;
+  width: min(680px, 100%);
+  z-index: 270;
+  --home-search-row-height: 48px;
+  --home-search-input-right-padding: 16px;
+}
+
+/* Match the Home mark/text spacing without changing experimental inputs. */
+.dashboard-home-console-input .home-search-prompt-input-row {
+  gap: 16px;
+}
+
+.dashboard-toolbar-dedicated-search {
+  width: min(360px, 100%);
+  min-width: 0;
+  transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-toolbar-dedicated-search:has(input[aria-expanded="true"]) {
+  width: min(560px, 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-toolbar-dedicated-search {
+    transition: none;
+  }
+}
+
+[data-input-mode="search"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+[data-input-mode="search"] > .home-search-bar {
+  border-color: transparent;
+}
+
+[data-input-mode="search"] > .home-search-bar--open {
+  border-color: #D4DEE9;
+}
+
+[data-input-mode="search"] > .absolute {
+  max-height: min(640px, calc(100dvh - 80px)) !important;
+}
+
+.console-prompt-rotation {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--home-search-hint-color, #7D8BA4);
+  font-size: 14px;
+  line-height: 28px;
+}
+
+.console-prompt-rotation > span {
+  position: absolute;
+  inset: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-home-search-anchor {
+  position: sticky;
+  top: var(--home-search-sticky-top, 12px);
+  width: var(--home-search-anchor-width, 50%);
+  padding-bottom: 0;
+  background: transparent;
+  overflow: visible;
+  z-index: 270;
+  transition: width var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1));
+}
+
+.dashboard-home-search-anchor--anchored .home-search-bar--hero {
+  box-shadow: var(--prototype-search-input-shadow, 0 1px 4px rgba(33, 37, 44, 0.04), 0 0.5px 1px rgba(33, 37, 44, 0.02));
+}
+
+.dashboard-home[data-prototype-search-chrome-shadow="false"] .dashboard-home-search-anchor--anchored .home-search-bar--hero {
+  box-shadow: none;
+}
+
+.dashboard-home[data-prototype-search-sticky-style="soft"] .dashboard-home-search-anchor--anchored .home-search-bar--hero {
+  background-color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(212, 222, 233, 0.78);
+  box-shadow: 0 8px 24px rgba(33, 37, 44, 0.08), 0 1px 3px rgba(33, 37, 44, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.dashboard-home[data-prototype-search-sticky-style="snappy"] .dashboard-home-search-anchor--anchored .home-search-bar--hero {
+  background-color: #F8FAFC;
+  border-color: #D4DEE9;
+  box-shadow: none;
+}
+
+.dashboard-home[data-prototype-search-chrome-shadow="false"] .dashboard-home-search-anchor--anchored .home-search-bar--hero,
+.dashboard-home[data-prototype-search-chrome-shadow="false"] .dashboard-home-search-anchor--anchored .home-search-bar--hero:hover,
+.dashboard-home[data-prototype-search-chrome-shadow="false"] .dashboard-home-search-anchor--anchored .home-search-bar--hero:focus-within,
+.dashboard-home[data-prototype-search-chrome-shadow="false"] .dashboard-home-search-anchor--anchored .home-search-bar--hero.home-search-bar--open {
+  box-shadow: none;
+}
+
+.dashboard-home-search-anchor--anchored:focus-within,
+.dashboard-home-search-anchor--anchored:has(.home-search-wrapper--open) {
+  width: min(var(--home-search-expanded-width, 560px), 100%);
+}
+
+.dashboard-home[data-prototype-search-input-grow-on-click="false"] .dashboard-home-search-anchor--anchored:focus-within,
+.dashboard-home[data-prototype-search-input-grow-on-click="false"] .dashboard-home-search-anchor--anchored:has(.home-search-wrapper--open) {
+  width: var(--home-search-anchor-width, 50%);
+}
+
+.home-nav-link,
+.home-page-link         { text-decoration: none; }
+.home-nav-link:hover,
+.home-page-link:hover   { text-decoration: underline; color: #533AFD; }
+
+.home-search-bar {
+  --home-search-input-border-color: #D4DEE9;
+  /* Sail Neutral 400, deepening to Neutral 600 while the pointer is on the hint. */
+  --home-search-hint-color: #7D8BA4;
+  --home-search-hint-hover-color: #50617A;
+  position: relative;
+  border: 1px solid var(--home-search-input-border-color);
+  outline: none;
+  transition:
+    border-color var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    box-shadow var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    background-color var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    border-radius var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1));
+}
+
+.home-search-bar--hint-hover {
+  --home-search-hint-color: var(--home-search-hint-hover-color);
+}
+
+.home-search-hint-text,
+.home-search-bar input::placeholder {
+  color: var(--home-search-hint-color, #7D8BA4);
+  transition: color 220ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.home-search-bar > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-search-bar--hero {
+  background-color: var(--prototype-search-input-color, #FFFFFF);
+  border-color: var(--prototype-search-input-border-color, #EBEEF1);
+  box-shadow: var(--prototype-search-input-shadow, 0 1px 4px rgba(33, 37, 44, 0.04), 0 0.5px 1px rgba(33, 37, 44, 0.02));
+  transition:
+    background-color var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    border-color var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    box-shadow var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    backdrop-filter var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1));
+}
+.home-search-bar--hero:hover {
+  border-color: var(--prototype-search-input-border-color, #EBEEF1);
+  box-shadow: var(--prototype-search-input-shadow, 0 1px 4px rgba(33, 37, 44, 0.04), 0 0.5px 1px rgba(33, 37, 44, 0.02));
+}
+.home-search-bar--hero:focus-within,
+.home-search-bar--hero.home-search-bar--open {
+  border-color: var(--prototype-search-input-border-color, #EBEEF1);
+  box-shadow: none;
+}
+
+.home-search-bar--chrome-grey,
+.home-search-bar--chrome-grey:hover,
+.home-search-bar--chrome-grey:focus-within,
+.home-search-bar--chrome-grey.home-search-bar--open {
+  background-color: #F5F7FA;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Focus tint swirl — a 1px outline laid exactly over the field's border that
+   draws the purple on clockwise, so the colour arrives by travelling around the
+   field rather than cross-fading in place, and lands as the settled border.
+   Drawn as a stroked rect rather than a rotating conic gradient because dash
+   offsets are measured along the path: the front glides at a genuinely even
+   rate at any width. An angle sweep instead maps to the perimeter as a tangent,
+   which crawls at the edge centres and then lurches around the corners. */
+/* Scoped to the child combinator so it outranks `.home-search-bar > *`, which
+   would otherwise pin this to `position: relative` and leave the SVG at its
+   default intrinsic size instead of the field's. */
+.home-search-bar > .home-search-bar__swirl {
+  position: absolute;
+  /* The bar's border is 1px, so this lines the outline up with its border box.
+     An SVG is a replaced element, so `width: auto` would resolve to its
+     intrinsic 300x150 and ignore the insets; percentages here resolve against
+     the bar's padding box, hence the 2px added back for the border. */
+  top: -1px;
+  left: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The field's own border is 1px, and matching it exactly left the pale lilac
+   reading thinner than the treatment wants — the colour is light enough that a
+   hairline of it barely registers. Carried on one property so the weight can be
+   taken back to 1px in a single place. */
+.home-search-bar__swirl {
+  --swirl-weight: 1.5px;
+}
+
+.home-search-bar__swirl rect {
+  /* Inset by half the stroke, so the centreline sits on the field's border and
+     the stroke covers it whatever weight it is carrying. */
+  x: calc(var(--swirl-weight) / 2);
+  y: calc(var(--swirl-weight) / 2);
+  width: calc(100% - var(--swirl-weight));
+  height: calc(100% - var(--swirl-weight));
+  rx: calc(var(--swirl-radius, 6px) - var(--swirl-weight) / 2);
+  fill: none;
+  stroke-width: var(--swirl-weight);
+}
+
+/* Masks the field's own border, which has already gone purple underneath, so
+   the sweep is the only thing revealing the new colour. */
+.home-search-bar__swirl-track {
+  stroke: #D4DEE9;
+}
+
+/* Rather than a flat blurple that has to change everywhere at the landing, the
+   stroke is laid down as a gradient running lilac at one end to blurple at the
+   other, so most of the outline is already where it is going and only the
+   blurple end has a step left to take. That end then eases to lilac as the sweep
+   lands — a short move on part of the stroke instead of the whole perimeter
+   turning over at once. The pool that follows the typed text is set alongside
+   this in HomeSearch, which paints it as its own gradient. */
+.home-search-bar__swirl--blurple-lilac {
+  --swirl-stroke: #C3B6FB;
+  --swirl-sheen: #C3B6FB;
+}
+
+.home-search-bar__swirl--blurple-lilac .home-search-bar__swirl-sweep {
+  stroke: var(--swirl-sweep-paint);
+}
+
+.home-search-bar__swirl-sweep-from {
+  stop-color: #C3B6FB;
+}
+
+.home-search-bar__swirl-sweep-to {
+  stop-color: #675DFF;
+}
+
+.home-search-bar__swirl--settled .home-search-bar__swirl-sweep-to {
+  stop-color: #C3B6FB;
+}
+
+/* Refresh gradient: same grey-to-colour swirl, but the sweep lays down the
+   three-stop brand gradient (blurple → pink → orange, stops fixed in HomeSearch)
+   and settles on it rather than handing over to a single colour. The head is
+   recoloured to the field's own grey so it reads as a grey cap leading the draw
+   — the gradient trails out of it and the cap lifts as it lands, so "grey for a
+   bit" gives way to the full colour with no grey left. */
+.home-search-bar__swirl--refresh-gradient {
+  --swirl-stroke: #533AFD;
+  --swirl-sheen: #D4DEE9;
+  /* The pale lilac needed 1.5px to read; this gradient carries enough weight on
+     its own, so it stays on the field's honest 1px. */
+  --swirl-weight: 1px;
+}
+
+.home-search-bar__swirl--refresh-gradient .home-search-bar__swirl-sweep {
+  stroke: var(--swirl-sweep-paint);
+}
+
+/* Grow on type: the refresh swirl announces the same way, then fades back to
+   the grey track once it lands, leaving the outline neutral. From there the
+   grow arc (below) draws the colour on as the query is typed. */
+.home-search-bar__swirl--refresh-grow {
+  --swirl-stroke: #533AFD;
+  --swirl-sheen: #D4DEE9;
+  /* Matches Refresh gradient — the brand colour carries its own weight at 1px. */
+  --swirl-weight: 1px;
+}
+
+.home-search-bar__swirl--refresh-grow .home-search-bar__swirl-sweep,
+.home-search-bar__swirl--refresh-trace .home-search-bar__swirl-sweep {
+  stroke: var(--swirl-sweep-paint);
+}
+
+/* Trace cursor: same announce-and-fade as Dynamic type, but a pointer-following
+   pool takes over once the ring is gone. */
+.home-search-bar__swirl--refresh-trace {
+  --swirl-stroke: #533AFD;
+  --swirl-sheen: #D4DEE9;
+  --swirl-weight: 1px;
+}
+
+/* Its announcement is a FocusTrace lap (HomeSearch) rather than the sweep.
+   Hidden, not removed, so the sweep still measures and settles. */
+.home-search-bar__swirl--refresh-trace .home-search-bar__swirl-sweep,
+.home-search-bar__swirl--refresh-trace .home-search-bar__swirl-head {
+  visibility: hidden;
+}
+
+/* Outranks `.home-search-bar > *`, and lines up with the bar's 1px border box
+   like the swirl does. */
+.home-search-bar > .dui-focus-trace {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  z-index: 3;
+}
+
+/* Trace cursor, blurple palette: announces on the blurple-to-lilac sweep like
+   the Blurple persistent gradient, but then fades to grey and hands the outline
+   to a blurple pointer pool rather than settling on the colour. */
+.home-search-bar__swirl--blurple-trace {
+  --swirl-stroke: #C3B6FB;
+  --swirl-sheen: #C3B6FB;
+}
+
+.home-search-bar__swirl--blurple-trace .home-search-bar__swirl-sweep {
+  stroke: var(--swirl-sweep-paint);
+}
+
+/* Persistent gradient + trace: announces and settles on the blurple-to-lilac
+   gradient exactly like the persistent tint (so it is absent from the fade-out
+   rule below and the outline keeps its colour), while the blurple pointer pool
+   traces the cursor over the top of it. */
+.home-search-bar__swirl--blurple-persist-trace {
+  --swirl-stroke: #C3B6FB;
+  --swirl-sheen: #C3B6FB;
+}
+
+.home-search-bar__swirl--blurple-persist-trace .home-search-bar__swirl-sweep {
+  stroke: var(--swirl-sweep-paint);
+}
+
+/* The announcement ring fades out once it has settled, handing the outline back
+   to grey before the query (or the pointer) starts drawing colour on. */
+.home-search-bar__swirl--refresh-grow.home-search-bar__swirl--settled .home-search-bar__swirl-sweep,
+.home-search-bar__swirl--refresh-trace.home-search-bar__swirl--settled .home-search-bar__swirl-sweep,
+.home-search-bar__swirl--blurple-trace.home-search-bar__swirl--settled .home-search-bar__swirl-sweep {
+  opacity: 0;
+  /* The grey→colour morph finishes as the loop closes (driven from JS during the
+     draw), so the ring is already the pure gradient at settle. Hold it there for a
+     ~400ms beat, then ease back to the grey border. */
+  transition: opacity 1100ms cubic-bezier(0.33, 0, 0.2, 1) 400ms;
+}
+
+/* The two arcs that track the query — top and bottom, mirrored, growing out
+   from the left edge. Painted with the same gradient the sweep laid down, so
+   they pick up the brand colours left to right; only the visible length changes,
+   eased on the dash offset from JS. Paths rather than rects, so the shared rect
+   geometry doesn't reach them — fill and weight are set here. */
+.home-search-bar__swirl-grow {
+  fill: none;
+  stroke: var(--swirl-sweep-paint);
+  stroke-width: var(--swirl-weight);
+  transition: stroke-dashoffset 260ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Slower than the field's own border transition on purpose — the handover should
+   read as the colour settling, not as a second event after the sweep. */
+.home-search-bar__swirl-sweep-from,
+.home-search-bar__swirl-sweep-to {
+  transition: stop-color 520ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The refresh sweep draws on wearing Line 2997 — a grey start stop easing into
+   the colour — then morphs to the pure brand gradient. That morph is driven from
+   JS concurrent with the draw (so it completes AS the loop closes, leaving no
+   post-close recolour to read as a jump), not on the --settled class. */
+
+/* Both dashed strokes are sized and driven from JS: Chrome ignores `pathLength`
+   on basic shapes, so the dash geometry has to come from a measured length. */
+.home-search-bar__swirl-sweep {
+  stroke: var(--swirl-stroke, #C3B6FB);
+}
+
+/* A lighter dash riding the front, for a soft leading sheen. */
+.home-search-bar__swirl-head {
+  stroke: var(--swirl-sheen, #DCD4FE);
+  opacity: 0;
+}
+
+/* On the refresh tints the head is the grey cap the gradient trails out of.
+   Round its ends and feather it with a soft blur so the grey dissolves into the
+   trailing colour — the junction reads as grey melting into the blue rather than
+   a hard butt edge (matching the Figma reference where the neutral border eases
+   into where the blue gradient starts). */
+.home-search-bar__swirl--refresh-gradient .home-search-bar__swirl-head,
+.home-search-bar__swirl--refresh-grow .home-search-bar__swirl-head,
+.home-search-bar__swirl--refresh-trace .home-search-bar__swirl-head {
+  stroke-linecap: round;
+  filter: blur(1.1px);
+}
+
+/* The darker blurple pooled around the pointer. Painted with a radial gradient
+   whose centre follows the cursor, so the outline deepens where the pointer is
+   closest and falls away to the base purple with distance. */
+.home-search-bar__swirl-pool {
+  opacity: 0;
+  /* The resting state carries the long duration, so dropping the lit class
+     recedes gently once the cursor stops. */
+  transition: opacity 1200ms ease;
+}
+
+/* Answering the pointer should feel immediate, so lighting up overrides the
+   duration with a much shorter one. */
+.home-search-bar__swirl-pool--lit {
+  opacity: 1;
+  transition-duration: 260ms;
+}
+
+/* Leaving Console crossfades the tint back to grey. Every purple layer fades
+   together over the opaque grey track beneath them, so the outline changes
+   colour where it stands instead of travelling anywhere — the sweep is the
+   arrival's alone. Kept in step with SWIRL_EXIT_MS in HomeSearch.jsx. */
+.home-search-bar__swirl-tint {
+  opacity: 1;
+  transition: opacity 360ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-search-bar__swirl--out .home-search-bar__swirl-tint {
+  opacity: 0;
+}
+
+.home-search-wrapper--open {
+  filter: none;
+}
+
+.home-search-wrapper {
+  transition: filter 160ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.home-search-wrapper--open .home-search-bar--hero {
+  box-shadow: none;
+}
+
+html[data-prototype-search-shadow-flip="true"] .home-search-bar--hero,
+html[data-prototype-search-shadow-flip="true"] .home-search-bar--hero:hover {
+  box-shadow: none;
+}
+
+html[data-prototype-search-shadow-flip="true"] .home-search-bar--hero:focus-within,
+html[data-prototype-search-shadow-flip="true"] .home-search-bar--hero.home-search-bar--open,
+html[data-prototype-search-shadow-flip="true"] .home-search-wrapper--open .home-search-bar--hero {
+  box-shadow: var(--prototype-search-input-shadow, 0 1px 4px rgba(33, 37, 44, 0.04), 0 0.5px 1px rgba(33, 37, 44, 0.02));
+}
+
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero,
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero:hover,
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero:focus-within,
+.dashboard-toolbar-sticky-search--no-shadow .home-search-bar--hero.home-search-bar--open,
+.dashboard-toolbar-sticky-search--no-shadow .home-search-wrapper--open .home-search-bar--hero {
+  box-shadow: none;
+}
+
+.home-search-spotlight-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-rows: 0fr;
+  pointer-events: none;
+  transition: grid-template-rows 160ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.home-search-spotlight-popover--animation-fade-in {
+  grid-template-rows: 1fr;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-2px) scale(0.965);
+  transform-origin: top center;
+  transition:
+    opacity 140ms cubic-bezier(0.33, 1, 0.68, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 220ms;
+}
+
+.home-search-spotlight-popover--open {
+  grid-template-rows: 1fr;
+  margin-top: 0;
+  pointer-events: auto;
+}
+
+.home-search-spotlight-popover--animation-fade-in.home-search-spotlight-popover--open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 140ms cubic-bezier(0.33, 1, 0.68, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s;
+}
+
+.home-search-spotlight-popover__inner {
+  overflow: hidden;
+  min-height: 0;
+  background: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+}
+
+.home-search-spotlight-popover__sizer {
+  overflow: hidden;
+}
+
+.home-search-spotlight-popover__sizer--shifting {
+  transition: height 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.home-search-spotlight-popover--open .home-search-spotlight-popover__inner {
+  border: 1px solid #EBEEF1;
+  box-shadow: 0 8px 32px rgba(33, 37, 44, 0.10), 0 2px 8px rgba(33, 37, 44, 0.06);
+}
+
+.home-search-spotlight-popover__inner .home-search-spotlight-suggestions {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 120ms cubic-bezier(0.4, 0, 1, 1),
+    transform 120ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.home-search-spotlight-popover--open .home-search-spotlight-popover__inner .home-search-spotlight-suggestions {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 140ms cubic-bezier(0.33, 1, 0.68, 1) 35ms,
+    transform 140ms cubic-bezier(0.33, 1, 0.68, 1) 35ms;
+}
+
+.home-search-spotlight-popover__inner .home-search-spotlight-footer {
+  opacity: 0;
+  transition: opacity 100ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.home-search-spotlight-popover--open .home-search-spotlight-popover__inner .home-search-spotlight-footer {
+  opacity: 1;
+  transition: opacity 120ms cubic-bezier(0.33, 1, 0.68, 1) 50ms;
+}
+
+.home-search-spotlight-popover--animation-fade-in .home-search-spotlight-popover__inner .home-search-spotlight-suggestions,
+.home-search-spotlight-popover--animation-fade-in .home-search-spotlight-popover__inner .home-search-spotlight-footer {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.home-search-spotlight-popover.home-search-spotlight-popover--open.home-search-spotlight-popover--dismissing {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.99);
+  transform-origin: top center;
+  pointer-events: none;
+  transition:
+    opacity 140ms cubic-bezier(0.4, 0, 1, 1),
+    transform 140ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Spotlight callout beside the hero input. The `> *` rule above forces every
+   bar child to position: relative, so this needs matching specificity. */
+.home-search-bar > .home-search-spotlight-tip {
+  --tip-arrow-width: 8px;
+  --tip-gap: 4px;
+  position: absolute;
+  top: 50%;
+  /* `left` resolves against the padding box, so the bar's 1px border is added
+     back to keep the gap measured from the field's outer edge. */
+  left: calc(100% + 1px + var(--tip-gap) + var(--tip-arrow-width));
+  transform: translateY(-50%);
+  z-index: 3;
+  box-sizing: border-box;
+  width: 280px;
+  padding: 16px;
+  background: #FFFFFF;
+  border: 1px solid #D4DEE9;
+  border-radius: 8px;
+  box-shadow:
+    0 15px 35px rgba(48, 49, 61, 0.08),
+    0 5px 15px rgba(0, 0, 0, 0.12);
+  cursor: default;
+  text-align: left;
+}
+
+.home-search-spotlight-tip__arrow {
+  position: absolute;
+  top: 50%;
+  /* Sits over the card's left border so the outlines read as one shape. The
+     extra 1px offsets the card's border, since `left` starts at the padding box. */
+  left: calc(-1px - var(--tip-arrow-width));
+  margin-top: -9px;
+  display: block;
+}
+
+.home-search-spotlight-tip__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.home-search-spotlight-tip__title {
+  flex: 1 0 0;
+  min-width: 0;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #353A44;
+}
+
+.home-search-spotlight-tip__close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #50617A;
+  cursor: pointer;
+  transition:
+    background-color 120ms cubic-bezier(0.33, 1, 0.68, 1),
+    color 120ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.home-search-spotlight-tip__close:hover {
+  background: #F4F7FA;
+  color: #3C4F69;
+}
+
+.home-search-spotlight-tip__body {
+  margin: 4px 0 0;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: #1A2C44;
+}
+
+/* The bar is a fixed 40px that centres its row; the row's 6px vertical padding
+   then reproduces Figma's 4px inset for search (32px row) and 6px for console
+   (28px row) off the line-height alone, so both variants share one rule. */
+.home-search-spotlight-footer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 40px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  background: #F6F9FC;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.home-search-spotlight-footer__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+
+.home-search-spotlight-footer--small {
+  background: #FFFFFF;
+}
+
+.home-search-spotlight-footer--small .home-search-spotlight-footer__disclaimer {
+  font-size: 11px;
+  line-height: 16px;
+  color: #9AA3B0;
+}
+
+.home-search-spotlight-footer--banner {
+  position: relative;
+  justify-content: flex-start;
+  /* The banner variant sizes to its own notice rather than the 40px bar. */
+  height: auto;
+  padding: 8px 12px;
+  background: #FFFFFF;
+}
+
+/* The banner draws its own inset card, so it opts out of the shared row inset. */
+.home-search-spotlight-footer--banner .home-search-spotlight-footer__row {
+  padding: 0;
+}
+
+.home-search-spotlight-footer--banner .home-search-spotlight-footer__disclaimer {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border: 0;
+  border-radius: 6px;
+  background: #F5F7FA;
+  color: #596171;
+  padding: 0 44px 0 14px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.home-search-spotlight-footer__dismiss {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  padding: 0;
+  background: transparent;
+  color: #8792A2;
+  cursor: pointer;
+}
+
+.home-search-spotlight-footer__dismiss:hover {
+  background: rgba(80, 97, 122, 0.08);
+  color: #596171;
+}
+
+.home-search-spotlight-footer__disclaimer {
+  font-size: 12px;
+  font-weight: 400;
+  color: #3C4F69;
+  line-height: 16px;
+  letter-spacing: 0;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+}
+
+.home-search-bar:hover { border-color: #D4DEE9; }
+.home-search-bar:focus-within { border-color: #D4DEE9; }
+.home-search-bar--open { border-color: #D4DEE9; }
+.home-search-bar--open:hover { border-color: #D4DEE9; }
+
+html[data-prototype-search-shadow-flip="true"] .home-search-bar--hero:focus-within,
+html[data-prototype-search-shadow-flip="true"] .home-search-bar--hero.home-search-bar--open,
+html[data-prototype-search-shadow-flip="true"] .home-search-bar--hero.home-search-bar--open:hover {
+  border-color: transparent;
+}
+
+html[data-prototype-search-shadow-preset="no-border-1"] .home-search-bar--hero,
+html[data-prototype-search-shadow-preset="no-border-1"] .home-search-bar--hero:hover,
+html[data-prototype-search-shadow-preset="no-border-1"] .home-search-bar--hero:focus-within,
+html[data-prototype-search-shadow-preset="no-border-1"] .home-search-bar--hero.home-search-bar--open,
+html[data-prototype-search-shadow-preset="no-border-1"] .home-search-bar--hero.home-search-bar--open:hover {
+  border-color: transparent;
+}
+
+.home-search-input-thinking-icon {
+  transform: scale(1.14);
+  transform-origin: center;
+  overflow: visible;
+}
+
+[data-input-mode="console"] .home-search-input-thinking-icon:not(.thinking-icon-animated):not([data-thinking]):not(.dui-console-blob) {
+  opacity: var(--prototype-search-icon-opacity, 0.5);
+}
+
+.home-search-helper-icon-motion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  transform-origin: center;
+}
+
+.home-search-outline-mode-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  padding: 0;
+  border: 1px solid var(--home-search-input-border-color, #D4DEE9);
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #474E5A;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(33, 37, 44, 0.03);
+  transition:
+    background-color 140ms cubic-bezier(0.2, 0, 0.1, 1),
+    border-color 140ms cubic-bezier(0.2, 0, 0.1, 1),
+    box-shadow 140ms cubic-bezier(0.2, 0, 0.1, 1),
+    transform 140ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.home-search-outline-mode-button:hover {
+  background: #F8FAFC;
+  border-color: #C8D4E2;
+  box-shadow: 0 2px 5px rgba(33, 37, 44, 0.05);
+}
+
+.home-search-outline-mode-button:active {
+  transform: scale(0.96);
+}
+
+.home-search-outline-mode-button--active {
+  border-color: #C8D4E2;
+  background: #FFFFFF;
+}
+
+.home-search-outline-mode-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #474E5A;
+}
+
+.home-search-outline-mode-button__search-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+.home-search-console-toggle {
+  --home-search-console-active-bg: #353A44;
+  --home-search-console-active-hover-bg: #2B3038;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  height: 28px;
+  margin: 10px 0 10px 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--home-search-console-button-radius, 4px);
+  background: transparent;
+  color: #596171;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  font-family: 'SF Pro Text', system-ui, sans-serif;
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    width var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    border-radius 180ms cubic-bezier(0.33, 1, 0.68, 1),
+    color var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    opacity 120ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.home-search-console-toggle::before,
+.home-search-console-toggle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity 220ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.home-search-console-toggle::before {
+  background: rgba(235, 238, 241, 0.5);
+  opacity: 1;
+}
+
+.home-search-console-toggle--default-outline::before {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px var(--home-search-input-border-color, #D4DEE9);
+}
+
+.home-search-console-toggle--default-cap {
+  --home-search-cap-line-color: #E1E7EF;
+  overflow: visible;
+}
+
+.home-search-console-toggle--default-text-string {
+  --home-search-console-active-bg: transparent;
+  --home-search-console-active-hover-bg: rgba(235, 238, 241, 0.42);
+  color: #8B93A1;
+  overflow: visible;
+}
+
+.home-search-console-toggle--flip-flop-variant {
+  --home-search-console-active-bg: transparent;
+  --home-search-console-active-hover-bg: transparent;
+  color: #596171;
+  overflow: visible;
+}
+
+.home-search-console-toggle--default-toggle {
+  --home-search-console-active-bg: transparent;
+  --home-search-console-active-hover-bg: transparent;
+  color: #596171;
+  overflow: visible;
+}
+
+.home-search-console-toggle--default-text-string::before,
+.home-search-console-toggle--default-text-string::after {
+  background: transparent;
+  inset: -2px -4px;
+  border-radius: 8px;
+}
+
+.home-search-console-toggle--flip-flop-variant::before {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-toggle::before {
+  background: transparent;
+}
+
+.home-search-console-toggle--flip-flop-variant::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-toggle::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-cap::before {
+  top: calc((28px - var(--home-search-row-height, 48px)) / 2);
+  right: 0;
+  bottom: calc((28px - var(--home-search-row-height, 48px)) / 2);
+  left: 0;
+  width: auto;
+  background: transparent;
+  border-radius: 0 var(--home-search-console-button-radius, 4px) var(--home-search-console-button-radius, 4px) 0;
+  box-shadow: inset 1px 0 0 var(--home-search-cap-line-color, #E1E7EF);
+}
+
+.home-search-console-toggle::after {
+  background: var(--home-search-console-active-bg, #353A44);
+  opacity: 0;
+}
+
+.home-search-console-toggle:hover::before {
+  background: rgba(226, 232, 239, 0.5);
+}
+
+.home-search-console-toggle--default-text-string:hover::before {
+  background: rgba(235, 238, 241, 0.42);
+}
+
+.home-search-console-toggle--flip-flop-variant:hover::before,
+.home-search-console-toggle--active.home-search-console-toggle--flip-flop-variant:hover::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-toggle:hover::before,
+.home-search-console-toggle--active.home-search-console-toggle--default-toggle:hover::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-cap:hover::before {
+  background: rgba(226, 232, 239, 0.5);
+  box-shadow: inset 1px 0 0 var(--home-search-cap-line-color, #E1E7EF);
+}
+
+.home-search-console-toggle--default-cap.home-search-console-toggle--exiting::before,
+.home-search-console-toggle--default-cap.home-search-console-toggle--exiting:hover::before {
+  background: transparent;
+  box-shadow: inset 1px 0 0 var(--home-search-cap-line-color, #E1E7EF);
+}
+
+.home-search-console-toggle--default-cap.home-search-console-toggle--exiting::after,
+.home-search-console-toggle--default-cap.home-search-console-toggle--exiting:hover::after {
+  background: transparent;
+  box-shadow: inset 1px 0 0 var(--home-search-cap-line-color, #E1E7EF);
+}
+
+.home-search-console-toggle--default-outline.home-search-console-toggle--exiting::before,
+.home-search-console-toggle--default-outline.home-search-console-toggle--exiting:hover::before {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px var(--home-search-input-border-color, #D4DEE9);
+}
+
+.home-search-console-toggle--default-outline.home-search-console-toggle--exiting::after,
+.home-search-console-toggle--default-outline.home-search-console-toggle--exiting:hover::after {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px var(--home-search-input-border-color, #D4DEE9);
+}
+
+.home-search-console-toggle--active::before {
+  opacity: 0;
+}
+
+.home-search-console-toggle--active::after {
+  opacity: 1;
+}
+
+.home-search-console-toggle--active:hover::after {
+  background: var(--home-search-console-active-hover-bg, #2B3038);
+}
+
+.home-search-console-toggle--active {
+  color: #FFFFFF;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-text-string {
+  color: #8B93A1;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--flip-flop-variant {
+  color: #596171;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-toggle {
+  color: #FFFFFF;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-text-string::before,
+.home-search-console-toggle--active.home-search-console-toggle--default-text-string::after {
+  background: transparent;
+  opacity: 1;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-text-string:hover::before,
+.home-search-console-toggle--active.home-search-console-toggle--default-text-string:hover::after {
+  background: rgba(235, 238, 241, 0.42);
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-outline {
+  color: #283B55;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-outline .home-search-console-toggle__close {
+  color: #8792A2;
+  opacity: 1;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-cap .home-search-console-toggle__close {
+  color: #8792A2;
+  opacity: 1;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-cap .home-search-console-toggle__close path {
+  stroke: #8792A2;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-outline::after {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px var(--home-search-input-border-color, #D4DEE9);
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-outline:hover::after {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px var(--home-search-input-border-color, #D4DEE9);
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-cap::after {
+  top: calc((28px - var(--home-search-row-height, 48px)) / 2);
+  right: 0;
+  bottom: calc((28px - var(--home-search-row-height, 48px)) / 2);
+  left: 0;
+  border-radius: 0 var(--home-search-console-button-radius, 4px) var(--home-search-console-button-radius, 4px) 0;
+  background: transparent;
+  box-shadow: inset 1px 0 0 var(--home-search-cap-line-color, #E1E7EF);
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-cap:hover::after {
+  background: rgba(226, 232, 239, 0.5);
+  box-shadow: inset 1px 0 0 var(--home-search-cap-line-color, #E1E7EF);
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-black {
+  color: #FFFFFF;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-black .home-search-console-toggle__close {
+  color: #C9D0DA;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--default-text-string {
+  color: #8B93A1;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--flip-flop-variant {
+  color: #596171;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--default-toggle {
+  color: #FFFFFF;
+}
+
+.home-search-console-toggle--default-text-string::before,
+.home-search-console-toggle--default-text-string::after,
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--default-text-string::before,
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--default-text-string::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--flip-flop-variant::before,
+.home-search-console-toggle--flip-flop-variant::after,
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--flip-flop-variant::before,
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--flip-flop-variant::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-toggle::before,
+.home-search-console-toggle--default-toggle::after,
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--default-toggle::before,
+.home-search-console-toggle--active.home-search-console-toggle--active-black.home-search-console-toggle--default-toggle::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-text-string:hover::before,
+.home-search-console-toggle--active.home-search-console-toggle--default-text-string:hover::after {
+  background: rgba(235, 238, 241, 0.42);
+}
+
+.home-search-console-toggle--default-text-string:active::before,
+.home-search-console-toggle--default-text-string:active::after {
+  background: rgba(235, 238, 241, 0.42);
+}
+
+.home-search-console-toggle--flip-flop-variant:hover::before,
+.home-search-console-toggle--active.home-search-console-toggle--flip-flop-variant:hover::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-toggle:hover::before,
+.home-search-console-toggle--active.home-search-console-toggle--default-toggle:hover::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--flip-flop-variant:active::before,
+.home-search-console-toggle--flip-flop-variant:active::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-toggle:active::before,
+.home-search-console-toggle--default-toggle:active::after {
+  background: transparent;
+}
+
+.home-search-console-toggle--default-toggle-x.home-search-console-toggle--toggle-x-grey {
+  --home-search-console-active-bg: rgba(235, 238, 241, 0.5);
+  --home-search-console-active-hover-bg: rgba(226, 232, 239, 0.5);
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-toggle-x.home-search-console-toggle--toggle-x-grey {
+  color: #596171;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-toggle-x.home-search-console-toggle--toggle-x-grey .home-search-console-toggle__close {
+  color: #6B7280;
+}
+
+.home-search-console-toggle--active.home-search-console-toggle--default-cap {
+  color: #596171;
+}
+
+.home-search-console-toggle--thinking {
+  pointer-events: none;
+  cursor: default;
+}
+
+.home-search-console-toggle__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: flex-start;
+  padding: 0 8px 0 8px;
+  white-space: nowrap;
+  transition:
+    padding var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    opacity var(--prototype-search-button-x-opacity-duration, 180ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    transform var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1));
+}
+
+.home-search-console-toggle--default-text-string .home-search-console-toggle__label {
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 13px !important;
+  font-weight: 400;
+  line-height: 20px;
+  opacity: 0.76;
+}
+
+.home-search-console-toggle--flip-flop-variant .home-search-console-toggle__label {
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 12px !important;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.home-search-console-toggle--default-toggle {
+  height: 28px;
+}
+
+.home-search-console-toggle--default-toggle .home-search-console-toggle__label {
+  padding: 0;
+  width: 56px;
+  height: 28px;
+}
+
+.home-search-console-toggle__flip-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-search-console-toggle__flip-icon-wrap,
+.home-search-console-toggle__flip-icon {
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.home-search-console-toggle__switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 56px;
+  height: 28px;
+  padding: 1px;
+  border-radius: 999px;
+  background: #EEF2F6;
+  box-shadow:
+    inset 0 0 0 1px rgba(80, 97, 122, 0.08),
+    inset 0 1px 1px rgba(80, 97, 122, 0.06);
+}
+
+.home-search-console-toggle--active .home-search-console-toggle__switch {
+  background: #E9EEF5;
+}
+
+.home-search-console-toggle__switch-thumb {
+  position: absolute;
+  z-index: 1;
+  left: 1px;
+  top: 1px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  box-shadow:
+    0 2px 7px rgba(33, 37, 44, 0.16),
+    0 0 0 1px rgba(80, 97, 122, 0.12);
+}
+
+.home-search-console-toggle__switch-icon {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  color: #596171;
+}
+
+.home-search-console-toggle__switch-icon--console {
+  color: #474E5A;
+}
+
+.home-search-console-toggle__switch-search-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+.home-search-console-toggle--default-text-string:hover .home-search-console-toggle__label {
+  opacity: 0.94;
+}
+
+.home-search-console-toggle__keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 20px;
+  min-width: 31px;
+  padding: 0 6px;
+  border-radius: 5px;
+  border: 1px solid #CFD8E3;
+  color: #87909E;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.home-search-console-toggle__keycap--slash-only {
+  min-width: 22px;
+  padding: 0 6px;
+}
+
+.home-search-console-toggle--default-text-string .home-search-console-toggle__text {
+  font-weight: 500;
+}
+
+.home-search-console-toggle__keycap-command {
+  font-size: 12px;
+  line-height: 16px;
+  transform: translateY(0.5px);
+}
+
+.home-search-console-toggle__keycap-slash {
+  font-size: 11px;
+  line-height: 16px;
+  transform: translateY(-0.75px);
+}
+
+.home-search-console-toggle--default-toggle-x.home-search-console-toggle--morphed .home-search-console-toggle__label {
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+.home-search-console-toggle--default-cap:not(.home-search-console-toggle--active) .home-search-console-toggle__label {
+  padding-left: 16px;
+}
+
+.home-search-console-toggle--default-cap.home-search-console-toggle--active .home-search-console-toggle__label {
+  padding-left: 16px;
+}
+
+.home-search-console-toggle__label--measure {
+  position: absolute;
+  inset: auto;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.home-search-console-toggle__label--morphed-measure {
+  padding-left: 8px;
+  padding-right: 28px;
+}
+
+.home-search-console-toggle--morphed {
+  justify-content: flex-start;
+}
+
+.home-search-console-toggle--morphed .home-search-console-toggle__label {
+  justify-content: flex-start;
+  padding-left: 8px;
+  padding-right: 28px;
+}
+
+.home-search-console-toggle--default-cap.home-search-console-toggle--morphed .home-search-console-toggle__label {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.home-search-console-toggle--default-cap .home-search-console-toggle__label--morphed-measure {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.home-search-console-toggle__close {
+  position: absolute;
+  z-index: 1;
+  right: 8px;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-50%) translateX(10px) scale(0.85);
+  transform-origin: center right;
+  color: currentColor;
+  pointer-events: none;
+  transition:
+    opacity var(--prototype-search-button-x-opacity-duration, 180ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    transform var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1));
+}
+
+.home-search-console-toggle--morphed .home-search-console-toggle__close {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0) scale(1);
+}
+
+.home-search-console-toggle__close--measure {
+  width: 14px;
+  margin-left: 8px;
+  margin-right: 8px;
+  opacity: 1;
+  transform: none;
+}
+
+.home-search-console-toggle--default-cap .home-search-console-toggle__close {
+  position: relative;
+  right: auto;
+  top: auto;
+  width: 0;
+  margin-left: 0;
+  margin-right: 0;
+  transform: translateX(10px) scale(0.85);
+  transition:
+    width var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    margin var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    opacity var(--prototype-search-button-x-opacity-duration, 180ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1)),
+    transform var(--prototype-search-button-x-duration, 220ms) var(--prototype-search-button-x-ease, cubic-bezier(0.2, 0, 0.1, 1));
+}
+
+.home-search-console-toggle--default-cap.home-search-console-toggle--morphed .home-search-console-toggle__close {
+  width: 14px;
+  opacity: 1 !important;
+  transform: translateX(0) scale(1);
+}
+
+.home-search-console-toggle--default-cap.home-search-console-toggle--morphed .home-search-console-toggle__close {
+  margin-left: 6px;
+  margin-right: 0;
+}
+
+.home-search-console-toggle--default-cap .home-search-console-toggle__close--measure {
+  width: 14px;
+  margin-left: 6px;
+  margin-right: 0;
+  opacity: 1;
+  transform: none;
+}
+
+.home-search-prompt-input-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--home-search-row-height, 48px);
+  min-height: var(--home-search-row-height, 48px);
+  padding: 0 var(--home-search-input-right-padding, 98px) 0 var(--home-search-input-left-padding, 16px);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  cursor: text;
+  transition:
+    height var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    min-height var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1)),
+    padding var(--prototype-search-sticky-transition-ms, 160ms) var(--prototype-search-sticky-easing-curve, cubic-bezier(0.25, 0.1, 0.25, 1));
+}
+
+.dashboard-home-search-anchor--anchored .home-search-prompt-input-row {
+  --home-search-input-right-padding: calc(98px - var(--home-search-input-right-pinch, 0px));
+}
+
+.home-search-prompt-input-row:has(.home-search-console-toggle--morphed) {
+  --home-search-input-right-padding: 124px;
+}
+
+.home-search-prompt-input-row:has(.home-search-console-toggle--default-toggle-x.home-search-console-toggle--morphed) {
+  --home-search-input-right-padding: 64px;
+}
+
+.home-search-prompt-input-row:has(.home-search-console-toggle--default-text-string) {
+  --home-search-input-right-padding: calc(var(--home-search-console-button-width, 84px) + 20px);
+}
+
+.home-search-prompt-input-row:has(.home-search-console-toggle--default-text-string.home-search-console-toggle--active) {
+  --home-search-input-right-padding: calc(var(--home-search-console-button-morphed-width, 84px) + 20px);
+}
+
+.home-search-prompt-input-row:has(.home-search-console-toggle--flip-flop-variant) {
+  --home-search-input-right-padding: calc(var(--home-search-console-button-width, 84px) + 20px);
+}
+
+.home-search-prompt-input-row:has(.home-search-console-toggle--flip-flop-variant.home-search-console-toggle--active) {
+  --home-search-input-right-padding: calc(var(--home-search-console-button-morphed-width, 84px) + 20px);
+}
+
+.home-search-prompt-input-row:has(.home-search-console-toggle--default-toggle) {
+  --home-search-input-right-padding: calc(var(--home-search-console-button-width, 56px) + 18px);
+}
+
+.home-search-prompt-input-row:has(.home-search-ask-console-switch) {
+  /* Matches the switch's own top/bottom gap, so its inset reads equal on all three sides. */
+  --home-search-ask-console-switch-inset: calc((var(--home-search-row-height, 48px) - 18px) / 2);
+  --home-search-input-right-padding: calc(
+    var(--home-search-ask-console-switch-width, 121px)
+    + var(--home-search-ask-console-switch-inset)
+    + 12px
+  );
+}
+
+.home-search-prompt-input-row:has(.home-search-shortcut-hint) {
+  /* Matches the hint's own top/bottom gap, so its inset reads equal on all three sides. */
+  --home-search-shortcut-hint-inset: calc((var(--home-search-row-height, 48px) - 20px) / 2);
+  --home-search-input-right-padding: calc(
+    var(--home-search-shortcut-hint-width, 105px)
+    + var(--home-search-shortcut-hint-inset)
+    + 12px
+  );
+}
+
+.home-search-prompt-input-row .home-search-shortcut-hint {
+  position: absolute;
+  right: var(--home-search-shortcut-hint-inset, 14px);
+  top: calc(50% - 10px);
+  z-index: 2;
+}
+
+.home-search-shortcut-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  /* Informational only — clicks fall through and focus the field. */
+  pointer-events: none;
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  /* Sail Neutral 400. Label and keycap read off one token so the hint deepens
+     as a single unit, and stays clear of the ghost's own hover variable. */
+  --shortcut-hint-color: #7D8BA4;
+}
+
+/* The hint is a button whenever a More switch could make it one, and stays one
+   across the swap so the keycap's crossfade is never remounted mid-flight. */
+button.home-search-shortcut-hint {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+
+/* Live only while it has something to do — otherwise it keeps waiving pointer
+   events above, and the click falls through to focus the field. Its box is the
+   whole label-plus-keycap run. */
+.home-search-shortcut-hint--button {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.home-search-shortcut-hint--button:hover,
+.home-search-shortcut-hint--button:focus-visible {
+  --shortcut-hint-color: var(--home-search-hint-hover-color, #50617A);
+}
+
+.home-search-shortcut-hint__label {
+  position: relative;
+  display: block;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.home-search-shortcut-hint__label-measure,
+.home-search-shortcut-hint__label-text {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.065px;
+  color: var(--shortcut-hint-color, #7D8BA4);
+  white-space: nowrap;
+}
+
+.home-search-shortcut-hint__label-measure {
+  visibility: hidden;
+}
+
+/* Right-aligned so the two labels crossfade against the keycap, not the field. */
+.home-search-shortcut-hint__label-text {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* More → Emphasize text: one brand band travels the whole hint as the spotlight
+   lands — the label first, then the keycap's glyph. The gradient's outer stops
+   are currentColor, so everything but the band stays on the hint's own token
+   and the text is unchanged either side of the sweep, hover colour included.
+
+   Label and keycap are separate elements, so the band is sized and placed
+   against the hint (--shimmer-w) rather than against each glyph's own box, and
+   each one subtracts how far along the hint it sits (--shimmer-at). That puts
+   both gradients in the same coordinate space: one band, moving once, rather
+   than two that restart at the gap. */
+@keyframes home-search-hint-shimmer {
+  /* Three hint-widths of image, so at either end the band is clear of the run
+     entirely and the whole duration goes on crossing it. */
+  from { background-position-x: calc(var(--shimmer-w, 105px) * -2 - var(--shimmer-at, 0px)); }
+  to { background-position-x: calc(0px - var(--shimmer-at, 0px)); }
+}
+
+/* Where the keycap starts along the hint. Published from the measure, since no
+   selector can ask how far a sibling sits from its parent's edge. */
+.home-search-shortcut-hint__keys {
+  --shimmer-at: var(--shimmer-keys-at, 0px);
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .home-search-shortcut-hint__label-text--shimmer,
+  .home-search-shortcut-hint__keys-text--shimmer {
+    /* A solid core with long shoulders either side: the core is what reads as
+       brand, and the shoulders are what keep it from arriving as an edge. All
+       told the band runs a little wider than the label itself. */
+    background-image: linear-gradient(
+      90deg,
+      currentColor 34%,
+      #533AFD 46%,
+      #533AFD 54%,
+      currentColor 66%
+    );
+    background-size: calc(var(--shimmer-w, 105px) * 3) 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* Even pace — easing makes the band lurch through the middle of the run.
+       Shared timing on both halves is what keeps the swipe continuous. The
+       spotlight card comes in behind the band, so this duration is also kept in
+       step with SHIMMER_DURATION_MS in HomeSearch.jsx. */
+    animation: home-search-hint-shimmer 1400ms linear 1 both;
+  }
+
+  /* More → Emphasize gradient: same travelling band, but the core carries the
+     Refresh gradient's three stops (#533AFD → #F44BCC → #FF6118) rather than a
+     single brand blue. Wider core so all three read as they cross a glyph, and
+     currentColor shoulders still hand back to the hint's own token either side.
+     Comes after the base rule, so it only overrides the paint. */
+  .home-search-shortcut-hint__label-text--shimmer-gradient,
+  .home-search-shortcut-hint__keys-text--shimmer-gradient {
+    background-image: linear-gradient(
+      90deg,
+      currentColor 30%,
+      #533AFD 42%,
+      #F44BCC 50%,
+      #FF6118 58%,
+      currentColor 70%
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-search-shortcut-hint__label-text--shimmer,
+  .home-search-shortcut-hint__keys-text--shimmer,
+  .home-search-shortcut-hint__label-text--shimmer-gradient,
+  .home-search-shortcut-hint__keys-text--shimmer-gradient {
+    animation-duration: 1ms;
+  }
+}
+
+.home-search-shortcut-hint__label-text,
+.home-search-shortcut-hint__keys-text {
+  transition: color 220ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Fixed box in both modes — only the glyph inside it changes. */
+.home-search-shortcut-hint__keys {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #F4F7FA;
+}
+
+.home-search-shortcut-hint__keys-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: -0.055px;
+  color: var(--shortcut-hint-color, #7D8BA4);
+  font-feature-settings: 'case' 1, 'calt' 0;
+}
+
+/* More → Arrow on type. Longer than the mode crossfades either side of it:
+   this one fires mid-keystroke, so it wants to be felt rather than seen. */
+.home-search-shortcut-hint__keys-glyph,
+.home-search-shortcut-hint__keys-arrow {
+  position: absolute;
+  inset: 0;
+  transition: opacity 340ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.home-search-shortcut-hint__keys-glyph--stood-down {
+  opacity: 0;
+}
+
+/* Sail's arrowRight at 12px, masked so the fill comes from the same token the
+   keycap's glyph reads, and so follows it into the hover colour. */
+.home-search-shortcut-hint__keys-arrow {
+  opacity: 0;
+  background-color: var(--shortcut-hint-color, #7D8BA4);
+  -webkit-mask: url('/dashboard-assets/icons/arrowRight12.svg') center / 12px 12px no-repeat;
+  mask: url('/dashboard-assets/icons/arrowRight12.svg') center / 12px 12px no-repeat;
+  transition: opacity 340ms cubic-bezier(0.25, 0.1, 0.25, 1),
+              background-color 220ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.home-search-shortcut-hint__keys-arrow--shown {
+  opacity: 1;
+}
+
+.home-search-prompt-input-row:has(.home-search-outline-mode-button--left) {
+  --home-search-input-left-padding: calc(16px - var(--home-search-input-left-pinch, 0px));
+  --home-search-input-right-padding: 16px;
+  gap: calc(12px - var(--home-search-input-left-gap-pinch, 0px));
+}
+
+.home-search-prompt-input-row:has(.home-search-outline-mode-button--right) {
+  --home-search-input-right-padding: calc(10px - var(--home-search-outline-right-pinch, 0px));
+}
+
+.home-search-prompt-input-row .home-search-console-toggle {
+  position: absolute;
+  right: var(--home-search-console-right-inset, 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--home-search-console-button-width, 84px);
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.home-search-prompt-input-row .home-search-ask-console-switch {
+  position: absolute;
+  right: var(--home-search-ask-console-switch-inset, 15px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.home-search-ask-console-switch {
+  display: inline-flex;
+  align-items: center;
+  /* The label owns its own trailing margin so it can animate to zero. */
+  gap: 0;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none;
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+}
+
+.home-search-ask-console-switch:disabled {
+  cursor: default;
+  opacity: 0.64;
+}
+
+/* Matches the input placeholder treatment exactly. */
+.home-search-mode-icon {
+  position: relative;
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: var(--prototype-search-icon-opacity, 0.5);
+}
+
+.home-search-mode-icon__layer {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-search-ask-console-switch__label {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  /* Sail Neutral 400, matching the field's hint text. */
+  color: #7D8BA4;
+  white-space: nowrap;
+}
+
+.home-search-ask-console-switch__track {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: none;
+  border-radius: 999px;
+  background-color: #ECF1F6;
+  box-shadow:
+    inset 0 0 0 1px #D4DEE9,
+    0px 1px 1px 0px rgba(33, 37, 44, 0.16);
+  transition:
+    background-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.home-search-ask-console-switch__thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 999px;
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px #D4DEE9;
+  transform-origin: center;
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.home-search-ask-console-switch--on .home-search-ask-console-switch__track {
+  background-color: #533AFD;
+  /* Same shadow structure as the rest state so the two interpolate cleanly. */
+  box-shadow:
+    inset 0 0 0 1px #533AFD,
+    0px 1px 1px 0px rgba(33, 37, 44, 0);
+}
+
+/* Scale rather than resize, so the knob settles inside the track without a layout tween. */
+.home-search-ask-console-switch--on .home-search-ask-console-switch__thumb {
+  transform: translateX(16px) scale(0.8889);
+}
+
+.home-search-ask-console-switch:focus-visible .home-search-ask-console-switch__track {
+  box-shadow: 0px 0px 0px 4px rgba(1, 150, 237, 0.36);
+}
+
+.home-search-prompt-input-row .home-search-console-toggle--morphed {
+  width: var(--home-search-console-button-morphed-width, 100px);
+}
+
+.home-search-prompt-input-row .home-search-console-toggle--default-text-string.home-search-console-toggle--active {
+  width: var(--home-search-console-button-morphed-width, 84px);
+}
+
+.home-search-prompt-input-row .home-search-console-toggle--flip-flop-variant.home-search-console-toggle--active {
+  width: var(--home-search-console-button-morphed-width, 84px);
+}
+
+.home-search-prompt-input-row .home-search-console-toggle--default-cap {
+  right: 0;
+  width: calc(var(--home-search-console-button-width, 84px) + var(--home-search-console-right-inset, 10px));
+}
+
+.home-search-prompt-input-row .home-search-console-toggle--default-cap.home-search-console-toggle--morphed {
+  width: calc(var(--home-search-console-button-cap-morphed-width, 100px) + var(--home-search-console-right-inset, 10px));
+}
+
+.home-search-spotlight-suggestions,
+.home-search-prompt-suggestions {
+  padding: 0 8px 8px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.home-search-spotlight-suggestions--no-header {
+  padding-top: 8px;
+}
+
+.home-search-spotlight-suggestions--compact-footer {
+  padding-bottom: 2px;
+}
+
+/* ── Floating Console — think-grid / think-dot ───────────────────────────── */
+@keyframes thinkPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.6); }
+  50%       { opacity: 1; transform: scale(1); }
+}
+.think-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 2.5px);
+  gap: 2.75px;
+  flex-shrink: 0;
+  width: 13px;
+  justify-content: center;
+}
+.think-dot {
+  width: 2.5px;
+  height: 2.5px;
+  border-radius: 50%;
+  background: #706AE7;
+  animation: thinkPulse 1.6s ease-in-out infinite;
+}
+.think-dot:nth-child(1) { animation-delay: 0.0s; animation-duration: 1.8s; }
+.think-dot:nth-child(2) { animation-delay: 0.5s; animation-duration: 1.5s; }
+.think-dot:nth-child(3) { animation-delay: 0.2s; animation-duration: 2.0s; }
+.think-dot:nth-child(4) { animation-delay: 0.7s; animation-duration: 1.4s; }
+.think-dot:nth-child(5) { animation-delay: 0.1s; animation-duration: 1.9s; }
+.think-dot:nth-child(6) { animation-delay: 0.9s; animation-duration: 1.6s; }
+.think-dot:nth-child(7) { animation-delay: 0.4s; animation-duration: 2.1s; }
+.think-dot:nth-child(8) { animation-delay: 1.1s; animation-duration: 1.3s; }
+.think-dot:nth-child(9) { animation-delay: 0.6s; animation-duration: 1.7s; }
+.floating-chat .think-dot { background: #5C55E0 !important; }
+
+/* Edge hover: on hover hide the tick, show the chevron + tooltip, shift divider line left. */
+.dash-sidebar-edge:hover .dash-sidebar-tick { opacity: 0 !important; }
+.dash-sidebar-edge:hover .dash-sidebar-collapse-ui { opacity: 1 !important; }
+.dash-sidebar-edge--expanded:hover .dash-sidebar-hover-line,
+.dash-sidebar-edge--collapsed:hover .dash-sidebar-hover-line {
+  /* Neutral/50 — same border default the nav uses, so hover doesn't darken it. */
+  background: #ECF1F6 !important;
+  left: -4px !important;
+}
+.dashboard-root:has(.dash-sidebar-edge:hover) .dash-sidebar-nav { border-color: transparent !important; border-right-color: transparent !important; border-right-style: none !important; }
+.dashboard-root:has(.dash-sidebar-edge:hover) .dash-sidebar-nav::after { background: transparent !important; }
+
+/* ── Page entrance animations ──────────────────────────────────────────── */
+@keyframes dash-nav-slide-in {
+  from { transform: translate(var(--prototype-sidebar-enter-x, -12px), var(--prototype-sidebar-enter-y, 0px)); }
+  to   { transform: translate(0, 0); }
+}
+@keyframes dash-nav-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes dash-content-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes dash-content-slide-in {
+  from { transform: translate(var(--prototype-content-enter-x, 0px), var(--prototype-content-enter-y, 12px)); }
+  to   { transform: translate(0, 0); }
+}
+.dash-sidebar-nav > * {
+  animation:
+    dash-nav-slide-in var(--prototype-sidebar-transition-ms, 350ms) cubic-bezier(0.25, 0.1, 0.25, 1) both,
+    dash-nav-fade-in var(--prototype-sidebar-fade-ms, 350ms) cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+/* Account switcher trigger: logo sits at 18px from the edge, like the nav icons. */
+.dash-account-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 100ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dash-account-trigger:hover,
+.dash-account-trigger--open { background: #F5F6F8; }
+.dash-account-trigger__chevron {
+  flex-shrink: 0;
+  color: #596171;
+  transition: transform 150ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+.dash-account-trigger--open .dash-account-trigger__chevron { transform: rotate(180deg); }
+
+/* The account header lifts off the nav once the nav scrolls under it. */
+.dash-sidebar-nav > .dash-sidebar-static-section.sticky {
+  transition: box-shadow 150ms cubic-bezier(0.2, 0, 0.1, 1);
+  /* Only the bottom edge casts; the sides would spill onto the page. */
+  clip-path: inset(0 0 -24px 0);
+}
+.dash-sidebar-nav > .dash-sidebar-static-section.sticky:has(~ .dui-scroll-area[data-scrolled]) {
+  box-shadow: 0 6px 16px rgba(48, 49, 61, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+[data-prototype-sidebar-static-sections="true"] .dash-sidebar-nav > .dash-sidebar-static-section {
+  animation: dash-nav-fade-in var(--prototype-sidebar-fade-ms, 350ms) cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+.dash-content-entrance {
+  animation:
+    dash-content-slide-in var(--prototype-content-transition-ms, 400ms) cubic-bezier(0.25, 0.1, 0.25, 1) var(--prototype-content-delay-ms, 120ms) backwards,
+    dash-content-fade-in var(--prototype-content-fade-ms, 400ms) cubic-bezier(0.25, 0.1, 0.25, 1) var(--prototype-content-delay-ms, 120ms) backwards;
+}
+
+/* Dashboard owns its document; these styles never load in Console. */
+html { font-size: 87.5%; }
+html, body, #dashboard-root { width: 100%; height: 100%; margin: 0; }
+body { overflow: hidden; background: #fff; }

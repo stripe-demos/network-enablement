@@ -1,0 +1,831 @@
+/* ── Wireframe overrides ───────────────────────────────────────────────────
+   Active while <html data-wireframe="on">. Palette variables (--wf-bg,
+   --wf-block, --wf-subtle, --wf-border, --wf-text) are set by
+   wireframeEngine.js. */
+
+html[data-wireframe="on"],
+html[data-wireframe="on"] body {
+  background: var(--wf-bg) !important;
+}
+
+/* Everything below stops at revealed or previewed content (Custom mode), so
+   that content renders at full fidelity. */
+@scope (html[data-wireframe="on"]) to ([data-wf-reveal], [data-wf-preview]) {
+  /* Only elements that directly hold blocked-out text (`data-wf-text`) go
+     transparent, so kept descendants elsewhere don't inherit it. */
+  [data-wf-text],
+  :is(input, textarea, select):not([data-wireframe-ui] *, [data-wf-keep], [data-wf-keep] *),
+  body :not([data-wireframe-ui], [data-wireframe-ui] *, [data-wf-keep], [data-wf-keep] *)::before,
+  body :not([data-wireframe-ui], [data-wireframe-ui] *, [data-wf-keep], [data-wf-keep] *)::after {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+  }
+
+  /* Gray fades (`data-wf-gradient="fade"`) keep hiding what scrolls beneath them. */
+  [data-wf-gradient="strip"],
+  body :not([data-wireframe-ui], [data-wireframe-ui] *)::before,
+  body :not([data-wireframe-ui], [data-wireframe-ui] *)::after {
+    background-image: none !important;
+  }
+
+  body :not([data-wireframe-ui], [data-wireframe-ui] *),
+  body :not([data-wireframe-ui], [data-wireframe-ui] *)::before,
+  body :not([data-wireframe-ui], [data-wireframe-ui] *)::after {
+    border-color: var(--wf-border) !important;
+    outline-color: var(--wf-border) !important;
+    caret-color: var(--wf-block) !important;
+  }
+
+  [data-wf-contrast] {
+    color: var(--wf-text) !important;
+    -webkit-text-fill-color: var(--wf-text) !important;
+  }
+
+  body :not([data-wf-keep])::placeholder {
+    color: transparent !important;
+  }
+
+  [data-wf="plain"] { background-color: transparent !important; }
+  [data-wf="surface"] { background-color: var(--wf-bg) !important; }
+  [data-wf="control"] { background-color: var(--wf-subtle) !important; }
+  [data-wf-before="plain"]::before,
+  [data-wf-after="plain"]::after { background-color: transparent !important; }
+  [data-wf-before="surface"]::before,
+  [data-wf-after="surface"]::after { background-color: var(--wf-bg) !important; }
+  [data-wf-before="block"]::before,
+  [data-wf-after="block"]::after { background-color: var(--wf-block) !important; }
+  [data-wf="icon"],
+  [data-wf="media"] { opacity: 0 !important; }
+
+  [data-wf~="shape"] { filter: none !important; }
+  [data-wf~="paint-fill"] { fill: var(--wf-block) !important; }
+  [data-wf~="paint-stroke"] { stroke: var(--wf-border) !important; }
+  [data-wf="chart"] :is(text, tspan):not([data-wf-keep] *) { fill: transparent !important; }
+
+  /* Every line is the same 1px weight (see `borderFlagsOf` in the engine). */
+  body :not([data-wireframe-ui], [data-wireframe-ui] *) { outline-width: 1px !important; }
+  [data-wf-border~="t"] { border-top-width: 1px !important; }
+  [data-wf-border~="r"] { border-right-width: 1px !important; }
+  [data-wf-border~="b"] { border-bottom-width: 1px !important; }
+  [data-wf-border~="l"] { border-left-width: 1px !important; }
+  [data-wf-border~="ring"] { box-shadow: 0 0 0 1px var(--wf-border) !important; }
+  [data-wf-border~="ring-inset"] { box-shadow: inset 0 0 0 1px var(--wf-border) !important; }
+  [data-wf-border~="no-ring"] { box-shadow: none !important; }
+
+  /* Frames keep cards from floating once backgrounds flatten: `card` draws a
+     border on the element's edge; `tray` keeps the grey tray behind card grids. */
+  [data-wireframe-frame="card"] {
+    box-shadow: inset 0 0 0 1px var(--wf-border) !important;
+    border-radius: 4px !important;
+  }
+
+  [data-wireframe-frame="tray"] {
+    background-color: var(--wf-subtle) !important;
+  }
+
+  [data-wireframe-frame="tray"] [data-wireframe-frame="card"] {
+    box-shadow: none !important;
+  }
+
+  /* Dark areas (e.g. Dashboard's Developers bar) keep their dark colors. */
+  [data-wireframe-tone="dark"],
+  [data-wireframe-tone="dark"] :is([data-wf="surface"], [data-wf="control"]),
+  [data-wireframe-tone-after="dark"]::after {
+    background-color: var(--wf-dark-bg) !important;
+  }
+
+  body [data-wireframe-tone="dark"],
+  body [data-wireframe-tone="dark"] * {
+    border-color: var(--wf-dark-border) !important;
+  }
+}
+
+/* ── Custom mode ───────────────────────────────────────────────────────── */
+
+/* Purple pen nib (Lucide "pen-tool") filled with black at 80% inside (white on a
+   light surface), with a soft glow. The image has room around it for the glow, and the hotspot is the nib's tip at the top left. */
+html[data-wf-custom="on"] {
+  --wf-pen-cursor-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cfilter id='g' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeDropShadow dx='0' dy='0' stdDeviation='1.5' flood-color='%23675DFF' flood-opacity='0.7'/%3E%3C/filter%3E%3Cg filter='url(%23g)' transform='translate(4 4)' fill='none' stroke='%23675DFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath fill='%23000' fill-opacity='0.8' d='M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z'/%3E%3Cpath fill='%23000' fill-opacity='0.8' d='m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18'/%3E%3Cpath d='m2.3 2.3 7.286 7.286'/%3E%3Ccircle cx='11' cy='11' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  --wf-pen-cursor-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cfilter id='g' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeDropShadow dx='0' dy='0' stdDeviation='1.5' flood-color='%23675DFF' flood-opacity='0.7'/%3E%3C/filter%3E%3Cg filter='url(%23g)' transform='translate(4 4)' fill='none' stroke='%23675DFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath fill='%23fff' d='M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z'/%3E%3Cpath fill='%23fff' d='m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18'/%3E%3Cpath d='m2.3 2.3 7.286 7.286'/%3E%3Ccircle cx='11' cy='11' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  --wf-pen-cursor: var(--wf-pen-cursor-dark);
+}
+
+/* On a light surface the nib is filled white instead of black. */
+html[data-wf-custom="on"][data-wf-surface="light"] {
+  --wf-pen-cursor: var(--wf-pen-cursor-light);
+}
+
+html[data-wf-custom="on"] body :not([data-wireframe-ui], [data-wireframe-ui] *) {
+  cursor: var(--wf-pen-cursor) 6 6, crosshair !important;
+}
+
+/* Dark areas of a light surface (e.g. Dashboard's Developers bar) keep the dark fill. */
+html[data-wf-custom="on"][data-wf-surface="light"] body [data-wireframe-tone="dark"],
+html[data-wf-custom="on"][data-wf-surface="light"] body [data-wireframe-tone="dark"] * {
+  cursor: var(--wf-pen-cursor-dark) 6 6, crosshair !important;
+}
+
+[data-wf-preview] {
+  animation: wf-dissolve 180ms ease-out;
+}
+
+@keyframes wf-dissolve {
+  from { opacity: 0; }
+}
+
+/* Drag selection box. Sits above the wireframe canvas and the grayscale overlay
+   (it is appended to <html> after the overlay), below the controls. */
+.ps-marquee {
+  position: fixed;
+  z-index: 2147483000;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 1px solid #675DFF;
+  border-radius: 2px;
+  background: rgb(103 93 255 / 0.1);
+}
+
+html[data-wf-custom="on"]:has(.ps-marquee) body * {
+  user-select: none !important;
+}
+
+.wf-canvas,
+.wf-fx {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2147483000;
+}
+
+/* ── Grayscale ─────────────────────────────────────────────────────────────
+   A backdrop filter leaves layout and fixed positioning untouched, and the
+   settings control above it keeps its color. */
+
+.ps-grayscale {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2147483000;
+  -webkit-backdrop-filter: grayscale(1);
+  backdrop-filter: grayscale(1);
+}
+
+/* ── Leaving wireframe ─────────────────────────────────────────────────────
+   The page is snapshotted as a wireframe and wiped away by a ring contracting
+   into the pen button, over the real page (see `playLeave`). The snapshot is
+   feathered at its edge, in step with the dissolve's bands. The bar, the pen
+   button and the outline canvas get layers of their own so they stay live. */
+
+@property --ps-leave-r {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+html[data-ps-leaving] .ps-trigger { view-transition-name: ps-pen; }
+html[data-ps-leaving] .wf-fx { view-transition-name: ps-fx; }
+
+html[data-ps-leaving]::view-transition-group(*) {
+  animation: none;
+}
+
+html[data-ps-leaving]::view-transition-old(*),
+html[data-ps-leaving]::view-transition-new(*) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The ring contracting into the pen button. A CSS animation (rather than a
+   scripted one) is what keeps the transition alive until it has played out.
+   Ease-in on the progress is the dissolve's ease-out run backward. */
+@keyframes ps-leave-ring {
+  from { --ps-leave-r: var(--ps-leave-start); }
+  to { --ps-leave-r: 0px; }
+}
+
+html[data-ps-leaving]::view-transition-old(ps-pen),
+html[data-ps-leaving]::view-transition-old(ps-fx) {
+  display: none;
+}
+
+html[data-ps-leaving]::view-transition-old(root) {
+  z-index: 1;
+  --ps-leave-r: var(--ps-leave-start);
+  animation: ps-leave-ring 720ms cubic-bezier(0.32, 0, 0.67, 0) both;
+  -webkit-mask-image: radial-gradient(
+    circle at var(--ps-leave-x) var(--ps-leave-y),
+    #000 calc(var(--ps-leave-r) - 240px),
+    rgb(0 0 0 / 0.85) calc(var(--ps-leave-r) - 150px),
+    rgb(0 0 0 / 0.45) calc(var(--ps-leave-r) - 70px),
+    transparent var(--ps-leave-r)
+  );
+  mask-image: radial-gradient(
+    circle at var(--ps-leave-x) var(--ps-leave-y),
+    #000 calc(var(--ps-leave-r) - 240px),
+    rgb(0 0 0 / 0.85) calc(var(--ps-leave-r) - 150px),
+    rgb(0 0 0 / 0.45) calc(var(--ps-leave-r) - 70px),
+    transparent var(--ps-leave-r)
+  );
+}
+
+/* ── Room for the bar ──────────────────────────────────────────────────────
+   <body> gives up the bar's height and becomes the containing block for fixed
+   descendants, so the page's own fixed bars, dialogs and menus stay inside the
+   page area instead of sitting under the bar. Elements the page sizes to the
+   whole viewport are shrunk through the `fitSelectors` prop. */
+
+/* The reserved height is a registered length so it can ease in and out. */
+@property --ps-bar-h {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+html[data-ps-bar] {
+  transition: --ps-bar-h 260ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+/* Leaving is quicker than arriving, in step with `ps-bar-out`. */
+html[data-ps-bar="closing"] {
+  transition-duration: 190ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+html[data-ps-bar] body {
+  height: calc(100vh - var(--ps-bar-h)) !important;
+  min-height: 0 !important;
+  overflow: hidden;
+  contain: layout;
+}
+
+/* ── Floating settings control ─────────────────────────────────────────── */
+
+.ps-ui {
+  --ps-bg: #FFFFFF;
+  --ps-border: #E3E8EE;
+  --ps-text: #353A44;
+  --ps-muted: #6A7383;
+  --ps-hover: #F6F8FA;
+  --ps-track: #C1C9D2;
+  --ps-accent: #675DFF;
+  --ps-shadow: 0 15px 35px rgba(48, 49, 61, 0.08), 0 5px 15px rgba(0, 0, 0, 0.12);
+
+  position: fixed;
+  right: 16px;
+  z-index: 2147483001;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ps-text);
+}
+
+.ps-ui[data-theme="dark"] {
+  --ps-bg: #171719;
+  --ps-border: #2C2C30;
+  --ps-text: #D3D3D3;
+  --ps-muted: #A0A0AA;
+  --ps-hover: #1E1E21;
+  --ps-track: #565656;
+  --ps-accent: #706AE7;
+  --ps-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Docked: the control spans the bottom edge instead of floating at the corner. */
+.ps-ui[data-docked="true"] {
+  right: 0;
+  left: 0;
+}
+
+.ps-trigger {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--ps-border);
+  border-radius: 999px;
+  background: var(--ps-bg);
+  color: var(--ps-muted);
+  box-shadow: var(--ps-shadow);
+  cursor: pointer;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+
+.ps-trigger:hover {
+  background: var(--ps-hover);
+  color: var(--ps-text);
+}
+
+/* While wireframe is off the pen idles quietly: a faint purple spark orbits the
+   button's edge, and every few seconds a purple shimmer passes through the
+   icon. Both are transforms and a tiny gradient, so they cost almost nothing. */
+.ps-trigger {
+  /* Fixed on its own so it can keep shrinking away after the bar docks. */
+  position: fixed;
+  right: 16px;
+  bottom: var(--ps-trigger-bottom, 16px);
+  z-index: 0;
+}
+
+/* Playful, with a little give: it swells slightly before shrinking away, and
+   overshoots slightly when it grows back. */
+.ps-trigger[data-state="out"] {
+  pointer-events: none;
+  animation: ps-pen-out 220ms cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+}
+
+.ps-trigger[data-state="in"] {
+  animation: ps-pen-in 340ms cubic-bezier(0.34, 1.56, 0.64, 1) 70ms both;
+}
+
+@keyframes ps-pen-out {
+  to { transform: scale(0); opacity: 0; }
+}
+
+@keyframes ps-pen-in {
+  from { transform: scale(0); opacity: 0; }
+}
+
+.ps-trigger::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: 999px;
+  background: conic-gradient(
+    transparent 0 292deg,
+    rgb(122 111 255 / 0) 292deg,
+    rgb(122 111 255 / 0.45) 340deg,
+    rgb(178 171 255 / 0.9) 353deg,
+    transparent 360deg
+  );
+  /* Keep only the ring: the padding box minus the content box. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  filter: drop-shadow(0 0 2px rgb(122 111 255 / 0.8));
+  opacity: 0.6;
+  pointer-events: none;
+  animation: ps-orbit 3.6s linear infinite;
+  transition: opacity 160ms ease;
+}
+
+.ps-trigger:hover::before,
+.ps-trigger:focus-visible::before {
+  opacity: 1;
+}
+
+/* The pen is the icon's shape, filled with the button's own color and a purple
+   band that sweeps across it. The band is a child moved with `transform`, which
+   stays on the compositor; animating `background-position` instead repaints the
+   button (and recalculates styles) on every frame, even while it rests. */
+.ps-pen {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  background: currentColor;
+  -webkit-mask: var(--ps-pen-mask) center / contain no-repeat;
+  mask: var(--ps-pen-mask) center / contain no-repeat;
+}
+
+.ps-pen::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  /* Four pen-widths wide, with the band in the middle. */
+  width: 400%;
+  background: linear-gradient(105deg, transparent 42%, color-mix(in srgb, var(--ps-accent) 85%, currentColor) 50%, transparent 58%);
+  transform: translateX(-75%);
+  animation: ps-pen-shimmer 5s ease-in-out infinite;
+}
+
+.ps-ui {
+  --ps-pen-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z'/%3E%3Cpath d='m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18'/%3E%3Cpath d='m2.3 2.3 7.286 7.286'/%3E%3Ccircle cx='11' cy='11' r='2'/%3E%3C/svg%3E");
+}
+
+@keyframes ps-orbit {
+  to { transform: rotate(360deg); }
+}
+
+/* Rests most of the cycle, then the band crosses left to right. */
+@keyframes ps-pen-shimmer {
+  0%, 72% { transform: translateX(-75%); }
+  92%, 100% { transform: translateX(0); }
+}
+
+.ps-trigger:focus-visible,
+.ps-switch:focus-visible {
+  outline: 2px solid var(--ps-accent);
+  outline-offset: 2px;
+}
+
+@keyframes ps-popover-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+}
+
+.ps-switch {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ps-track);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.ps-switch[aria-checked="true"] {
+  background: var(--ps-accent);
+}
+
+.ps-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 160ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.ps-switch[aria-checked="true"] .ps-switch-thumb {
+  transform: translateX(12px);
+}
+
+/* ── Docked bar ──────────────────────────────────────────────────────────
+   With wireframe on, the control becomes a full-width bar at the bottom edge.
+   The page gives that strip up (see the html[data-ps-bar] rules above) so the
+   bar never covers anything. It is flat: one solid color, a hairline on top,
+   and translucent keys, the same in both themes. */
+/* Registered so the base color, and everything mixed from it, can fade between modes. */
+@property --ps-toast-base {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4F46E5;
+}
+
+.ps-bar {
+  /* Purple while editing (picking), dark slate once done. */
+  --ps-toast-base: #4F46E5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px 0 16px;
+  border-top: 1px solid color-mix(in srgb, var(--ps-toast-base) 80%, #FFFFFF);
+  background: var(--ps-toast-base);
+  color: #FFFFFF;
+  font-weight: 500;
+  white-space: nowrap;
+  animation: ps-bar-in 260ms cubic-bezier(0.2, 0, 0.1, 1);
+  transition: --ps-toast-base 200ms ease;
+  /* Above the pen button while it shrinks away or grows back. */
+  position: relative;
+  z-index: 1;
+}
+
+.ps-bar[data-mode="view"] {
+  --ps-toast-base: #2F3745;
+}
+
+.ps-bar[data-closing="true"] {
+  pointer-events: none;
+  animation: ps-bar-out 190ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.ps-bar-spacer {
+  flex: 1;
+}
+
+/* The Wireframe switch lives on the bar while wireframe is on. */
+.ps-bar-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ps-bar-toggle svg {
+  flex: none;
+}
+
+.ps-bar .ps-switch[aria-checked="true"] {
+  background: #8F86FF;
+}
+
+.ps-bar .ps-switch:focus-visible {
+  outline-color: #FFFFFF;
+}
+
+.ps-toast-divider {
+  align-self: center;
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.ps-toast-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* The flow name as a menu. It reads as the bar's label until hovered, and the
+   list opens upward as a regular panel. */
+.ps-flow-menu {
+  position: relative;
+}
+
+.ps-flow-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  margin: 0 -6px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.ps-flow-trigger:hover,
+.ps-flow-trigger[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.ps-flow-label {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-flow-trigger svg {
+  flex: none;
+  opacity: 0.8;
+  transition: transform 160ms ease;
+}
+
+.ps-flow-trigger[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.ps-flow-list {
+  position: absolute;
+  bottom: calc(100% + 18px);
+  left: -6px;
+  display: grid;
+  min-width: 180px;
+  max-width: 280px;
+  max-height: 240px;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid var(--ps-border);
+  border-radius: 8px;
+  background: var(--ps-bg);
+  color: var(--ps-text);
+  font-weight: 400;
+  text-shadow: none;
+  white-space: normal;
+  box-shadow: var(--ps-shadow);
+  transform-origin: bottom left;
+  animation: ps-popover-in 160ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.ps-flow-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ps-flow-item:hover,
+.ps-flow-item:focus-visible {
+  background: var(--ps-hover);
+  outline: none;
+}
+
+.ps-flow-item[aria-checked="true"] {
+  font-weight: 600;
+}
+
+.ps-flow-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  color: var(--ps-accent);
+}
+
+.ps-flow-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-flow-trigger:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 1px;
+}
+
+.ps-toast-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+.ps-toast-action svg {
+  flex: none;
+}
+
+.ps-toast-action:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.ps-toast-action:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ps-toast-action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ps-toast-action:focus-visible,
+.ps-button:focus-visible,
+.ps-input:focus-visible {
+  outline: 2px solid var(--ps-accent);
+  outline-offset: 2px;
+}
+
+.ps-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.32);
+  animation: ps-fade-in 140ms ease-out;
+}
+
+.ps-dialog {
+  display: grid;
+  gap: 8px;
+  width: 340px;
+  padding: 16px;
+  border: 1px solid var(--ps-border);
+  border-radius: 10px;
+  background: var(--ps-bg);
+  box-shadow: var(--ps-shadow);
+  animation: ps-popover-in 160ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.ps-dialog-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.ps-dialog-body {
+  margin: 0;
+  color: var(--ps-muted);
+  line-height: 18px;
+}
+
+.ps-input {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ps-border);
+  border-radius: 6px;
+  background: var(--ps-bg);
+  color: inherit;
+  font: inherit;
+}
+
+.ps-input::placeholder {
+  color: var(--ps-muted);
+}
+
+.ps-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ps-button {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--ps-border);
+  border-radius: 6px;
+  background: var(--ps-bg);
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ps-button:hover:not(:disabled) {
+  background: var(--ps-hover);
+}
+
+.ps-button--start {
+  margin-right: auto;
+}
+
+.ps-button--primary {
+  border-color: var(--ps-accent);
+  background: var(--ps-accent);
+  color: #FFFFFF;
+}
+
+.ps-button--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ps-accent) 88%, #000000);
+}
+
+.ps-button--danger {
+  border-color: #DF1B41;
+  background: #DF1B41;
+  color: #FFFFFF;
+}
+
+.ps-button--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, #DF1B41 88%, #000000);
+}
+
+.ps-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@keyframes ps-fade-in {
+  from { opacity: 0; }
+}
+
+/* The bar slides up from the bottom edge and back down. */
+@keyframes ps-bar-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@keyframes ps-bar-out {
+  from { transform: none; }
+  to { transform: translateY(100%); }
+}
+
+
+.ps-field-label {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ps-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-bar {
+    animation: none;
+  }
+
+  html[data-ps-bar] {
+    transition: none;
+  }
+
+  .ps-trigger::before {
+    animation: none;
+    opacity: 0;
+  }
+
+  .ps-pen::after,
+  .ps-trigger[data-state] {
+    animation: none;
+  }
+}

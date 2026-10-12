@@ -1,0 +1,62 @@
+/* Shared disclosure treatment from designer/perceived-loadout. */
+.disclosure-chevron { display: inline-flex; align-items: center; flex-shrink: 0; margin-left: 3px; color: inherit; opacity: .5; transition: opacity 150ms ease; }
+.disclosure-chevron > svg { transform: rotate(-90deg); transform-origin: center; transition: transform 220ms cubic-bezier(.4, 0, .2, 1); }
+.disclosure-chevron[data-expanded="true"] > svg { transform: rotate(0); }
+.disclosure-trigger { transition: color 150ms ease; }
+.disclosure-trigger:is(:hover, :focus-visible) { color: var(--color-text-secondary) !important; }
+.disclosure-trigger:is(:hover, :focus-visible) > .disclosure-chevron { opacity: 1; }
+.disclosure-trigger:focus-visible { outline: 2px solid var(--color-border-hover); outline-offset: 3px; border-radius: 3px; }
+.disclosure-content { display: grid; grid-template-rows: minmax(0, 0fr); transition: grid-template-rows 220ms cubic-bezier(.4, 0, .2, 1); }
+.disclosure-content[data-expanded="true"] { grid-template-rows: minmax(0, 1fr); }
+.disclosure-content-inner { min-height: 0; overflow: hidden; }
+
+.task-module.future-task { margin: 0 -2px; padding: 0; border: 0; border-radius: 0; background: transparent; overflow: hidden; }
+.future-task > .task-header { appearance: none; width: calc(100% - 4px); max-width: 100%; display: flex; align-items: center; gap: 8px; margin: 0 2px; padding: 5px 0; border: 0; background: transparent; color: var(--color-text-tertiary); font: inherit; font-size: 13px; line-height: 1.6; text-align: left; }
+.future-task .task-live-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.future-task > .task-header > .disclosure-chevron { margin-left: -5px; }
+.future-task[data-task-group] > .task-header { gap: 6px; }
+.future-task[data-task-group] > .task-header > .disclosure-chevron { margin-left: -3px; }
+/* Preset replies have their own 5px top inset. Compensate once so the visible
+   gap below a task title equals the gap above it, without a toggle-time jump. */
+.task-module.future-task[data-preset-task] { margin-bottom: -5px; }
+.future-task.expanded > .task-header > .disclosure-chevron { opacity: 1; }
+.future-task-indicator { width: 8px; margin-right: 4px; flex-shrink: 0; }
+.future-task-indicator > span { display: block; }
+.task-timer { color: inherit; opacity: .5; font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
+.future-task > .task-detail { grid-template-rows: minmax(0, 0fr); transition: grid-template-rows 220ms cubic-bezier(.4, 0, .2, 1); }
+.future-task.expanded > .task-detail { grid-template-rows: minmax(0, 1fr); }
+/* Match the source's reserved 18px indicator gutter and 2px task border.
+   Progress and tools share one 8px rhythm, including consecutive tools. */
+.future-task > .task-detail > .task-detail-inner { border: 0; margin: 0; padding: 6px 0 0; }
+.task-module.future-task:not([data-task-group]) { border: 2px solid transparent; }
+.future-task:not([data-task-group]) > .task-header { width: 100%; margin: 0; padding: 0 0 0 18px; }
+.future-task:not([data-task-group]) > .task-detail > .task-detail-inner { margin-left: 18px; padding: 8px 0; }
+/* Tighten the response gap progressively during the fold, not in a final jump. */
+.future-task[data-task-group][data-group-phase]:not(.expanded):has(+ .assistant-message) { margin-bottom: calc(-8px * (1 - var(--checkpoint-height-factor, 1))); }
+.future-task[data-group-phase="folding"] > .task-detail { grid-template-rows: minmax(0, var(--checkpoint-fold-row)); opacity: var(--checkpoint-history-opacity); transition: none; }
+.checkpoint-group-history { display: flex; flex-direction: column; gap: 8px; padding: 0 2px; }
+.future-task[data-group-phase="settled"] > .task-detail > .task-detail-inner > .checkpoint-group-history { gap: 6px; }
+.checkpoint-step { display: contents; }
+.checkpoint-message { padding: 5px 0 5px 18px; font-size: 13px; line-height: 1.6; }
+/* Source comparisonChunkEnter: each new message/tool settles upward 5px.
+   Only new arrivals animate; reopening or revisiting history does not replay it. */
+@keyframes futureTaskChunkEnter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.checkpoint-step > [data-enter="true"],
+.assistant-message[data-future-response][data-enter="true"] { animation: futureTaskChunkEnter 240ms cubic-bezier(.2, 0, 0, 1); }
+.future-task:not(.expanded) > .task-header:is(:hover, :focus-visible) { --task-live-text-base: var(--color-text-secondary); }
+@keyframes taskLiveShimmer { from { background-position: 100% center; } to { background-position: 0% center; } }
+.task-live-text.text-shimmer { --shimmer-highlight: #fff; font-weight: 400; -webkit-font-smoothing: antialiased; background-image: linear-gradient(90deg, transparent calc(50% - var(--spread)), var(--shimmer-highlight) 50%, transparent calc(50% + var(--spread))), linear-gradient(var(--task-live-text-base, var(--color-text-tertiary)), var(--task-live-text-base, var(--color-text-tertiary))); background-size: 250% 100%, auto; background-repeat: no-repeat; background-position: 100% center; animation: taskLiveShimmer 1s linear infinite; }
+/* Finishing changes paint only. Retaining clipped text avoids a rasterization
+   switch between the active gradient and a newly mounted plain-text span. */
+.task-live-text.text-shimmer[data-active="false"] { animation: none; background-image: linear-gradient(var(--task-live-text-base, var(--color-text-tertiary)), var(--task-live-text-base, var(--color-text-tertiary))); }
+[data-theme="light"] .task-live-text.text-shimmer { --shimmer-highlight: #000; }
+[data-conversation-scroll] { overflow-anchor: none; }
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-chevron > svg, .disclosure-content, .future-task > .task-detail { transition: none; }
+  .checkpoint-step > [data-enter], .assistant-message[data-future-response] { animation: none !important; }
+  .task-live-text { animation: none !important; }
+  .future-task[data-group-phase="folding"] > .task-detail { grid-template-rows: minmax(0, 0fr); opacity: 0; }
+}

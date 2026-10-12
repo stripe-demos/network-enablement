@@ -1,0 +1,68 @@
+/* FocusTrace: Console's orbiting focus border (FocusTrace.jsx). */
+.dui-focus-trace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 1;
+  transition: opacity 280ms ease-out;
+  animation: dui-focus-trace-in 280ms ease-out;
+}
+
+/* Fixed over its target from document.body: above the page content, below
+   the docked Console panel and the portalled menus. */
+.dui-focus-trace--follow {
+  position: fixed;
+  inset: auto;
+  z-index: 1;
+}
+
+.dui-focus-trace--out {
+  opacity: 0;
+}
+
+@keyframes dui-focus-trace-in {
+  from { opacity: 0; }
+}
+
+/* Each slice's dash starts --trace-start along the outline from the band's
+   peak; the offset carries the peak once round per loop. */
+.dui-focus-trace__band path {
+  animation: dui-focus-trace-orbit var(--trace-duration, 5500ms) linear var(--trace-loops, infinite) both;
+}
+
+.dui-focus-trace--offscreen .dui-focus-trace__band path {
+  animation-play-state: paused;
+}
+
+/* A limited run fades the band in as it sets off and out as it arrives back,
+   over the whole run (one lap's duration × laps). */
+.dui-focus-trace__band--once {
+  animation: dui-focus-trace-band-fade calc(var(--trace-duration, 5500ms) * var(--trace-loops, 1)) linear both;
+}
+
+@keyframes dui-focus-trace-band-fade {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes dui-focus-trace-orbit {
+  from { stroke-dashoffset: calc(-1 * var(--trace-start)); }
+  to { stroke-dashoffset: calc(-1 * var(--trace-start) - var(--trace-length)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dui-focus-trace__band path {
+    animation-play-state: paused;
+  }
+
+  .dui-focus-trace__band--once {
+    animation: none;
+    opacity: 0;
+  }
+}

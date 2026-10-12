@@ -1,0 +1,19 @@
+.dashboard-thinking-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.dashboard-thinking-icon[data-thinking] circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dashboard-thinking-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes dashboard-thinking-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.6); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-thinking-icon[data-thinking] circle { animation: none; }
+}
