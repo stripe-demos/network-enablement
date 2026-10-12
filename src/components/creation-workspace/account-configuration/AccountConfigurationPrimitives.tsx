@@ -10,9 +10,83 @@ import CountryTag from "@/send-flow/prototypes/prototype2/ui/CountryTag"
 
 import { type NetworkAccount } from "./model"
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function useCardCreateTypeScale() {
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
+  const matchCard = productFormStyle === "sail"
+  return {
+    matchCard,
+    tokens,
+    sectionTitle: matchCard
+      ? "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
+      : cn(tokens.sectionTitle, "font-[400]"),
+    fieldLabel: matchCard
+      ? "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
+      : cn(tokens.sectionTitle, "font-[400]"),
+    helper: matchCard ? tokens.helperClass : "text-[11px] leading-[16px] text-[#6C7688]",
+    rowTitle: matchCard
+      ? "text-[14px] font-[500] leading-[20px] tracking-[-0.08px]"
+      : "text-[12px] font-[600] leading-[16px]",
+    rowDetail: matchCard ? tokens.helperClass : "text-[11px] leading-[16px] text-[#6C7688]",
+    link: matchCard
+      ? "text-[13px] font-[600] leading-[18px] text-[#533AFD] hover:text-[#4730E0]"
+      : "text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]",
+    edit: matchCard
+      ? "shrink-0 rounded-[5px] p-[4px] text-[13px] font-[500] leading-[18px] text-[#533AFD] outline-none transition-colors hover:bg-[#F0EDFF]"
+      : "shrink-0 rounded-[6px] p-[4px] text-[11px] font-[600] leading-[16px] text-[#533AFD] outline-none transition-colors hover:bg-[#F4F4FE]",
+    stack: matchCard ? "flex flex-col gap-[24px] pb-[16px]" : "flex flex-col gap-[18px] pb-[64px]",
+    section: matchCard ? "flex flex-col gap-[16px]" : "flex flex-col gap-[12px]",
+    headingHelper: matchCard ? "mt-[6px]" : "mt-[3px]",
+    cardStack: matchCard ? "flex flex-col gap-[8px]" : "flex flex-col gap-[8px]",
+    rowPad: matchCard ? "min-h-[60px] px-[16px] py-[12px]" : "min-h-[48px] px-[12px] py-[10px]",
+    reviewPad: matchCard ? "min-h-[60px] px-[16px] py-[12px]" : "min-h-[58px] p-[12px]",
+    reviewBody: matchCard ? "p-[16px]" : "p-[12px]",
+    previewName: matchCard
+      ? "text-[16px] font-[600] leading-[24px] tracking-[-0.31px] text-[#1A2C44]"
+      : "text-[16px] font-[650] leading-[22px] tracking-[-0.18px] text-[#1A2C44]",
+    previewMeta: matchCard
+      ? "text-[13px] font-[400] leading-[18px] tracking-[-0.08px]"
+      : "text-[12px] leading-[17px]",
+    previewSection: matchCard
+      ? "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
+      : "text-[13px] font-[600] leading-[22px] text-[#1A2C44]",
+    previewEmpty: matchCard
+      ? "text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#596171]"
+      : "text-[12px] leading-[17px] text-[#818DA0]",
+    previewConfig: matchCard
+      ? "text-[14px] font-[500] leading-[20px] tracking-[-0.08px] text-[#2C219E]"
+      : "text-[12px] font-[600] leading-[16px] text-[#2C219E]",
+    previewCapability: matchCard
+      ? "text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#3C4F69]"
+      : "text-[12px] leading-[18px] text-[#3C4F69]",
+    previewToggle: matchCard
+      ? "text-[13px] font-[500] leading-[18px] tracking-[-0.08px]"
+      : "text-[12px] leading-[16px] tracking-[-0.02px]",
+  }
+}
+
+export function Field({ label, description, children }: { label: string; description?: ReactNode; children: ReactNode }) {
+  const { productFormStyle } = useProductFormStyle()
+  const tokens = getFormTokens(productFormStyle)
+
+  if (productFormStyle === "sail" || description) {
+    return (
+      <div>
+        <label className={productFormStyle === "sail"
+          ? "form-field-label block text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
+          : tokens.labelClass}
+        >
+          {label}
+        </label>
+        {description ? (
+          <p className={`mt-[6px] mb-[8px] form-field-helper ${tokens.helperClass}`}>{description}</p>
+        ) : (
+          <div className="h-[6px]" />
+        )}
+        {children}
+      </div>
+    )
+  }
 
   return (
     <label className="flex flex-col gap-[4px]">
@@ -48,13 +122,13 @@ export function SelectControl({
       </select>
       <svg
         className="pointer-events-none absolute right-[9px] top-1/2 -translate-y-1/2 text-[#6C7688]"
-        width="10"
-        height="10"
-        viewBox="0 0 16 16"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
         fill="none"
         aria-hidden="true"
       >
-        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
   )
@@ -211,7 +285,8 @@ export function AccountSummaryCard({
   subtitle?: string
   size?: "default" | "flow"
 }) {
-  const isFlow = size === "flow"
+  const type = useCardCreateTypeScale()
+  const isFlow = type.matchCard || size === "flow"
   return (
     <div data-account-summary-card className={`${revealActionOnHover ? "group " : ""}flex items-center gap-[10px] rounded-[8px] bg-[#F6F8FA] ${isFlow ? "p-[12px]" : "p-[10px]"}`}>
       {account.hasBrandIcon ? (
@@ -223,16 +298,13 @@ export function AccountSummaryCard({
           className="h-[32px] w-[32px] shrink-0 rounded-[6px]"
         />
       ) : (
-        <span className={`relative flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${isFlow ? "text-sail-label-small-emphasized" : "text-[12px] font-[650]"}`}>
+        <span className={`relative flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${isFlow ? "text-[13px] font-[500]" : "text-[12px] font-[650]"}`}>
           <AvatarInitials initials={account.initials} />
         </span>
       )}
       <div className={`flex min-w-0 flex-1 flex-col justify-center ${isFlow ? "leading-[20px]" : "leading-[16px]"}`}>
         <div className="flex items-center gap-[8px]">
-          <p className={isFlow
-            ? "text-sail-label-medium-emphasized min-w-0 flex-1 truncate text-ink"
-            : "min-w-0 flex-1 truncate text-[13px] font-[600] leading-[16px] tracking-[-0.08px] text-[#1A2C44]"}
-          >
+          <p className={`min-w-0 flex-1 truncate text-[#1A2C44] ${isFlow ? type.rowTitle : "text-[13px] font-[600] leading-[16px] tracking-[-0.08px]"}`}>
             {account.name}
           </p>
           <span className="relative shrink-0">
@@ -240,12 +312,12 @@ export function AccountSummaryCard({
               ? "block transition-opacity group-hover:opacity-0 group-focus-within:opacity-0"
               : "block"}
             >
-              <CountryBadge country={account.country} size="sm" tone="deep" />
+              <CountryBadge country={account.country} size={isFlow ? "default" : "sm"} tone="deep" />
             </span>
             {revealActionOnHover && actionLabel && onAction ? (
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 text-[11px] font-[600] leading-[16px] text-[#533AFD] opacity-0 transition-opacity hover:text-[#4730E0] group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
+                className={`absolute inset-y-0 right-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 ${type.edit}`}
                 onClick={onAction}
               >
                 {actionLabel}
@@ -253,15 +325,12 @@ export function AccountSummaryCard({
             ) : null}
           </span>
         </div>
-        <p className={isFlow
-          ? "text-sail-label-small truncate text-ink-faint"
-          : "truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]"}
-        >
+        <p className={isFlow ? `truncate ${type.rowDetail}` : "truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]"}>
           {subtitle ?? account.email}
         </p>
       </div>
       {actionLabel && onAction && !revealActionOnHover ? (
-        <button type="button" className="shrink-0 self-start pt-[2px] text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={onAction}>
+        <button type="button" className={`shrink-0 self-start ${type.edit}`} onClick={onAction}>
           {actionLabel}
         </button>
       ) : null}
@@ -273,7 +342,7 @@ export function DuplicateAccountNudge({
   account,
   onUseExisting,
   onDismiss,
-  description = "This email matches an existing account in your Network. Continue with it to add configurations instead of creating a duplicate.",
+  description = "This email is linked to an existing account in your Network. Continue with it to add configurations instead of creating a duplicate.",
   actionLabel = "Use existing account",
   size = "default",
 }: {
@@ -284,7 +353,8 @@ export function DuplicateAccountNudge({
   actionLabel?: string
   size?: "default" | "flow"
 }) {
-  const isFlow = size === "flow"
+  const type = useCardCreateTypeScale()
+  const isFlow = type.matchCard || size === "flow"
   return (
     <div
       className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white shadow-[0_8px_24px_rgba(26,44,68,0.12)]"
@@ -293,9 +363,9 @@ export function DuplicateAccountNudge({
       aria-label="Existing account found"
     >
       <div className={isFlow ? "p-[12px]" : "p-[8px]"}>
-        <AccountSummaryCard account={account} subtitle={account.id} size={size} />
+        <AccountSummaryCard account={account} subtitle={account.id} size={isFlow ? "flow" : size} />
         <p className={isFlow
-          ? "text-sail-label-medium px-[8px] pb-[4px] pt-[12px] text-ink-muted"
+          ? `px-[8px] pb-[4px] pt-[12px] ${type.helper}`
           : "px-[8px] pb-[4px] pt-[12px] text-[12px] leading-[16px] text-[#3C4F69]"}
         >
           {description}
@@ -305,8 +375,8 @@ export function DuplicateAccountNudge({
         <button
           type="button"
           className={isFlow
-            ? "text-sail-label-small-emphasized rounded-[6px] px-[10px] py-[6px] text-ink-muted hover:bg-[#EEF2F6]"
-            : "rounded-[6px] px-[8px] py-[5px] text-[11px] font-[600] text-[#526378] hover:bg-[#EEF2F6]"}
+            ? "rounded-[6px] px-[8px] py-[4px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#EEF2F6]"
+            : "rounded-[6px] px-[8px] py-[4px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#EEF2F6]"}
           onClick={onDismiss}
         >
           Create new anyway
@@ -314,7 +384,7 @@ export function DuplicateAccountNudge({
         <button
           type="button"
           className={isFlow
-            ? "text-sail-label-small-emphasized rounded-[6px] bg-[#675DFF] px-[10px] py-[6px] text-white hover:bg-[#5B52F0]"
+            ? "rounded-[6px] bg-[#675DFF] px-[10px] py-[6px] text-[12px] font-[600] leading-[16px] text-white hover:bg-[#5B52F0]"
             : "rounded-[6px] bg-[#675DFF] px-[8px] py-[5px] text-[11px] font-[600] text-white hover:bg-[#5B52F0]"}
           onClick={onUseExisting}
         >
@@ -380,6 +450,7 @@ export function ReviewRow({
   openLabel?: string
   children: ReactNode
 }) {
+  const type = useCardCreateTypeScale()
   const cardRef = useRef<HTMLDivElement>(null)
   const wasOpen = useRef(open)
 
@@ -405,19 +476,19 @@ export function ReviewRow({
   const header = (
     <>
       <span className="min-w-0 flex-1">
-        <span className="block text-[12px] font-[600] leading-[16px] text-[#1A2C44]">{title}</span>
-        <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#6C7688]">{summary}</span>
+        <span className={`block text-[#1A2C44] ${type.rowTitle}`}>{title}</span>
+        <span className={`mt-[2px] block font-[400] ${type.rowDetail}`}>{summary}</span>
       </span>
     </>
   )
 
   return (
     <div ref={cardRef} className="overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white [overflow-anchor:none]">
-      <div className="flex min-h-[58px] w-full items-center gap-[12px] p-[12px] [overflow-anchor:auto]">
+      <div className={`flex w-full items-center gap-[12px] [overflow-anchor:auto] ${type.reviewPad}`}>
         {header}
         <button
           type="button"
-          className="shrink-0 rounded-[6px] px-[8px] py-[4px] text-[11px] font-[600] leading-[16px] text-[#533AFD] outline-none transition-colors hover:bg-[#F4F4FE]"
+          className={type.edit}
           aria-expanded={open}
           onClick={onToggle}
         >
@@ -429,7 +500,7 @@ export function ReviewRow({
         style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="border-t border-[#ECF1F6] bg-[#F8FAFB] p-[12px]">{children}</div>
+          <div className={`border-t border-[#ECF1F6] bg-[#F8FAFB] ${type.reviewBody}`}>{children}</div>
         </div>
       </div>
     </div>

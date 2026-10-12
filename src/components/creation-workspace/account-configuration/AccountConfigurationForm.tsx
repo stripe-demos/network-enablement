@@ -5,28 +5,26 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 
 import { SegmentedControl } from "@/components/SegmentedControl"
-import { CreationModalShell } from "@/components/creation-workspace/CreationModalShell"
-import { EntityDropdown } from "@/components/creation-workspace/forms/EntityDropdown"
 import { Checkbox } from "@/components/creation-workspace/forms/shared/Checkbox"
-import { ChevronIcon } from "@/components/creation-workspace/forms/shared/CustomSelect"
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
-import { cn } from "@/lib/utils"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
-import { useAccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
+import { useAccountConflictNudgeMode, type AccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
 import type { AccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
 import type { AccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
 
+import { EntityDropdown } from "@/components/creation-workspace/forms/EntityDropdown"
 import { AddressFields, CountrySelect, formatAddressSummary, phoneCountryFromBillingCountry, type AddressValue } from "@/components/creation-workspace/forms/shared/AddressFields"
+import { CreationModalShell } from "@/components/creation-workspace/CreationModalShell"
 import { DescribeAccountModal } from "./DescribeAccountModal"
 import {
   AccountSummaryCard,
   DuplicateAccountNudge,
   Field,
-  NetworkAccountOption,
   ReviewRow,
   SelectControl,
   Toggle,
+  useCardCreateTypeScale,
 } from "./AccountConfigurationPrimitives"
 import {
   ACCOUNT_ONBOARDING_LINK,
@@ -38,13 +36,14 @@ import {
   findMatchingNetworkAccount,
   getCapabilities,
   getCapabilitiesForGroup,
-  getAccountRoles,
   getConfigurationOptions,
   getDisplayedNetworkAccount,
   getDraftName,
+  getRecommendedConfigurations,
   isNewAccountIdentityValid,
   type AccountDetailsDraft,
   type AccountSource,
+  type CapabilityItem,
   type ConfigurationKind,
   type ConfigurationOption,
   type NetworkAccount,
@@ -54,7 +53,6 @@ import {
 } from "./model"
 
 const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
-const ACCOUNT_SOURCE_OPTIONS = ["existing", "new"] as const
 const ONBOARDING_ACTION_OPTIONS = ["send-email", "copy-link"] as const
 
 export function FieldHint({ label, children }: { label: string; children: string }) {
@@ -138,21 +136,67 @@ function getNetworkAccounts(userPath?: UserPath) {
   return NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, userPath))
 }
 
-function getNetworkAccountItems(userPath?: UserPath) {
-  return getNetworkAccounts(userPath).map((account) => ({ id: account.id, name: account.name, detail: account.email }))
+const EMAIL_SETTLE_MS = 120
+
+function resolveEmailMatch(email: string, mode: AccountConflictNudgeMode) {
+  if (mode === "off") return undefined
+  if (mode === "always" && email.trim()) return NETWORK_ACCOUNTS.find((account) => account.id === "acct_juniper")
+  return findMatchingNetworkAccount(email)
 }
 
-function getNetworkAccountSearchText(userPath?: UserPath) {
-  return (item: { id: string; name: string }) => {
-    const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === item.id)
-    return account ? `${account.name} ${account.email} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}` : item.name
+export function useRefinedEmailLookup(email: string, enabled: boolean) {
+  const { accountConflictNudgeMode } = useAccountConflictNudgeMode()
+  const [status, setStatus] = useState<"idle" | "checking" | "ready">("idle")
+  const [match, setMatch] = useState<NetworkAccount | undefined>()
+  const [dismissedMatchId, setDismissedMatchId] = useState("")
+  const lookedUpEmailRef = useRef("")
+  const statusRef = useRef(status)
+  statusRef.current = status
+
+  const startLookup = (value: string) => {
+    const next = value.trim()
+    if (!EMAIL_PATTERN.test(next)) {
+      lookedUpEmailRef.current = ""
+      setStatus("idle")
+      setMatch(undefined)
+      return
+    }
+    if (lookedUpEmailRef.current === next && statusRef.current !== "idle") return
+    lookedUpEmailRef.current = next
+    setMatch(resolveEmailMatch(next, accountConflictNudgeMode))
+    setStatus("ready")
   }
-}
 
-function AccountPickerOption({ id, userPath }: { id: string; userPath?: UserPath }) {
-  const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
-  if (!account) return null
-  return <NetworkAccountOption account={account} />
+  useEffect(() => {
+    if (!enabled) {
+      lookedUpEmailRef.current = ""
+      setStatus("idle")
+      setMatch(undefined)
+      return
+    }
+    const next = email.trim()
+    if (!EMAIL_PATTERN.test(next)) {
+      lookedUpEmailRef.current = ""
+      setStatus("idle")
+      setMatch(undefined)
+      return
+    }
+    if (lookedUpEmailRef.current === next && statusRef.current !== "idle") return
+    setStatus("idle")
+    setMatch(undefined)
+    const timeout = window.setTimeout(() => startLookup(email), EMAIL_SETTLE_MS)
+    return () => window.clearTimeout(timeout)
+  }, [accountConflictNudgeMode, email, enabled])
+
+  return {
+    status,
+    match,
+    dismissedMatchId,
+    dismissMatch: () => {
+      if (match) setDismissedMatchId(match.id)
+    },
+    commitNow: () => startLookup(email),
+  }
 }
 
 function AccountIdentityFields({
@@ -161,100 +205,166 @@ function AccountIdentityFields({
   onUseExisting,
   autoFocus = false,
   typeLabel = "Account type",
+  emailFirst = false,
+  lookupStatus = "idle",
+  lookupMatch,
+  dismissedMatchId = "",
+  onDismissMatch,
+  onCommitEmail,
 }: {
   details: AccountDetailsDraft
   onChange: (patch: Partial<AccountDetailsDraft>) => void
   onUseExisting: (account: NetworkAccount) => void
   autoFocus?: boolean
   typeLabel?: string
+  emailFirst?: boolean
+  lookupStatus?: "idle" | "checking" | "ready"
+  lookupMatch?: NetworkAccount
+  dismissedMatchId?: string
+  onDismissMatch?: () => void
+  onCommitEmail?: () => void
 }) {
-  const [dismissedMatchId, setDismissedMatchId] = useState("")
+  const [localDismissedMatchId, setLocalDismissedMatchId] = useState("")
   const firstInputRef = useRef<HTMLInputElement>(null)
   const { productFormStyle } = useProductFormStyle()
   const { inputFill } = useInputFill()
   const { accountConflictNudgeMode } = useAccountConflictNudgeMode()
   const tokens = getFormTokens(productFormStyle, { filled: inputFill })
-  const matchingAccount = accountConflictNudgeMode === "off"
-    ? undefined
-    : accountConflictNudgeMode === "always" && details.accountEmail.trim()
-      ? NETWORK_ACCOUNTS.find((account) => account.id === "acct_juniper")
-      : findMatchingNetworkAccount(details.accountEmail)
+  const typeScale = useCardCreateTypeScale()
+  const matchingAccount = emailFirst
+    ? lookupMatch
+    : accountConflictNudgeMode === "off"
+      ? undefined
+      : accountConflictNudgeMode === "always" && details.accountEmail.trim()
+        ? NETWORK_ACCOUNTS.find((account) => account.id === "acct_juniper")
+        : findMatchingNetworkAccount(details.accountEmail)
+  const resolvedDismissedId = emailFirst ? dismissedMatchId : localDismissedMatchId
+  const lookupReady = !emailFirst || lookupStatus === "ready"
+  const showMatch = Boolean(lookupReady && matchingAccount && resolvedDismissedId !== matchingAccount.id)
 
   useEffect(() => {
     if (!autoFocus) return
     requestAnimationFrame(() => firstInputRef.current?.focus({ preventScroll: true }))
   }, [autoFocus])
 
-  return (
-    <div className="flex flex-col gap-[12px]" data-new-account-fields>
-      <div className="flex flex-col gap-[4px]">
-        <span className={tokens.labelClass}>{typeLabel}</span>
-        <SegmentedControl
-          value={details.type}
-          options={ACCOUNT_TYPE_OPTIONS}
-          onChange={(type) => onChange({ type })}
-          variantOverride="segmented"
-          buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
+  const typeField = (
+    <Field label={typeLabel}>
+      {typeScale.matchCard ? (
+        <EntityDropdown
+          label=""
+          placeholder="Select…"
+          searchPlaceholder="Search"
+          hideSearch
+          insetOptionHover
+          items={ACCOUNT_TYPE_OPTIONS.map((option) => ({ id: option, name: option }))}
+          selectedId={details.type}
+          onSelect={(id) => onChange({ type: id as AccountDetailsDraft["type"] })}
+          optionNameClassName="block truncate text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
         />
-      </div>
-      {details.type === "Company" ? (
-        <Field label="Company name">
-          <input
-            ref={firstInputRef}
-            className={tokens.inputClass}
-            placeholder="Example Corp Inc"
-            value={details.registeredName}
-            onChange={(event) => onChange({ registeredName: event.target.value })}
-          />
-        </Field>
       ) : (
-        <Field label="Legal name">
-          <span className="grid gap-[6px]">
-            <input ref={firstInputRef} aria-label="First name" className={tokens.inputClass} placeholder="First name" value={details.firstName} onChange={(event) => onChange({ firstName: event.target.value })} />
-            <input aria-label="Last name" className={tokens.inputClass} placeholder="Last name" value={details.lastName} onChange={(event) => onChange({ lastName: event.target.value })} />
-          </span>
-        </Field>
+        <SelectControl
+          className={tokens.selectClass}
+          value={details.type}
+          ariaLabel={typeLabel}
+          onChange={(next) => onChange({ type: next as AccountDetailsDraft["type"] })}
+        >
+          {ACCOUNT_TYPE_OPTIONS.map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </SelectControl>
       )}
-      <div className="flex flex-col gap-[6px]">
-        <Field label="Account email">
+    </Field>
+  )
+  const nameField = details.type === "Company" ? (
+    <Field label="Company name">
+      <input
+        ref={emailFirst ? undefined : firstInputRef}
+        className={tokens.inputClass}
+        placeholder="Example Corp Inc"
+        value={details.registeredName}
+        onChange={(event) => onChange({ registeredName: event.target.value })}
+      />
+    </Field>
+  ) : (
+    <Field label="Legal name">
+      <span className="grid gap-[6px]">
+        <input ref={emailFirst ? undefined : firstInputRef} aria-label="First name" className={tokens.inputClass} placeholder="First name" value={details.firstName} onChange={(event) => onChange({ firstName: event.target.value })} />
+        <input aria-label="Last name" className={tokens.inputClass} placeholder="Last name" value={details.lastName} onChange={(event) => onChange({ lastName: event.target.value })} />
+      </span>
+    </Field>
+  )
+  const emailField = (
+    <div className="flex flex-col gap-[6px]">
+      <Field label="Account email">
+        <span className="relative block">
           <input
+            ref={emailFirst ? firstInputRef : undefined}
             type="email"
-            className={tokens.inputClass}
+            className={`${tokens.inputClass}${emailFirst && lookupStatus === "checking" ? " pr-[32px]" : ""}`}
             placeholder="email@example.com"
             value={details.accountEmail}
             onChange={(event) => onChange({ accountEmail: event.target.value })}
+            onBlur={() => onCommitEmail?.()}
             aria-invalid={details.accountEmail.length > 0 && !EMAIL_PATTERN.test(details.accountEmail)}
+            aria-busy={emailFirst && lookupStatus === "checking"}
           />
-        </Field>
-        {matchingAccount && dismissedMatchId !== matchingAccount.id ? (
-          <DuplicateAccountNudge
-            account={matchingAccount}
-            onUseExisting={() => onUseExisting(matchingAccount)}
-            onDismiss={() => setDismissedMatchId(matchingAccount.id)}
-          />
-        ) : null}
-      </div>
-      <div className="flex flex-col gap-[4px]">
-        <span className={tokens.labelClass}>Country</span>
-        <CountrySelect
-          className={tokens.selectClass}
-          value={details.country}
-          onChange={(country) => onChange({ country, billingCountry: details.billingCountry || country })}
+          {emailFirst && lookupStatus === "checking" ? (
+            <span className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#6C7688]" aria-hidden="true">
+              <svg className="animate-spin" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" />
+                <path d="M10.5 6a4.5 4.5 0 0 0-4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </span>
+          ) : null}
+        </span>
+      </Field>
+      {showMatch && matchingAccount ? (
+        <DuplicateAccountNudge
+          account={matchingAccount}
+          onUseExisting={() => onUseExisting(matchingAccount)}
+          onDismiss={() => {
+            if (emailFirst) onDismissMatch?.()
+            else setLocalDismissedMatchId(matchingAccount.id)
+          }}
         />
-      </div>
+      ) : null}
+    </div>
+  )
+  const countryField = (
+    <Field label="Country">
+      <CountrySelect
+        className={typeScale.matchCard ? tokens.inputClass : tokens.selectClass}
+        value={details.country}
+        onChange={(country) => onChange({ country, billingCountry: details.billingCountry || country })}
+      />
+    </Field>
+  )
+
+  return (
+    <div className={typeScale.section} data-new-account-fields>
+      {emailFirst ? (
+        <>
+          {emailField}
+          {typeField}
+          {nameField}
+          {countryField}
+        </>
+      ) : (
+        <>
+          {typeField}
+          {nameField}
+          {emailField}
+          {countryField}
+        </>
+      )}
     </div>
   )
 }
 
-function SelectedAccountSummary({ account, onChange }: { account: NetworkAccount; onChange?: () => void }) {
+function SelectedAccountSummary({ account }: { account: NetworkAccount }) {
   return (
     <div data-selected-account-summary>
-      <AccountSummaryCard
-        account={account}
-        actionLabel={onChange ? "Remove" : undefined}
-        onAction={onChange}
-        revealActionOnHover
-      />
+      <AccountSummaryCard account={account} />
     </div>
   )
 }
@@ -265,12 +375,13 @@ function AccountSelector({
   selectedAccountId,
   details,
   userPath,
-  onChooseExisting,
-  onPrepareNew,
-  onChooseNew,
-  onClearSelected,
   onSelectExisting,
   onDetailsChange,
+  lookupStatus,
+  lookupMatch,
+  dismissedMatchId,
+  onDismissMatch,
+  onCommitEmail,
 }: {
   style: AccountSelectionStyle
   source: AccountSource
@@ -280,47 +391,18 @@ function AccountSelector({
   onChooseExisting: () => void
   onPrepareNew: () => void
   onChooseNew: () => void
-  onClearSelected?: () => void
   onSelectExisting: (account: NetworkAccount) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
+  lookupStatus?: "idle" | "checking" | "ready"
+  lookupMatch?: NetworkAccount
+  dismissedMatchId?: string
+  onDismissMatch?: () => void
+  onCommitEmail?: () => void
 }) {
-  const [newAccountModalOpen, setNewAccountModalOpen] = useState(false)
-  const { productFormStyle } = useProductFormStyle()
-  const tokens = getFormTokens(productFormStyle)
-  const draftName = getDraftName(details)
-  const selectedLabel = source === "new" ? draftName || "New account" : undefined
+  const type = useCardCreateTypeScale()
   const selectedAccount = source === "existing"
     ? getNetworkAccounts(userPath).find((account) => account.id === selectedAccountId)
     : undefined
-
-  const selectExisting = (id: string) => {
-    const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
-    if (account) onSelectExisting(account)
-  }
-
-  const accountPicker = (
-    <EntityDropdown
-      label="Account"
-      placeholder="Find or add an account"
-      searchPlaceholder="Search by name, email, or account ID"
-      initialOpen
-      items={getNetworkAccountItems(userPath)}
-      getSearchText={getNetworkAccountSearchText(userPath)}
-      renderOption={(item) => <AccountPickerOption id={item.id} userPath={userPath} />}
-      insetOptionHover
-      selectedId={source === "existing" ? selectedAccountId : ""}
-      selectedLabel={selectedLabel}
-      selectedIsPlaceholder={source === "new" && !draftName}
-      onSelect={selectExisting}
-      addNewLabel="Create new account"
-      onAddNew={() => {
-        if (source !== "new") onPrepareNew()
-        if (style === "related-modal") setNewAccountModalOpen(true)
-        else onChooseNew()
-      }}
-      onEdit={source === "new" && style === "related-modal" ? () => setNewAccountModalOpen(true) : undefined}
-    />
-  )
 
   const identityFields = (
     <AccountIdentityFields
@@ -328,80 +410,24 @@ function AccountSelector({
       onChange={onDetailsChange}
       onUseExisting={onSelectExisting}
       autoFocus
-      typeLabel={style === "picker" ? "Type" : "Account type"}
+      typeLabel="Account type"
+      emailFirst={style === "refined"}
+      lookupStatus={lookupStatus}
+      lookupMatch={lookupMatch}
+      dismissedMatchId={dismissedMatchId}
+      onDismissMatch={onDismissMatch}
+      onCommitEmail={onCommitEmail}
     />
   )
 
   return (
-    <section className="flex flex-col gap-[12px]" data-account-selection-style={style}>
-      {style === "no-picker" ? (
-        source === "existing" && selectedAccount ? (
-          <div className="flex flex-col gap-[12px]">
-            <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Selected account</h3>
-            <SelectedAccountSummary account={selectedAccount} onChange={onClearSelected} />
-          </div>
-        ) : identityFields
-      ) : style === "source-toggle" ? (
-        <>
-          <div>
-            <SegmentedControl
-              value={source}
-              options={ACCOUNT_SOURCE_OPTIONS}
-              getDisplayValue={(value) => value === "existing" ? "Existing account" : "New account"}
-              onChange={(value) => {
-                if (value === "existing") onChooseExisting()
-                else {
-                  if (source !== "new") onPrepareNew()
-                  onChooseNew()
-                }
-              }}
-              variantOverride="segmented"
-            />
-          </div>
-          {source === "existing" ? (
-            <>
-              {accountPicker}
-              {selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : null}
-            </>
-          ) : identityFields}
-        </>
-      ) : (
-        <>
-          {accountPicker}
-          {selectedAccount ? <SelectedAccountSummary account={selectedAccount} /> : null}
-          {style === "picker" && source === "new" ? identityFields : null}
-        </>
-      )}
-
-      <CreationModalShell
-        isOpen={newAccountModalOpen}
-        onClose={() => setNewAccountModalOpen(false)}
-        title={source === "new" ? "Edit account" : "New account"}
-        modalWidth="w-[460px]"
-        footer={
-          <div className="flex items-center justify-end gap-[8px] border-t border-[#ECF1F6] bg-white px-[20px] py-[12px]">
-            <button type="button" className={tokens.secondaryButtonClass} onClick={() => setNewAccountModalOpen(false)}>Discard</button>
-            <button
-              type="button"
-              disabled={!isNewAccountIdentityValid(details)}
-              className={isNewAccountIdentityValid(details)
-                ? tokens.primaryButtonClass
-                : `${tokens.primaryButtonClass} cursor-not-allowed opacity-45`}
-              onClick={() => {
-                if (!isNewAccountIdentityValid(details)) return
-                onChooseNew()
-                setNewAccountModalOpen(false)
-              }}
-            >
-              {source === "new" ? "Save" : "Create account"}
-            </button>
-          </div>
-        }
-      >
-        <div className="overflow-y-auto px-[20px] py-[16px]">
-          <AccountIdentityFields details={details} onChange={onDetailsChange} onUseExisting={(account) => { onSelectExisting(account); setNewAccountModalOpen(false) }} />
+    <section className={type.section} data-account-selection-style={style}>
+      {source === "existing" && selectedAccount ? (
+        <div className={type.section}>
+          <h3 className={type.sectionTitle}>Selected account</h3>
+          <SelectedAccountSummary account={selectedAccount} />
         </div>
-      </CreationModalShell>
+      ) : identityFields}
     </section>
   )
 }
@@ -421,16 +447,85 @@ function ConfigurationRow({
   onToggle?: () => void
   onOpen?: () => void
 }) {
-  const canOpen = Boolean(onOpen) && (checked || locked)
-  const capabilityLabel = typeof capabilityCount === "number"
-    ? `${capabilityCount} ${capabilityCount === 1 ? "capability" : "capabilities"}`
-    : null
-  const detail = canOpen && capabilityLabel
-    ? `${option.relationship} · ${capabilityLabel}`
-    : option.relationship
-  const open = () => {
-    if (canOpen) onOpen?.()
-    else if (!locked) onToggle?.()
+  const type = useCardCreateTypeScale()
+  const canOpen = Boolean(onOpen) && checked && !locked
+  const capabilityLink = canOpen && capabilityCount ? (
+    <button
+      type="button"
+      className={`${type.edit} self-center`}
+      onClick={(event) => {
+        event.stopPropagation()
+        onOpen?.()
+      }}
+    >
+      {capabilityCount === 1 ? "1 capability" : `${capabilityCount} capabilities`}
+    </button>
+  ) : null
+
+  const label = locked
+    ? `${option.title} is on this account`
+    : checked ? `Remove ${option.title} configuration` : `Add ${option.title} configuration`
+  const activate = () => {
+    if (locked) return
+    onToggle?.()
+  }
+
+  const checkbox = (
+    <Checkbox
+      checked={checked}
+      label={label}
+      decorative
+      className={locked ? "opacity-55" : undefined}
+      onChange={() => {}}
+    />
+  )
+
+  const rowProps = {
+    role: "button" as const,
+    tabIndex: locked && !canOpen ? -1 : 0,
+    "aria-pressed": checked,
+    "aria-label": label,
+    onClick: activate,
+    onKeyDown: (event: { key: string; preventDefault: () => void }) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault()
+        activate()
+      }
+    },
+  }
+
+  if (type.matchCard) {
+    return (
+      <div
+        data-configuration={option.id}
+        data-selected={checked ? "true" : "false"}
+        data-existing={locked ? "true" : "false"}
+        className={`overflow-hidden rounded-[8px] border ${
+          locked
+            ? "border-[#E3E8EF] bg-white opacity-55"
+            : checked
+              ? "border-[#C8C0FF] bg-[#F8F7FF]"
+              : "border-[#E3E8EF] bg-white"
+        }`}
+        onClick={activate}
+        onKeyDown={rowProps.onKeyDown}
+        role="button"
+        tabIndex={rowProps.tabIndex}
+        aria-pressed={checked}
+        aria-label={label}
+      >
+        <div className={`flex min-h-[60px] items-start gap-[12px] px-[16px] py-[12px] text-left outline-none ${
+          locked && !canOpen ? "cursor-default" : "cursor-pointer"
+        } ${checked || locked ? "" : "transition-colors hover:bg-[#FAFBFC]"}`}>
+          <span className="mt-[2px] flex h-[20px] items-center">{checkbox}</span>
+          <span className="min-w-0 flex-1">
+            <span className={`block text-[14px] font-[500] leading-[20px] tracking-[-0.08px] ${checked && !locked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
+            <span className="mt-[2px] block text-[13px] font-[400] leading-[18px] text-[#596171]">{option.relationship}</span>
+          </span>
+          {capabilityLink}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -438,27 +533,22 @@ function ConfigurationRow({
       data-configuration={option.id}
       data-selected={checked ? "true" : "false"}
       data-existing={locked ? "true" : "false"}
-      className={`flex min-h-[48px] items-start gap-[9px] px-[11px] py-[9px] ${
+      className={`flex items-start gap-[9px] ${type.rowPad} outline-none ${
         locked ? "bg-[#F8FAFB]" : checked ? "bg-[#F8F7FF]" : "hover:bg-[#F8FAFB]"
-      }`}
+      } ${locked && !canOpen ? "cursor-default" : "cursor-pointer"}`}
+      onClick={activate}
+      onKeyDown={rowProps.onKeyDown}
+      role="button"
+      tabIndex={rowProps.tabIndex}
+      aria-pressed={checked}
+      aria-label={label}
     >
-      <Checkbox
-        checked={checked}
-        label={locked ? `${option.title} is on this account` : checked ? `Remove ${option.title} configuration` : `Add ${option.title} configuration`}
-        className={`mt-[1px] ${locked ? "pointer-events-none opacity-55" : ""}`}
-        onChange={() => {
-          if (!locked) onToggle?.()
-        }}
-      />
-      <button type="button" className="flex min-w-0 flex-1 items-center gap-[8px] text-left" onClick={open} disabled={locked && !canOpen}>
-        <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
-          <span className={`text-[12px] font-[600] leading-[16px] ${locked ? "text-[#596171]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
-          <span className="text-[11px] leading-[16px] text-[#6C7688]">{detail}</span>
-        </span>
-        {canOpen ? (
-          <ChevronIcon className="h-[12px] w-[12px] shrink-0 -rotate-90" />
-        ) : null}
-      </button>
+      <span className="mt-[1px]">{checkbox}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
+        <span className={`${type.rowTitle} ${locked ? "text-[#596171]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
+        <span className={type.rowDetail}>{option.relationship}</span>
+      </span>
+      {capabilityLink}
     </div>
   )
 }
@@ -468,43 +558,65 @@ function ConfigurationPicker({
   existing,
   userPath,
   capabilityCounts,
+  details,
   onChange,
-  onOpenCapabilities,
+  onDetailsChange,
+  isNewAccount,
 }: {
   selected: ConfigurationKind[]
   existing: ConfigurationKind[]
   userPath?: UserPath
   capabilityCounts: Partial<Record<"merchant" | "recipient", number>>
+  details: AccountDetailsDraft
   onChange: (next: ConfigurationKind[]) => void
-  onOpenCapabilities: (id: "merchant" | "recipient") => void
+  onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
+  isNewAccount?: boolean
 }) {
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
+  const type = useCardCreateTypeScale()
   const options = getConfigurationOptions(userPath)
   const existingOptions = options.filter((option) => existing.includes(option.id))
   const addableOptions = options.filter((option) => !existing.includes(option.id))
-  const [describeOpen, setDescribeOpen] = useState(false)
+  const [describeMode, setDescribeMode] = useState<"describe" | "recommend" | null>(null)
+  const [editingGroup, setEditingGroup] = useState<"merchant" | "recipient" | null>(null)
   const toggle = (option: ConfigurationOption) => {
     onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])
   }
   const canOpen = (id: ConfigurationKind): id is "merchant" | "recipient" => id === "merchant" || id === "recipient"
-
+  const closeCapabilities = () => setEditingGroup(null)
   return (
     <section className="flex flex-col gap-[12px]" data-configuration-picker>
       <div>
-        <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Configurations</h3>
-        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">
-          Select all roles that apply to this account. Not sure?{" "}
-          <button type="button" className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]" onClick={() => setDescribeOpen(true)}>
-            Tell us about the account
-          </button>.
+        <h3 className={type.fieldLabel}>Configurations</h3>
+        <p className={`mt-[6px] ${type.helper}`}>
+          {isNewAccount ? (
+            <>
+              Choose what this account can do. Not sure what to pick?{" "}
+              <button
+                type="button"
+                className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
+                onClick={() => setDescribeMode("describe")}
+              >
+                Tell us about the account
+              </button>.
+            </>
+          ) : (
+            <>
+              Select all roles that apply to this account. Not sure?{" "}
+              <button type="button" className="font-[500] text-[#533AFD] hover:text-[#4730E0]" onClick={() => setDescribeMode("describe")}>
+                Tell us about the account
+              </button>.
+            </>
+          )}
         </p>
       </div>
+      <div className={existingOptions.length > 0 && addableOptions.length > 0 ? "flex flex-col gap-[16px]" : type.cardStack}>
       {existingOptions.length > 0 ? (
-        <div className="flex flex-col gap-[8px]">
-          <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">On this account</p>
+        <div className={type.cardStack}>
+          <p className={type.helper}>On this account</p>
           <HoverTip text="You can deactivate configurations from the account details page.">
-            <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
+            <div className={type.matchCard ? type.cardStack : "divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white"}>
               {existingOptions.map((option) => {
                 const groupId = canOpen(option.id) ? option.id : null
                 return (
@@ -514,7 +626,7 @@ function ConfigurationPicker({
                     checked
                     locked
                     capabilityCount={groupId ? capabilityCounts[groupId] : undefined}
-                    onOpen={groupId ? () => onOpenCapabilities(groupId) : undefined}
+                    onOpen={groupId ? () => setEditingGroup(groupId) : undefined}
                   />
                 )
               })}
@@ -523,11 +635,11 @@ function ConfigurationPicker({
         </div>
       ) : null}
       {addableOptions.length > 0 ? (
-        <div className="flex flex-col gap-[8px]">
+        <div className={type.cardStack}>
           {existingOptions.length > 0 ? (
-            <p className="text-[11px] font-[500] leading-[16px] text-[#6C7688]">Add</p>
+            <p className={type.helper}>Add</p>
           ) : null}
-          <div className="divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white">
+          <div className={type.matchCard ? type.cardStack : "divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white"}>
             {addableOptions.map((option) => {
               const groupId = canOpen(option.id) ? option.id : null
               return (
@@ -537,21 +649,61 @@ function ConfigurationPicker({
                   checked={selected.includes(option.id)}
                   capabilityCount={groupId ? capabilityCounts[groupId] : undefined}
                   onToggle={() => toggle(option)}
-                  onOpen={groupId ? () => onOpenCapabilities(groupId) : undefined}
+                  onOpen={groupId ? () => setEditingGroup(groupId) : undefined}
                 />
               )
             })}
           </div>
         </div>
       ) : null}
+      </div>
       <DescribeAccountModal
-        isOpen={describeOpen}
+        isOpen={describeMode !== null}
         userPath={userPath}
         existing={existing}
         selected={selected}
-        onClose={() => setDescribeOpen(false)}
+        initialStep={describeMode === "recommend" ? "recommend" : "describe"}
+        initialRecommended={describeMode === "recommend" ? getRecommendedConfigurations(userPath) : undefined}
+        onClose={() => setDescribeMode(null)}
         onApply={onChange}
       />
+      <CreationModalShell
+        isOpen={Boolean(editingGroup)}
+        onClose={closeCapabilities}
+        title={editingGroup === "recipient" ? "Recipient capabilities" : "Merchant capabilities"}
+        subtitle="Select all the capabilities you want to enable."
+        modalWidth="w-[520px]"
+        headerActions={
+          <button
+            type="button"
+            aria-label="Close"
+            className={`${tokens.closeButtonClass} shrink-0 self-start`}
+            onClick={closeCapabilities}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        }
+        footer={
+          <div className="flex items-center justify-end border-t border-[#ECF1F6] bg-white px-[20px] py-[12px]">
+            <button type="button" className={tokens.primaryButtonClass} onClick={closeCapabilities}>
+              Save
+            </button>
+          </div>
+        }
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto px-[20px] py-[16px]">
+          {editingGroup ? (
+            <CapabilitiesEditor
+              groupId={editingGroup}
+              configurations={[...existing, ...selected]}
+              details={details}
+              onChange={onDetailsChange}
+            />
+          ) : null}
+        </div>
+      </CreationModalShell>
     </section>
   )
 }
@@ -663,8 +815,7 @@ function PayoutInformationSection({
   onChange: (patch: Partial<AccountDetailsDraft>) => void
 }) {
   const [openMethod, setOpenMethod] = useState<PayoutMethod | null>(null)
-  const { productFormStyle } = useProductFormStyle()
-  const tokens = getFormTokens(productFormStyle)
+  const type = useCardCreateTypeScale()
   const isDirect = userPath === "direct"
   const merchantSelected = configurations.includes("merchant") || existingConfigurations.includes("merchant")
   const payoutMethods = isDirect ? PAYOUT_METHODS.filter((method) => method.id !== "stripe-balance") : PAYOUT_METHODS
@@ -717,10 +868,10 @@ function PayoutInformationSection({
   return (
     <section className="flex flex-col gap-[12px]" data-payout-information>
       <div>
-        <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Payout methods</h3>
-        <p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Don’t have payout details? You can choose to have Stripe email the account to collect them later.</p>
+        <h3 className={type.sectionTitle}>Payout methods</h3>
+        <p className={`mt-[6px] ${type.helper}`}>Don’t have payout details? You can choose to have Stripe email the account to collect them later.</p>
       </div>
-      <div className="flex flex-col gap-[7px]">
+      <div className={type.cardStack}>
         {payoutMethods.map((method) => {
           const checked = details.payoutMethods.includes(method.id)
           const methodDetails = details.payoutMethodDetails[method.id]
@@ -737,23 +888,24 @@ function PayoutInformationSection({
                     : "border-[#E3E8EF] bg-white"
               }`}
             >
-              <div className="flex min-h-[58px] items-start">
+              <div className="flex min-h-[60px] items-start">
                 {open ? (
-                  <div className="flex min-w-0 flex-1 items-start gap-[8px] p-[12px]">
-                    <Checkbox
-                      checked={checked}
-                      label={method.label}
-                      className="mt-[2px]"
-                      onChange={(next) => {
-                        if (locked) return
-                        toggleMethod(method.id, next)
-                      }}
-                    />
+                  <div className="flex min-w-0 flex-1 items-start gap-[12px] px-[16px] py-[12px]">
+                    <span className="mt-[2px] flex h-[20px] items-center">
+                      <Checkbox
+                        checked={checked}
+                        label={method.label}
+                        onChange={(next) => {
+                          if (locked) return
+                          toggleMethod(method.id, next)
+                        }}
+                      />
+                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block text-[12px] font-[600] leading-[16px] ${checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
+                      <span className={`block ${type.rowTitle} ${checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
                         {method.label}
                       </span>
-                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#6C7688]">
+                      <span className={`mt-[2px] block font-[400] ${type.rowDetail}`}>
                         {payoutMethodSummary(method.id, methodDetails, method.description)}
                       </span>
                     </span>
@@ -764,7 +916,7 @@ function PayoutInformationSection({
                     tabIndex={locked ? -1 : 0}
                     aria-pressed={checked}
                     aria-label={method.label}
-                    className={`flex min-w-0 flex-1 items-start gap-[8px] p-[12px] text-left outline-none ${locked ? "cursor-default" : "cursor-pointer"}`}
+                    className={`flex min-w-0 flex-1 items-start gap-[12px] px-[16px] py-[12px] text-left outline-none ${locked ? "cursor-default" : "cursor-pointer"}`}
                     onClick={() => {
                       if (locked) return
                       toggleMethod(method.id, !checked)
@@ -777,32 +929,35 @@ function PayoutInformationSection({
                       }
                     }}
                   >
-                    <Checkbox
-                      checked={checked}
-                      label={method.label}
-                      decorative
-                      className="mt-[2px]"
-                      onChange={() => {}}
-                    />
+                    <span className="mt-[2px] flex h-[20px] items-center">
+                      <Checkbox
+                        checked={checked}
+                        label={method.label}
+                        decorative
+                        onChange={() => {}}
+                      />
+                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block text-[12px] font-[600] leading-[16px] ${locked ? "text-[#1A2C44]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
+                      <span className={`block ${type.rowTitle} ${locked ? "text-[#1A2C44]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
                         {method.label}
                       </span>
-                      <span className="mt-[2px] block text-[11px] font-[400] leading-[16px] text-[#6C7688]">
+                      <span className={`mt-[2px] block font-[400] ${type.rowDetail}`}>
                         {payoutMethodSummary(method.id, methodDetails, method.description)}
                       </span>
                     </span>
                   </div>
                 )}
                 {canAddDetails && checked ? (
-                  <button
-                    type="button"
-                    className="shrink-0 py-[12px] pr-[12px] text-[11px] font-[600] leading-[16px] text-[#533AFD] outline-none hover:text-[#4730E0]"
-                    aria-expanded={open}
-                    onClick={() => toggleEditor(method.id)}
-                  >
-                    {open ? "Done" : "Edit"}
-                  </button>
+                  <div className="flex items-center self-center pr-[16px]">
+                    <button
+                      type="button"
+                      className={type.edit}
+                      aria-expanded={open}
+                      onClick={() => toggleEditor(method.id)}
+                    >
+                      {open ? "Done" : "Edit"}
+                    </button>
+                  </div>
                 ) : null}
               </div>
               {canAddDetails ? (
@@ -836,7 +991,6 @@ function billingDetailsSummary(details: AccountDetailsDraft) {
   const address = formatAddressSummary([details.billingLine1, details.billingCity, details.billingState, details.billingPostalCode])
   if (address) return address
   if (!details.useAccountEmailForBilling && details.billingEmail?.trim()) return details.billingEmail.trim()
-  if (details.useAccountEmailForBilling) return "Same as account email"
   return "Not added"
 }
 
@@ -890,17 +1044,17 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
   const { productFormStyle } = useProductFormStyle()
   const { inputFill } = useInputFill()
   const tokens = getFormTokens(productFormStyle, { filled: inputFill })
+  const type = useCardCreateTypeScale()
 
   return (
-    <section className="flex flex-col gap-[12px]">
-      <h3 className={cn(tokens.sectionTitle, "font-[400]")}>Billing and shipping</h3>
-      <div className="flex flex-col gap-[7px]">
+    <section className={type.section}>
+      <h3 className={type.sectionTitle}>Billing and shipping</h3>
+      <div className={type.cardStack}>
         <ReviewRow title="Billing details" summary={billingDetailsSummary(details)} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
           <div className="flex flex-col gap-[12px]">
-            <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[400] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#6C7688]">Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
+            <div className="flex items-center justify-between gap-[12px]"><div><p className={type.matchCard ? tokens.toggleRow : "text-[12px] font-[400] text-[#273951]"}>Use account email</p><p className={`mt-[2px] ${type.helper}`}>Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
             {!details.useAccountEmailForBilling ? <Field label="Billing email"><input type="email" className={tokens.inputClass} placeholder={details.accountEmail || "billing@example.com"} value={details.billingEmail} onChange={(event) => onChange({ billingEmail: event.target.value })} /></Field> : null}
-            <div className="flex flex-col gap-[6px]">
-              <p className={tokens.labelClass}>Billing address</p>
+            <Field label="Billing address">
               <AddressFields
                 showCountry={false}
                 value={billingAddressValue(details)}
@@ -916,13 +1070,13 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
                   billingPhoneCountry: patch.phoneCountry ?? details.billingPhoneCountry,
                 })}
               />
-            </div>
+            </Field>
           </div>
         </ReviewRow>
         <ReviewRow title="Shipping details" summary={shippingDetailsSummary(details)} open={openRow === "shipping"} onToggle={() => setOpenRow(openRow === "shipping" ? null : "shipping")}>
           <div className="flex flex-col gap-[12px]">
             <div className="flex items-center justify-between gap-[12px]">
-              <p className="text-[12px] font-[400] text-[#273951]">Same as billing details</p>
+              <p className={type.matchCard ? tokens.toggleRow : "text-[12px] font-[400] text-[#273951]"}>Same as billing details</p>
               <Toggle checked={details.sameAsBilling} label="Same as billing details" onChange={(sameAsBilling) => onChange({ sameAsBilling })} />
             </div>
             {details.sameAsBilling ? null : (
@@ -969,6 +1123,39 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
   )
 }
 
+function groupCapabilitySections(items: CapabilityItem[], defaultTitle: string) {
+  const sections: { id: string; title: string; items: CapabilityItem[] }[] = []
+  const indexById = new Map<string, number>()
+  for (const item of items) {
+    const id = item.section ?? "default"
+    const title = id === "local" ? "Local payment methods" : defaultTitle
+    let index = indexById.get(id)
+    if (index === undefined) {
+      index = sections.length
+      indexById.set(id, index)
+      sections.push({ id, title, items: [] })
+    }
+    sections[index].items.push(item)
+  }
+  return sections
+}
+
+function groupItemsByCountry(items: CapabilityItem[]) {
+  const groups: { country: string; items: CapabilityItem[] }[] = []
+  const indexByCountry = new Map<string, number>()
+  for (const item of items) {
+    const country = item.country ?? "Other"
+    let index = indexByCountry.get(country)
+    if (index === undefined) {
+      index = groups.length
+      indexByCountry.set(country, index)
+      groups.push({ country, items: [] })
+    }
+    groups[index].items.push(item)
+  }
+  return groups
+}
+
 function CapabilitiesEditor({
   configurations,
   details,
@@ -980,15 +1167,9 @@ function CapabilitiesEditor({
   onChange: (patch: Partial<AccountDetailsDraft>) => void
   groupId: "merchant" | "recipient"
 }) {
-  const [query, setQuery] = useState("")
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([groupId])
-  const { productFormStyle } = useProductFormStyle()
-  const { inputFill } = useInputFill()
-  const tokens = getFormTokens(productFormStyle, { filled: inputFill })
+  const type = useCardCreateTypeScale()
   const requested = new Set(getCapabilities(configurations, details.disabledCapabilities, details.additionalCapabilities))
-  const normalizedQuery = query.trim().toLowerCase()
   const visibleGroups = CAPABILITY_GROUPS.filter((group) => group.id === groupId)
-  const previewLimit = 6
 
   const isChecked = (name: string) => requested.has(name)
   const toggleCapability = (name: string, required: boolean, checked: boolean) => {
@@ -1012,58 +1193,44 @@ function CapabilitiesEditor({
         : details.additionalCapabilities.filter((capability) => capability !== name),
     })
   }
-  const toggleGroup = (groupId: (typeof CAPABILITY_GROUPS)[number]["id"], checked: boolean) => {
-    const group = CAPABILITY_GROUPS.find((candidate) => candidate.id === groupId)
-    if (!group) return
-    const optional = group.items.filter((item) => !item.required).map((item) => item.name)
+  const toggleItems = (names: string[], checked: boolean) => {
     if (checked) {
       onChange({
-        additionalCapabilities: Array.from(new Set([...details.additionalCapabilities, ...optional])),
-        disabledCapabilities: details.disabledCapabilities.filter((capability) => !optional.includes(capability)),
+        additionalCapabilities: Array.from(new Set([...details.additionalCapabilities, ...names])),
+        disabledCapabilities: details.disabledCapabilities.filter((capability) => !names.includes(capability)),
       })
       return
     }
     onChange({
-      additionalCapabilities: details.additionalCapabilities.filter((capability) => !optional.includes(capability)),
+      additionalCapabilities: details.additionalCapabilities.filter((capability) => !names.includes(capability)),
     })
   }
 
   return (
-    <div className="flex flex-col gap-[12px]">
-      <input
-        className={tokens.inputClass}
-        placeholder="Search capabilities"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-      <div className="flex flex-col gap-[14px]">
+    <div className="flex flex-col">
         {visibleGroups.map((group) => {
-          const items = group.items.filter((item) => !normalizedQuery || item.name.toLowerCase().includes(normalizedQuery))
-          if (items.length === 0) return null
-          const expanded = Boolean(normalizedQuery) || expandedGroups.includes(group.id)
-          const visibleItems = expanded ? items : items.slice(0, previewLimit)
-          const hiddenCount = items.length - visibleItems.length
-          const optional = items.filter((item) => !item.required)
-          const allOptionalChecked = optional.length > 0 && optional.every((item) => isChecked(item.name))
+          const items = group.items
+          const sections = groupCapabilitySections(items, group.id === "merchant" ? "Core capabilities" : "Capabilities")
           return (
-            <div key={group.id}>
-              <div className="mb-[8px] flex items-center justify-between gap-[8px]">
-                <p className="text-[12px] font-[600] leading-[16px] text-[#273951]">{group.id === groupId ? "Capabilities" : group.title}</p>
-                {optional.length > 0 ? (
-                  <button
-                    type="button"
-                    className="text-[11px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]"
-                    onClick={() => toggleGroup(group.id, !allOptionalChecked)}
-                  >
-                    {allOptionalChecked ? "Clear" : "Select all"}
-                  </button>
-                ) : null}
-              </div>
-              <div className="flex flex-col gap-[8px]">
-                {visibleItems.map((item) => {
+            <div key={group.id} className="flex flex-col">
+              {sections.map((section, index) => {
+                const optional = section.items.filter((item) => !item.required).map((item) => item.name)
+                const allOptionalChecked = optional.length > 0 && optional.every((name) => isChecked(name))
+                const countryGroups = section.id === "local" ? groupItemsByCountry(section.items) : [{ country: "", items: section.items }]
+                const helper = section.id === "local"
+                  ? "Payment options commonly used in a specific country or region."
+                  : group.id === "merchant"
+                    ? "The standard way to accept payments in most countries."
+                    : null
+                const renderItem = (item: CapabilityItem) => {
                   const checked = isChecked(item.name)
                   return (
-                    <div key={item.name} className={`flex items-center gap-[8px] text-[12px] leading-[16px] ${item.required ? "text-[#818DA0]" : "text-[#273951]"}`}>
+                    <div
+                      key={item.name}
+                      className={`flex h-[28px] items-center gap-[8px] text-[14px] font-[400] leading-[20px] tracking-[-0.15px] ${
+                        item.required ? "text-[#818DA0]" : "text-[#273951]"
+                      }`}
+                    >
                       <Checkbox
                         checked={checked}
                         label={`${checked ? "Remove" : "Add"} ${item.name}`}
@@ -1073,46 +1240,42 @@ function CapabilitiesEditor({
                       {item.name}
                     </div>
                   )
-                })}
-                {hiddenCount > 0 ? (
-                  <button
-                    type="button"
-                    className="self-start text-[12px] font-[600] leading-[16px] text-[#533AFD] hover:text-[#4730E0]"
-                    onClick={() => setExpandedGroups((current) => [...current, group.id])}
+                }
+                return (
+                  <div
+                    key={`${group.id}-${section.id}`}
+                    className={index > 0 ? "mt-[16px] border-t border-[#ECF1F6] pt-[16px]" : undefined}
                   >
-                    Show {hiddenCount} more
-                  </button>
-                ) : null}
-              </div>
+                    <p className={type.fieldLabel}>{section.title}</p>
+                    {helper ? (
+                      <p className={`mt-[4px] ${type.helper}`}>{helper}</p>
+                    ) : null}
+                    <div className="mt-[8px] flex flex-col">
+                      {optional.length > 0 ? (
+                        <div className="flex h-[28px] items-center gap-[8px] text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]">
+                          <Checkbox
+                            checked={allOptionalChecked}
+                            label={allOptionalChecked ? "Clear all local payment methods" : "Select all local payment methods"}
+                            onChange={(next) => toggleItems(optional, next)}
+                          />
+                          Select all
+                        </div>
+                      ) : null}
+                      {countryGroups.map((countryGroup) => (
+                        <div key={countryGroup.country || "default"} className={countryGroup.country ? "mt-[12px]" : undefined}>
+                          {countryGroup.country ? (
+                            <p className="mb-[4px] text-[12px] font-[500] leading-[16px] text-[#818DA0]">{countryGroup.country}</p>
+                          ) : null}
+                          {countryGroup.items.map(renderItem)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-function ConfigurationCapabilitiesPage({
-  groupId,
-  configurations,
-  details,
-  onChange,
-}: {
-  groupId: "merchant" | "recipient"
-  configurations: ConfigurationKind[]
-  details: AccountDetailsDraft
-  onChange: (patch: Partial<AccountDetailsDraft>) => void
-}) {
-  const title = groupId === "merchant" ? "Merchant capabilities" : "Recipient capabilities"
-  const helper = "Select all the capabilities you want to enable. We’ve pre-filled some for you based on your onboarding preferences and country."
-
-  return (
-    <div className="flex flex-col gap-[16px] pb-[64px]">
-      <div>
-        <h3 className="truncate text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#1A2C44]">{title}</h3>
-        <p className="mt-[6px] text-[11px] leading-[16px] text-[#6C7688]">{helper}</p>
-      </div>
-      <CapabilitiesEditor groupId={groupId} configurations={configurations} details={details} onChange={onChange} />
     </div>
   )
 }
@@ -1121,10 +1284,11 @@ function OnboardingSection({ details, onChange }: { details: AccountDetailsDraft
   const { productFormStyle } = useProductFormStyle()
   const { inputFill } = useInputFill()
   const tokens = getFormTokens(productFormStyle, { filled: inputFill })
+  const type = useCardCreateTypeScale()
 
   return (
-    <section className="flex flex-col gap-[9px]" data-onboarding-placement="pre-save">
-      <div><h3 className={tokens.labelClass}>After creation</h3><p className="mt-[3px] text-[11px] leading-[16px] text-[#6C7688]">Choose how the account will finish providing any remaining information.</p></div>
+    <section className={type.section} data-onboarding-placement="pre-save">
+      <div><h3 className={type.sectionTitle}>After creation</h3><p className={`${type.headingHelper} ${type.helper}`}>Choose how the account will finish providing any remaining information.</p></div>
       <SegmentedControl
         value={details.onboardingAction}
         options={ONBOARDING_ACTION_OPTIONS}
@@ -1133,12 +1297,12 @@ function OnboardingSection({ details, onChange }: { details: AccountDetailsDraft
         variantOverride="segmented"
       />
       {details.onboardingAction === "send-email" ? (
-        <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] p-[11px]">
-          <div className="flex items-center justify-between gap-[12px]"><div><p className="text-[12px] font-[600] text-[#273951]">Use account email</p><p className="mt-[2px] text-[11px] leading-[15px] text-[#6C7688]">Send the secure onboarding link after creation.</p></div><Toggle checked={details.useAccountEmailForOnboarding} label="Use account email for onboarding" onChange={(useAccountEmailForOnboarding) => onChange({ useAccountEmailForOnboarding })} /></div>
+        <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] p-[12px]">
+          <div className="flex items-center justify-between gap-[12px]"><div><p className={type.matchCard ? tokens.toggleRow : "text-[12px] font-[600] text-[#273951]"}>Use account email</p><p className={`mt-[2px] ${type.helper}`}>Send the secure onboarding link after creation.</p></div><Toggle checked={details.useAccountEmailForOnboarding} label="Use account email for onboarding" onChange={(useAccountEmailForOnboarding) => onChange({ useAccountEmailForOnboarding })} /></div>
           {!details.useAccountEmailForOnboarding ? <div className="mt-[10px]"><Field label="Onboarding email"><input type="email" className={tokens.inputClass} placeholder="account@example.com" value={details.onboardingEmail} onChange={(event) => onChange({ onboardingEmail: event.target.value })} aria-invalid={details.onboardingEmail.length > 0 && !EMAIL_PATTERN.test(details.onboardingEmail)} /></Field></div> : null}
         </div>
       ) : (
-        <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] px-[11px] py-[10px]"><p className="text-[11px] leading-[16px] text-[#6C7688]">The secure link will be copied after the account is created.</p><p className="mt-[4px] truncate font-mono text-[10px] text-[#818DA0]">{ACCOUNT_ONBOARDING_LINK}</p></div>
+        <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] p-[12px]"><p className={type.helper}>The secure link will be copied after the account is created.</p><p className="mt-[4px] truncate font-mono text-[10px] text-[#818DA0]">{ACCOUNT_ONBOARDING_LINK}</p></div>
       )}
     </section>
   )
@@ -1153,7 +1317,6 @@ export function AccountConfigurationForm({
   configurations,
   existingConfigurations,
   userPath,
-  capabilityGroup,
   onChooseExisting,
   onPrepareNew,
   onChooseNew,
@@ -1161,7 +1324,6 @@ export function AccountConfigurationForm({
   onSelectExisting,
   onDetailsChange,
   onConfigurationsChange,
-  onOpenCapabilities,
 }: {
   selectionStyle: AccountSelectionStyle
   onboardingStyle: AccountOnboardingStyle
@@ -1171,7 +1333,6 @@ export function AccountConfigurationForm({
   configurations: ConfigurationKind[]
   existingConfigurations: ConfigurationKind[]
   userPath?: UserPath
-  capabilityGroup: "merchant" | "recipient" | null
   onChooseExisting: () => void
   onPrepareNew: () => void
   onChooseNew: () => void
@@ -1179,28 +1340,17 @@ export function AccountConfigurationForm({
   onSelectExisting: (account: NetworkAccount) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
   onConfigurationsChange: (next: ConfigurationKind[]) => void
-  onOpenCapabilities: (group: "merchant" | "recipient" | null) => void
 }) {
+  const type = useCardCreateTypeScale()
+  const refinedLookup = useRefinedEmailLookup(details.accountEmail, selectionStyle === "refined" && source === "new")
   const canConfigure = source === "new" || Boolean(selectedAccountId)
   const effectiveConfigurations = Array.from(new Set([...existingConfigurations, ...configurations]))
   const capabilityCounts = {
     merchant: getCapabilitiesForGroup("merchant", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities).length,
     recipient: getCapabilitiesForGroup("recipient", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities).length,
   }
-
-  if (capabilityGroup) {
-    return (
-      <ConfigurationCapabilitiesPage
-        groupId={capabilityGroup}
-        configurations={effectiveConfigurations}
-        details={details}
-        onChange={onDetailsChange}
-      />
-    )
-  }
-
   return (
-    <div className="flex flex-col gap-[18px] pb-[64px]">
+    <div className={type.stack}>
       <AccountSelector
         style={selectionStyle}
         source={source}
@@ -1210,9 +1360,13 @@ export function AccountConfigurationForm({
         onChooseExisting={onChooseExisting}
         onPrepareNew={onPrepareNew}
         onChooseNew={onChooseNew}
-        onClearSelected={onClearSelected}
         onSelectExisting={onSelectExisting}
         onDetailsChange={onDetailsChange}
+        lookupStatus={refinedLookup.status}
+        lookupMatch={refinedLookup.match}
+        dismissedMatchId={refinedLookup.dismissedMatchId}
+        onDismissMatch={refinedLookup.dismissMatch}
+        onCommitEmail={refinedLookup.commitNow}
       />
       {canConfigure ? (
         <ConfigurationPicker
@@ -1220,8 +1374,10 @@ export function AccountConfigurationForm({
           existing={existingConfigurations}
           userPath={userPath}
           capabilityCounts={capabilityCounts}
+          details={details}
           onChange={onConfigurationsChange}
-          onOpenCapabilities={onOpenCapabilities}
+          onDetailsChange={onDetailsChange}
+          isNewAccount={source === "new"}
         />
       ) : null}
       {configurations.includes("customer") ? <CustomerDetailsSection details={details} onChange={onDetailsChange} /> : null}

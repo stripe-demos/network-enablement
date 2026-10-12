@@ -4,16 +4,13 @@ import { useState } from "react"
 
 import { AccountConfigurationCreationEditor, type AccountConfigurationPayload } from "@/components/creation-workspace/AccountConfigurationCreationEditor"
 import { AccountConfigurationOptionsPopover } from "@/components/creation-workspace/AccountConfigurationOptionsPopover"
-import { CreationWorkspace } from "@/components/creation-workspace/CreationWorkspace"
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
 import { DemoContextBar } from "@/components/creation-workspace/DemoContextBar"
 import { AccountCompletionToast } from "@/components/creation-workspace/account-configuration/AccountConfigurationResult"
-import { UserPathPicker } from "@/components/creation-workspace/account-configuration/UserPathPicker"
-import type { UserPath } from "@/components/creation-workspace/account-configuration/model"
 import { AccountConflictNudgeModeProvider } from "@/components/creation-workspace/accountConflictNudgeMode"
 import { AccountOnboardingStyleProvider, useAccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
 import { AccountPropertiesLayoutProvider } from "@/components/creation-workspace/accountPropertiesLayout"
-import { AccountSelectionStyleProvider, useAccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
+import { AccountSelectionStyleProvider } from "@/components/creation-workspace/accountSelectionStyle"
 import { InputFillProvider } from "@/components/creation-workspace/inputFill"
 import { LayoutSplitProvider } from "@/components/creation-workspace/layoutSplit"
 import { ProductFormStyleProvider } from "@/components/creation-workspace/productFormStyle"
@@ -28,17 +25,13 @@ function DemoExperience({
   patternLabel?: string
   exampleLabel?: string
 }) {
-  const [userPath, setUserPath] = useState<UserPath | null>(null)
-  const [isEditorOpen, setIsEditorOpen] = useState(false)
+  const [isEditorOpen, setIsEditorOpen] = useState(true)
   const [runKey, setRunKey] = useState(0)
   const [accountCompletion, setAccountCompletion] = useState<AccountConfigurationPayload | null>(null)
   const { accountOnboardingStyle } = useAccountOnboardingStyle()
-  const { accountSelectionStyle } = useAccountSelectionStyle()
-  const canLaunch = Boolean(userPath)
-  const headerActionLabel = accountSelectionStyle === "no-picker" ? "Create account" : "Add"
+  const headerActionLabel = "Create account"
 
   const launch = () => {
-    if (!userPath) return
     setAccountCompletion(null)
     setRunKey((current) => current + 1)
     setIsEditorOpen(true)
@@ -55,12 +48,7 @@ function DemoExperience({
         headerAction={
           <button
             type="button"
-            disabled={!canLaunch}
-            className={`flex h-[32px] items-center gap-[6px] rounded-[7px] border px-[12px] text-[13px] font-[600] shadow-[0_1px_2px_rgba(20,34,52,0.06)] ${
-              canLaunch
-                ? "border-[#D4DEE9] bg-white text-[#1A2C44] hover:bg-[#F5F6F8]"
-                : "cursor-not-allowed border-[#E4E9EF] bg-[#F5F6F8] text-[#9CA3B0]"
-            }`}
+            className="flex h-[32px] items-center gap-[6px] rounded-[7px] border border-[#D4DEE9] bg-white px-[12px] text-[13px] font-[600] text-[#1A2C44] shadow-[0_1px_2px_rgba(20,34,52,0.06)] hover:bg-[#F5F6F8]"
             onClick={launch}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -71,24 +59,11 @@ function DemoExperience({
         }
       />
 
-      {!userPath ? (
-        <CreationWorkspace
-          mode="single"
-          presentation="large-modal"
-          isOpen
-          largeModalHugContent
-          hideHeader
-          skipEnterAnimation
-          header={null}
-          editor={<UserPathPicker onChoose={setUserPath} />}
-        />
-      ) : null}
-
-      {isEditorOpen && userPath ? (
+      {isEditorOpen ? (
         <AccountConfigurationCreationEditor
           key={runKey}
           isOpen
-          userPath={userPath}
+          userPath="platform"
           onClose={() => setIsEditorOpen(false)}
           onSubmit={setAccountCompletion}
         />
@@ -137,7 +112,7 @@ export function AccountConfigurationDemo({
       <SegmentedStyleProvider initial="segmented">
         <ProductFormStyleProvider initial="current" ignorePersisted>
           <LayoutSplitProvider initial="fixed" ignorePersisted>
-            <AccountSelectionStyleProvider initial="picker" ignorePersisted>
+            <AccountSelectionStyleProvider initial="refined" ignorePersisted>
               <AccountConflictNudgeModeProvider initial="automatic" ignorePersisted>
                 <AccountOnboardingStyleProvider initial="success-page" ignorePersisted>
                   <AccountPropertiesLayoutProvider initial="combined" ignorePersisted>

@@ -6,8 +6,10 @@ import { CreationWorkspace, type WorkspacePresentation } from "@/components/crea
 import { DashboardBackdrop } from "@/components/creation-workspace/DashboardBackdrop"
 import { DiscardConfirmOverlay } from "@/components/creation-workspace/DiscardConfirmOverlay"
 import { SimpleCreationHeader } from "@/components/creation-workspace/SimpleCreationHeader"
+import { CardCreateShell } from "@/components/creation-workspace/card-create/CardCreateShell"
 import { useAccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
 import { useAccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
+import { ProductFormStyleProvider } from "@/components/creation-workspace/productFormStyle"
 import { AccountConfigurationForm } from "@/components/creation-workspace/account-configuration/AccountConfigurationForm"
 import { AccountConfigurationPreview } from "@/components/creation-workspace/account-configuration/AccountConfigurationPreview"
 import { AccountSuccessPage, copyAccountOnboardingLink } from "@/components/creation-workspace/account-configuration/AccountConfigurationResult"
@@ -58,7 +60,6 @@ export function AccountConfigurationCreationEditor({
   const [selectedAccount, setSelectedAccount] = useState<NetworkAccount | null>(null)
   const [details, setDetails] = useState<AccountDetailsDraft>(INITIAL_ACCOUNT_DETAILS)
   const [configurations, setConfigurations] = useState<ConfigurationKind[]>([])
-  const [capabilityGroup, setCapabilityGroup] = useState<"merchant" | "recipient" | null>(null)
   const [completedPayload, setCompletedPayload] = useState<AccountConfigurationPayload | null>(null)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
@@ -67,12 +68,7 @@ export function AccountConfigurationCreationEditor({
   }
 
   useEffect(() => {
-    if (!isOpen) setCapabilityGroup(null)
-  }, [isOpen])
-
-  useEffect(() => {
-    setCapabilityGroup(null)
-    if (accountSelectionStyle === "no-picker") {
+    if (accountSelectionStyle === "current" || accountSelectionStyle === "refined") {
       setSource("new")
       setSelectedAccount(null)
       setDetails(INITIAL_ACCOUNT_DETAILS)
@@ -81,7 +77,7 @@ export function AccountConfigurationCreationEditor({
     }
     setSource("existing")
     setSelectedAccount(null)
-  }, [accountSelectionStyle])
+  }, [accountSelectionStyle, userPath])
 
   const selectExistingAccount = (account: NetworkAccount) => {
     setSource("existing")
@@ -109,6 +105,7 @@ export function AccountConfigurationCreationEditor({
 
   const chooseNew = () => {
     setSource("new")
+    setConfigurations([])
   }
 
   const clearSelectedAccount = () => {
@@ -116,7 +113,6 @@ export function AccountConfigurationCreationEditor({
     setSelectedAccount(null)
     setDetails(INITIAL_ACCOUNT_DETAILS)
     setConfigurations([])
-    setCapabilityGroup(null)
   }
 
   const accountReady = source === "existing" ? Boolean(selectedAccount) : isNewAccountIdentityValid(details)
@@ -225,11 +221,62 @@ export function AccountConfigurationCreationEditor({
     )
   }
 
-  const noPicker = accountSelectionStyle === "no-picker"
+  const noPicker = accountSelectionStyle === "current" || accountSelectionStyle === "refined"
   const creatingWithoutPicker = noPicker && source === "new"
   const parentTitle = creatingWithoutPicker ? "Create account" : "Add configurations"
-  const capabilityTitle = capabilityGroup === "merchant" ? "Merchant capabilities" : capabilityGroup === "recipient" ? "Recipient capabilities" : null
   const submitLabel = "Save"
+  const overlay = showDiscardConfirm ? (
+    <DiscardConfirmOverlay
+      title="Discard changes?"
+      description="Your progress on this account will be lost."
+      onKeepEditing={() => setShowDiscardConfirm(false)}
+      onDiscard={onClose}
+    />
+  ) : null
+  const form = (
+    <AccountConfigurationForm
+      selectionStyle={accountSelectionStyle}
+      onboardingStyle={accountOnboardingStyle}
+      source={source}
+      selectedAccountId={selectedAccount?.id ?? ""}
+      details={details}
+      configurations={configurations}
+      existingConfigurations={source === "existing" ? selectedAccount?.configurations ?? [] : []}
+      userPath={userPath}
+      onChooseExisting={chooseExisting}
+      onPrepareNew={prepareNew}
+      onChooseNew={chooseNew}
+      onClearSelected={clearSelectedAccount}
+      onSelectExisting={selectExistingAccount}
+      onDetailsChange={updateDetails}
+      onConfigurationsChange={setConfigurations}
+    />
+  )
+  const preview = (
+    <div className="relative flex h-full min-h-0 w-full overflow-hidden">
+      <AccountConfigurationPreview source={source} selectedAccount={selectedAccount} configurations={configurations} details={details} userPath={userPath} />
+    </div>
+  )
+
+  if (accountSelectionStyle === "refined") {
+    return (
+      <ProductFormStyleProvider initial="sail" ignorePersisted>
+        <CardCreateShell
+          title={parentTitle}
+          isOpen={isOpen}
+          embedded={embedded}
+          form={form}
+          preview={preview}
+          overlay={overlay}
+          onDiscard={requestDiscard}
+          onSubmit={handleSubmit}
+          submitLabel={submitLabel}
+          submitDisabled={!readyToSubmit}
+          submitDisabledReason={submitDisabledReason}
+        />
+      </ProductFormStyleProvider>
+    )
+  }
 
   return (
     <CreationWorkspace
@@ -240,9 +287,7 @@ export function AccountConfigurationCreationEditor({
       skipEnterAnimation
       header={
         <SimpleCreationHeader
-          title={capabilityTitle ?? parentTitle}
-          parentLabel={capabilityTitle ? parentTitle : undefined}
-          onNavigateToParent={capabilityTitle ? () => setCapabilityGroup(null) : undefined}
+          title={parentTitle}
           onDiscard={requestDiscard}
           onSubmit={handleSubmit}
           submitLabel={submitLabel}
@@ -251,42 +296,9 @@ export function AccountConfigurationCreationEditor({
           discardLabel="Discard"
         />
       }
-      overlay={
-        showDiscardConfirm ? (
-          <DiscardConfirmOverlay
-            title="Discard changes?"
-            description="Your progress on this account will be lost."
-            onKeepEditing={() => setShowDiscardConfirm(false)}
-            onDiscard={onClose}
-          />
-        ) : null
-      }
-      editor={
-        <AccountConfigurationForm
-          selectionStyle={accountSelectionStyle}
-          onboardingStyle={accountOnboardingStyle}
-          source={source}
-          selectedAccountId={selectedAccount?.id ?? ""}
-          details={details}
-          configurations={configurations}
-          existingConfigurations={source === "existing" ? selectedAccount?.configurations ?? [] : []}
-          userPath={userPath}
-          onChooseExisting={chooseExisting}
-          onPrepareNew={prepareNew}
-          onChooseNew={chooseNew}
-          onClearSelected={clearSelectedAccount}
-          onSelectExisting={selectExistingAccount}
-          onDetailsChange={updateDetails}
-          onConfigurationsChange={setConfigurations}
-          capabilityGroup={capabilityGroup}
-          onOpenCapabilities={setCapabilityGroup}
-        />
-      }
-      preview={
-        <div className="relative flex h-full min-h-0 w-full overflow-hidden">
-          <AccountConfigurationPreview source={source} selectedAccount={selectedAccount} configurations={configurations} details={details} userPath={userPath} />
-        </div>
-      }
+      overlay={overlay}
+      editor={form}
+      preview={preview}
     />
   )
 }

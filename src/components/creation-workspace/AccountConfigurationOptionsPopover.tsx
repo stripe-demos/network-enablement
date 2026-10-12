@@ -25,24 +25,14 @@ const SELECTION_OPTIONS: ReadonlyArray<{
   description: string
 }> = [
   {
-    value: "picker",
-    label: "Picker",
-    description: "Create a new account inline from the Account field.",
-  },
-  {
-    value: "no-picker",
-    label: "No picker",
+    value: "current",
+    label: "Current",
     description: "Skip the account field and start a new account form.",
   },
   {
-    value: "related-modal",
-    label: "Modal",
-    description: "Create the account in a Simple modal, then return here.",
-  },
-  {
-    value: "source-toggle",
-    label: "Toggle",
-    description: "Switch between existing and new account forms.",
+    value: "refined",
+    label: "Refined",
+    description: "Start with email. A match appears if one exists; otherwise the rest of the form reveals.",
   },
 ]
 
@@ -226,7 +216,7 @@ export function AccountConfigurationOptionsPopover() {
 
         <div className="mt-[13px] border-t border-[#EBEEF1] pt-[12px]">
           <p className="text-[11px] font-[600] leading-[16px] text-[#526378]">Account selection</p>
-          <div role="group" aria-label="Account selection" className="mt-[6px] grid grid-cols-4 gap-[2px] rounded-[7px] bg-[#F1F4F7] p-[2px]">
+          <div role="group" aria-label="Account selection" className="mt-[6px] grid grid-cols-2 gap-[2px] rounded-[7px] bg-[#F1F4F7] p-[2px]">
             {SELECTION_OPTIONS.map((option) => {
               const selected = accountSelectionStyle === option.value
               return (

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 
 import FlagIcon from "@/send-flow/prototypes/prototype2/ui/FlagIcon"
 import { SelectControl } from "@/components/creation-workspace/account-configuration/AccountConfigurationPrimitives"
+import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 
 export type PhoneCountry = "US" | "CA" | "GB"
 
@@ -60,8 +61,8 @@ function regionOptionsForCountry(country: string) {
 
 function Chevron() {
   return (
-    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#6C7688]">
-      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="shrink-0 text-[#6C7688]">
+      <path d="M3 4.5L6 7.5L9 4.5" stroke="#6C7688" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -87,6 +88,8 @@ function FlagMenu<T extends string>({
   menuRef: RefObject<HTMLDivElement | null>
   onSelect: (id: T) => void
 }) {
+  const { productFormStyle } = useProductFormStyle()
+  const matchCard = productFormStyle === "sail"
   if (!open) return null
   return createPortal(
     <div
@@ -98,7 +101,11 @@ function FlagMenu<T extends string>({
         <button
           key={item.id}
           type="button"
-          className={`flex w-full items-center gap-[8px] px-[10px] py-[6px] text-left text-[12px] leading-[16px] text-[#1A2C44] hover:bg-[#F8FAFB] ${item.id === value ? "bg-[#F8F7FF]" : ""}`}
+          className={`flex w-full items-center gap-[8px] px-[10px] py-[6px] text-left hover:bg-[#F5F6F8] ${
+            matchCard
+              ? "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
+              : "text-[12px] leading-[16px] text-[#1A2C44]"
+          } ${item.id === value ? "bg-[#F8F7FF]" : ""}`}
           onClick={() => onSelect(item.id)}
         >
           <Flag code={item.code} />
@@ -214,7 +221,7 @@ export function CountrySelect({
         aria-label={ariaLabel}
         aria-expanded={menu.open}
         data-styled-select
-        className={`${className} flex items-center gap-[8px] !pr-[10px] text-left ${selected ? "" : "font-[400] text-[#6C7688]"}`}
+        className={`${className} flex items-center gap-[8px] text-left ${selected ? "" : "font-[400] text-[#6C7688]"}`}
         onMouseDown={(event) => event.preventDefault()}
         onClick={(event) => {
           event.preventDefault()

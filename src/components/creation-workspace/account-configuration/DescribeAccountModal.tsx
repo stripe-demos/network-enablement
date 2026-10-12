@@ -8,7 +8,6 @@ import { useProductFormStyle } from "@/components/creation-workspace/productForm
 
 import {
   CONFIGURATION_OPTIONS,
-  explainRecommendedConfigurations,
   highlightAccountDescription,
   recommendConfigurationsFromDescription,
   type ClassificationHighlight,
@@ -25,6 +24,8 @@ export function DescribeAccountModal({
   userPath,
   existing,
   selected,
+  initialStep = "describe",
+  initialRecommended,
   onClose,
   onApply,
 }: {
@@ -32,13 +33,14 @@ export function DescribeAccountModal({
   userPath?: UserPath
   existing: ConfigurationKind[]
   selected: ConfigurationKind[]
+  initialStep?: "describe" | "recommend"
+  initialRecommended?: ConfigurationKind[]
   onClose: () => void
   onApply: (next: ConfigurationKind[]) => void
 }) {
   const { productFormStyle } = useProductFormStyle()
   const tokens = getFormTokens(productFormStyle)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const bodyRef = useRef<HTMLDivElement>(null)
   const recommendAbort = useRef<AbortController | null>(null)
   const highlightAbort = useRef<AbortController | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -52,7 +54,6 @@ export function DescribeAccountModal({
   const [isRecording, setIsRecording] = useState(false)
   const [micStream, setMicStream] = useState<MediaStream | null>(null)
   const [voiceError, setVoiceError] = useState<string | null>(null)
-  const [bodyHeight, setBodyHeight] = useState<number>()
   const [highlights, setHighlights] = useState<ClassificationHighlight[]>([])
   const [highlightPending, setHighlightPending] = useState(false)
   const voiceRingRef = useRef<HTMLDivElement>(null)
@@ -75,12 +76,19 @@ export function DescribeAccountModal({
         return null
       })
       setVoiceError(null)
-      setBodyHeight(undefined)
       setHighlights([])
       setHighlightPending(false)
       spokenBaseRef.current = ""
+      return
     }
-  }, [isOpen])
+    if (initialStep === "recommend") {
+      const next = (initialRecommended ?? []).filter((id) => !existing.includes(id))
+      setStep("recommend")
+      setRecommended(next)
+      setPicked(next)
+      setStatus("ready")
+    }
+  }, [existing, initialRecommended, initialStep, isOpen])
 
   useEffect(() => {
     if (!isOpen || step !== "describe") return
@@ -168,14 +176,14 @@ export function DescribeAccountModal({
     setIsRecording(true)
   }
 
-  const explanations = explainRecommendedConfigurations(recommended)
+  const showSaasWhy = initialStep === "recommend"
+    && recommended.includes("customer")
+    && recommended.includes("merchant")
   const canContinue = description.trim().length > 0 && status !== "thinking"
   const canApply = step === "recommend" && picked.length > 0
 
   const continueFromDescription = async () => {
     if (!canContinue) return
-    const nextHeight = bodyRef.current?.offsetHeight
-    if (nextHeight) setBodyHeight(nextHeight)
     stopMicrophone(micStream)
     setMicStream(null)
     setIsRecording(false)
@@ -239,10 +247,7 @@ export function DescribeAccountModal({
     <CreationModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={step === "recommend" ? "Recommended configurations" : "Tell us about this account"}
-      subtitle={step === "recommend"
-        ? "Based on your description, here’s what we recommend."
-        : "Describe how this account uses your platform and how money moves between you."}
+      title={step === "recommend" ? "Recommended configurations" : "Tell us about the account"}
       modalWidth="w-[560px]"
       headerActions={
         <button
@@ -259,20 +264,22 @@ export function DescribeAccountModal({
       footer={
         <div className={`flex items-center gap-[12px] border-t border-[#ECF1F6] bg-white px-[20px] py-[12px] ${step === "recommend" ? "justify-between" : "justify-end"}`}>
           {step === "recommend" ? (
-            <p className={`${tokens.helperClass} min-w-0`}>
-              For more details,{" "}
-              <a
-                href="https://docs.stripe.com/connect/accounts"
-                target="_blank"
-                rel="noreferrer"
+            <p className="min-w-0 text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#596171]">
+              Still unsure?{" "}
+              <button
+                type="button"
                 className="font-[500] text-[#533AFD] transition-colors hover:text-[#4730E0]"
+                onClick={() => {
+                  setStep("describe")
+                  setStatus("idle")
+                }}
               >
-                view docs
-              </a>
+                Describe this account to us.
+              </button>
             </p>
           ) : null}
           <div className="flex shrink-0 items-center gap-[8px]">
-            {step === "recommend" ? (
+            {step === "recommend" && initialStep !== "recommend" ? (
               <button
                 type="button"
                 className={tokens.secondaryButtonClass}
@@ -298,13 +305,12 @@ export function DescribeAccountModal({
         </div>
       }
     >
-      <div
-        ref={bodyRef}
-        className="flex min-h-0 flex-col gap-[16px] overflow-y-auto px-[20px] py-[16px]"
-        style={bodyHeight ? { height: bodyHeight } : undefined}
-      >
+      <div className="min-h-[240px] overflow-y-auto px-[20px] py-[16px]">
         {step === "describe" ? (
         <div>
+          <p className="mb-[6px] text-[13px] font-[400] leading-[20px] tracking-[-0.08px] text-[#353A44]">
+            Describe how this account uses your platform and how money moves between you.
+          </p>
           <div className={`relative isolate overflow-hidden rounded-[12px] bg-white ${isRecording ? "border border-transparent" : "border border-[#E6EAF0]"}`}>
             {isRecording ? (
               <>
@@ -329,12 +335,12 @@ export function DescribeAccountModal({
                 />
               </>
             ) : null}
-            <div className="relative z-[2] min-h-[132px]">
+            <div className="relative z-[2]">
               {description ? (
                 <div
                   ref={overlayRef}
                   aria-hidden="true"
-                  className={`pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-[12px] pb-[6px] pt-[12px] text-[12px] font-[400] leading-[16px] tracking-[-0.024px] text-[#353A44] ${highlightPending ? "t-jev-mark-pending" : ""}`}
+                  className={`pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-[12px] pb-[6px] pt-[12px] text-[13px] font-[400] leading-[20px] tracking-[-0.08px] text-[#353A44] ${highlightPending ? "t-jev-mark-pending" : ""}`}
                 >
                   <HighlightedDescription text={description} highlights={highlights} />
                 </div>
@@ -342,7 +348,7 @@ export function DescribeAccountModal({
               <textarea
                 autoFocus
                 maxLength={DESCRIPTION_LIMIT}
-                className={`relative min-h-[132px] w-full resize-none border-0 bg-transparent px-[12px] pb-[6px] pt-[12px] text-[12px] font-[400] leading-[16px] tracking-[-0.024px] outline-none ${
+                className={`relative min-h-[160px] w-full resize-none border-0 bg-transparent px-[12px] pb-[6px] pt-[12px] text-[13px] font-[400] leading-[20px] tracking-[-0.08px] outline-none ${
                   description
                     ? "text-transparent caret-[#353A44] selection:bg-[#533AFD]/20"
                     : "text-[#353A44] placeholder:text-[#8B95A3]"
@@ -381,14 +387,14 @@ export function DescribeAccountModal({
               </button>
               <button
                 type="button"
-                className="flex h-[24px] items-center gap-[5px] rounded-[6px] bg-[#F1F3F5] px-[8px] text-[11px] font-[500] leading-[16px] text-[#3C4257] transition-colors hover:bg-[#E8ECF0]"
+                className="flex h-[28px] items-center gap-[6px] rounded-[6px] bg-[#F1F3F5] px-[8px] text-[13px] font-[500] leading-[18px] text-[#3C4257] transition-colors hover:bg-[#E8ECF0]"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <PlusIcon />
                 Add files or photos
               </button>
               {files.map((file) => (
-                <span key={`${file.name}-${file.size}`} className="flex h-[24px] max-w-[180px] items-center gap-[5px] rounded-[6px] bg-[#F1F3F5] px-[8px] text-[11px] leading-[16px] text-[#3C4257]">
+                <span key={`${file.name}-${file.size}`} className="flex h-[28px] max-w-[180px] items-center gap-[6px] rounded-[6px] bg-[#F1F3F5] px-[8px] text-[13px] leading-[18px] text-[#3C4257]">
                   <span className="truncate">{file.name}</span>
                   <button
                     type="button"
@@ -413,7 +419,7 @@ export function DescribeAccountModal({
                 }}
               />
             </div>
-            <span className="pointer-events-none absolute bottom-[8px] right-[12px] z-[2] text-[11px] leading-[16px] text-[#6C7688]">
+            <span className="pointer-events-none absolute bottom-[8px] right-[12px] z-[2] text-[13px] leading-[18px] text-[#6C7688]">
               {description.length.toLocaleString()}/{DESCRIPTION_LIMIT.toLocaleString()}
             </span>
           </div>
@@ -421,23 +427,106 @@ export function DescribeAccountModal({
             <HighlightLegend highlights={highlights} listening={isRecording && highlightPending} />
           ) : null}
           {voiceError ? (
-            <p className="mt-[8px] text-[11px] leading-[16px] text-[#C45500]">{voiceError}</p>
+            <p className="mt-[8px] text-[13px] leading-[18px] text-[#C45500]">{voiceError}</p>
           ) : null}
         </div>
-        ) : explanations.length > 0 ? (
-          <div className="flex flex-col gap-[16px]">
-            {explanations.map((item) => (
-              <div key={item.id}>
-                <p className="text-[13px] font-[650] leading-[18px] text-[#1A2C44]">{item.title}</p>
-                <p className="mt-[4px] text-[12px] leading-[18px] text-[#596171]">{item.body}</p>
-              </div>
-            ))}
-          </div>
         ) : (
-          <p className="text-[12px] leading-[18px] text-[#6C7688]">No new configurations to add for this account.</p>
+          <RecommendedResult ids={recommended} saasWhy={showSaasWhy} />
         )}
       </div>
     </CreationModalShell>
+  )
+}
+
+const RESULT_HEADING = "text-[14px] font-[500] leading-[20px] tracking-[-0.08px] text-[#1A2C44]"
+const RESULT_BODY = "mt-[6px] text-[13px] font-[400] leading-[20px] tracking-[-0.08px] text-[#353A44]"
+const RESULT_STACK = "flex flex-col gap-[16px]"
+
+function BoldName({ children }: { children: string }) {
+  return <span className="font-[600]">{children}</span>
+}
+
+function recommendedTitles(ids: ConfigurationKind[]) {
+  return ids.flatMap((id) => {
+    const option = CONFIGURATION_OPTIONS.find((candidate) => candidate.id === id)
+    return option ? [option.title] : []
+  })
+}
+
+function RecommendedCombination({ ids }: { ids: ConfigurationKind[] }) {
+  const titles = recommendedTitles(ids)
+  if (titles.length === 0) return <>No new configurations to add for this account.</>
+  if (titles.length === 1) return <>The <BoldName>{titles[0]}</BoldName> configuration.</>
+  if (titles.length === 2) {
+    return <>A combination of <BoldName>{titles[0]}</BoldName> and <BoldName>{titles[1]}</BoldName>.</>
+  }
+  return (
+    <>
+      A combination of{" "}
+      {titles.slice(0, -1).map((title, index) => (
+        <span key={title}>
+          {index > 0 ? ", " : null}
+          <BoldName>{title}</BoldName>
+        </span>
+      ))}
+      , and <BoldName>{titles[titles.length - 1]!}</BoldName>.
+    </>
+  )
+}
+
+const WHY_CLAUSE: Record<ConfigurationKind, string> = {
+  customer: "lets them make one-time or recurring payments to you",
+  merchant: "lets this account accept payments from their own customers",
+  recipient: "lets them receive transfers or payouts from you",
+}
+
+function RecommendedWhy({ ids, saasWhy }: { ids: ConfigurationKind[]; saasWhy: boolean }) {
+  if (saasWhy) {
+    return (
+      <>
+        You run a platform for yoga studios. The <BoldName>Merchant</BoldName> configuration lets a studio charge their clients directly. The <BoldName>Customer</BoldName> configuration lets a studio use the money they earned to pay your subscription fees.
+      </>
+    )
+  }
+  const clauses = ids.filter((id) => Boolean(WHY_CLAUSE[id]))
+  if (clauses.length === 0) return <>We don’t have a new configuration to add from that description.</>
+  return (
+    <>
+      {clauses.map((id, index) => {
+        const option = CONFIGURATION_OPTIONS.find((candidate) => candidate.id === id)
+        if (!option) return null
+        return (
+          <span key={id}>
+            {index === 0 ? "The " : " and the "}
+            <BoldName>{option.title}</BoldName>
+            {" "}configuration {WHY_CLAUSE[id]}
+          </span>
+        )
+      })}
+      .
+    </>
+  )
+}
+
+function RecommendedResult({ ids, saasWhy }: { ids: ConfigurationKind[]; saasWhy: boolean }) {
+  if (ids.length === 0) {
+    return (
+      <p className="text-[13px] font-[400] leading-[20px] tracking-[-0.08px] text-[#353A44]">
+        No new configurations to add for this account.
+      </p>
+    )
+  }
+  return (
+    <div className={RESULT_STACK}>
+      <div>
+        <p className={RESULT_HEADING}>What we recommend</p>
+        <p className={RESULT_BODY}><RecommendedCombination ids={ids} /></p>
+      </div>
+      <div>
+        <p className={RESULT_HEADING}>Why?</p>
+        <p className={RESULT_BODY}><RecommendedWhy ids={ids} saasWhy={saasWhy} /></p>
+      </div>
+    </div>
   )
 }
 
@@ -495,14 +584,14 @@ function HighlightLegend({
         const option = CONFIGURATION_OPTIONS.find((candidate) => candidate.id === id)
         if (!option) return null
         return (
-          <span key={id} className="inline-flex items-center gap-[5px] text-[11px] leading-[16px] text-[#596171]">
+          <span key={id} className="inline-flex items-center gap-[6px] text-[13px] leading-[18px] text-[#596171]">
             <span className={`h-[7px] w-[7px] rounded-full ${HIGHLIGHT_DOT[id]}`} />
             {option.title}
           </span>
         )
       })}
       {listening ? (
-        <span className="text-[11px] leading-[16px] text-[#8B95A3]">
+        <span className="text-[13px] leading-[18px] text-[#8B95A3]">
           {kinds.length > 0 ? "Updating from Jev…" : "Listening for account shape…"}
         </span>
       ) : null}

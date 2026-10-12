@@ -77,6 +77,12 @@ const currentModalTitle = "text-[14px] font-[600] leading-[20px] tracking-[-0.15
 const currentCloseButton =
   "flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-[#6C7688] transition-colors hover:bg-[#F5F6F8]"
 
+const sailPrimaryButton =
+  "flex h-[28px] items-center whitespace-nowrap rounded-[6px] bg-[#675DFF] px-[8px] text-[14px] font-[600] leading-[20px] tracking-[-0.15px] text-white shadow-[0px_1px_1px_0px_rgba(20,19,78,0.32),0px_0px_0px_1px_#625AFA] transition-colors hover:bg-[#5B52F0]"
+const sailSecondaryButton =
+  "flex h-[28px] items-center rounded-[6px] bg-white px-[8px] text-[14px] font-[600] leading-[20px] tracking-[-0.15px] text-[#353A44] shadow-[0px_1px_1px_0px_rgba(26,27,37,0.16),0px_0px_0px_1px_#D5DBE1] transition-colors hover:bg-[#F5F6F8]"
+const sailModalTitle = "text-[15px] font-[600] leading-[20px] tracking-[-0.15px] text-[#1A2C44]"
+
 const refreshPrimaryButton =
   "flex h-[32px] items-center justify-center gap-[6px] rounded-full bg-[#142234] px-[12px] text-[13px] font-[500] leading-[20px] tracking-[-0.065px] text-white transition-colors hover:bg-[#0F1A28]"
 const refreshSecondaryButton =
@@ -99,9 +105,9 @@ export function getFormTokens(style: ProductFormStyle, options?: { filled?: bool
       toggleRow: "flex items-center justify-between text-[14px] font-[600] leading-[20px] tracking-[-0.15px] text-[#273951]",
       checkboxText: "text-[14px] font-[600] leading-[20px] tracking-[-0.15px] text-[#273951]",
       sectionTitle: "text-[16px] font-[600] leading-[24px] tracking-[-0.31px] text-[#1A2C44]",
-      primaryButtonClass: currentPrimaryButton,
-      secondaryButtonClass: currentSecondaryButton,
-      modalTitleClass: currentModalTitle,
+      primaryButtonClass: sailPrimaryButton,
+      secondaryButtonClass: sailSecondaryButton,
+      modalTitleClass: sailModalTitle,
       closeButtonClass: currentCloseButton,
       toggle: {
         trackClass: "h-[20px] w-[38px]",

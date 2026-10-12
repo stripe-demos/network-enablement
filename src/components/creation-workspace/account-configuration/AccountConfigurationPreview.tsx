@@ -4,9 +4,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { motion, useReducedMotion } from "framer-motion"
 
 import { AccountApiPreview } from "./AccountApiPreview"
-import { FieldHint } from "./AccountConfigurationForm"
-import { AccountAvatar, CheckIcon, CountryBadge } from "./AccountConfigurationPrimitives"
+import { AccountAvatar, CheckIcon, CountryBadge, useCardCreateTypeScale } from "./AccountConfigurationPrimitives"
 import {
+  EMAIL_PATTERN,
   getCapabilitiesForGroup,
   getConfigurationOptions,
   getDraftName,
@@ -14,12 +14,15 @@ import {
   type AccountSource,
   type ConfigurationKind,
   type NetworkAccount,
+  type PayoutMethod,
   type UserPath,
 } from "./model"
 
 const SHOW_API_PREVIEW = true
 const EXPAND_MS = 280
 const EXPAND_EASE = "cubic-bezier(0.22, 1, 0.36, 1)"
+
+type PreviewMode = "dashboard" | "api"
 
 function Expand({
   open,
@@ -47,62 +50,154 @@ function ConfigurationCapabilityGroup({
   id,
   title,
   capabilities,
-  expanded,
-  onToggle,
-  collapsible,
 }: {
   id: string
   title: string
   capabilities: string[]
-  expanded: boolean
-  onToggle: () => void
-  collapsible: boolean
 }) {
-  const showChildren = !collapsible || expanded
+  const type = useCardCreateTypeScale()
   const capabilityCount = capabilities.length
   const capabilityLabel = capabilityCount === 0 ? "" : capabilityCount === 1 ? "1 capability" : `${capabilityCount} capabilities`
+  const previewLimit = 6
+  const [showAll, setShowAll] = useState(false)
+  const visibleCapabilities = showAll || capabilityCount <= previewLimit
+    ? capabilities
+    : capabilities.slice(0, previewLimit)
+  const hiddenCount = capabilityCount - visibleCapabilities.length
 
   return (
     <div data-preview-configuration={id}>
-      {collapsible ? (
-        <button
-          type="button"
-          className="flex w-full items-center gap-[8px] text-left"
-          aria-expanded={expanded}
-          onClick={onToggle}
-        >
-          <CheckIcon />
-          <span className="min-w-0 text-[12px] font-[600] leading-[16px] text-[#2C219E]">{title}</span>
-          <span className="ml-auto flex items-center">
-            <span className={`mr-[8px] text-[12px] leading-[16px] text-[#818DA0] transition-opacity duration-200 ${expanded ? "opacity-0" : "opacity-100"}`}>
-              {capabilityLabel}
-            </span>
-            <svg className={`shrink-0 text-[#6C7688] transition-transform duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${expanded ? "rotate-180" : ""}`} width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-        </button>
-      ) : (
-        <div className="flex w-full items-center gap-[8px]">
-          <CheckIcon />
-          <span className="text-[12px] font-[600] leading-[16px] text-[#2C219E]">{title}</span>
-        </div>
-      )}
-      {capabilities.length > 0 ? (
-        <Expand open={showChildren}>
-          <div className="ml-[8px] mt-[8px] border-l border-[#D4DEE9] pl-[16px]">
-            <div className="flex flex-col gap-[8px]">
-              {capabilities.map((capability) => (
-                <div key={capability} data-preview-capability={capability} data-enabled="true" className="min-w-0">
-                  <span className="text-[12px] leading-[18px] text-[#3C4F69]">{capability}</span>
-                </div>
-              ))}
-            </div>
+      <div className="flex w-full items-center gap-[8px]">
+        <CheckIcon />
+        <span className={type.previewConfig}>{title}</span>
+      </div>
+      {capabilityCount > 0 ? (
+        <div className="ml-[24px] mt-[10px] border-l border-[#E3E8EF] pl-[12px]">
+          <p className="mb-[6px] text-[12px] font-[400] leading-[16px] text-[#818DA0]">{capabilityLabel}</p>
+          <div className="flex flex-col gap-[6px]">
+            {visibleCapabilities.map((capability) => (
+              <div key={capability} data-preview-capability={capability} data-enabled="true" className="min-w-0">
+                <span className={type.previewCapability}>{capability}</span>
+              </div>
+            ))}
           </div>
-        </Expand>
+          {hiddenCount > 0 ? (
+            <button
+              type="button"
+              className={`mt-[6px] ${type.previewEmpty} hover:text-[#4730E0]`}
+              onClick={() => setShowAll(true)}
+            >
+              Show {hiddenCount} more
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   )
+}
+
+function paymentMethodLabel(name: string) {
+  const stripped = name.replace(/ payments$/i, "").trim()
+  return stripped.toLowerCase() === "card" ? "card" : stripped
+}
+
+function joinPhraseList(items: string[]) {
+  if (items.length <= 1) return items[0] ?? ""
+  if (items.length === 2) return `${items[0]} and ${items[1]}`
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`
+}
+
+function acceptPaymentsPhrase(capabilities: string[]) {
+  const names = capabilities.map(paymentMethodLabel)
+  if (names.length === 0) return "accept payments from its own users"
+  if (names.length <= 3) return `use ${joinPhraseList(names)} to accept payments from its own users`
+  const others = names.length - 3
+  return `use ${names[0]}, ${names[1]}, ${names[2]}, and ${others} other way${others === 1 ? "" : "s"} to accept payments from its own users`
+}
+
+const PAYOUT_DESTINATION: Record<PayoutMethod, string> = {
+  "stripe-balance": "Stripe balance",
+  "bank-account": "bank account",
+  "debit-card": "debit card",
+}
+
+function sendMoneyDestination(payoutMethods: PayoutMethod[]) {
+  const labels = payoutMethods.map((method) => PAYOUT_DESTINATION[method]).filter(Boolean)
+  if (labels.length === 0) return "this account"
+  if (labels.length === 1) return `this account's ${labels[0]}`
+  if (labels.length === 2) return `this account's ${labels[0]} or ${labels[1]}`
+  return `this account's ${labels.slice(0, -1).join(", ")}, or ${labels[labels.length - 1]}`
+}
+
+const PLATFORM_NAME = "Mindbody"
+
+function sendMoneyPhrase(payoutMethods: PayoutMethod[], also: boolean) {
+  const alsoWord = also ? " also" : ""
+  return `${PLATFORM_NAME} can${alsoWord} send money to ${sendMoneyDestination(payoutMethods)}.`
+}
+
+function describeFundsFlow({
+  merchant,
+  customer,
+  recipient,
+  merchantCapabilities,
+  payoutMethods,
+  accountName,
+}: {
+  merchant: boolean
+  customer: boolean
+  recipient: boolean
+  merchantCapabilities: string[]
+  payoutMethods: PayoutMethod[]
+  accountName?: string
+}) {
+  const subject = accountName?.trim() && accountName !== "New account" ? accountName.trim() : "This account"
+  const collect = merchant
+    ? `${subject} can ${acceptPaymentsPhrase(merchantCapabilities)}.`
+    : ""
+  const payYou = merchant
+    ? `It can then use this money to pay ${PLATFORM_NAME} a one-time or recurring subscription fee.`
+    : `${subject} can pay ${PLATFORM_NAME} a one-time or recurring subscription fee.`
+  const fromYou = sendMoneyPhrase(payoutMethods, false)
+  const alsoFromYou = sendMoneyPhrase(payoutMethods, true)
+
+  if (merchant && customer && recipient) return `${collect} ${payYou} ${alsoFromYou}`
+  if (merchant && customer) return `${collect} ${payYou}`
+  if (merchant && recipient) return `${collect} ${alsoFromYou}`
+  if (customer && recipient) return `${payYou} ${alsoFromYou}`
+  if (merchant) return collect
+  if (customer) return payYou
+  if (recipient) return fromYou
+  return ""
+}
+
+function FundsFlowLines({
+  configurations,
+  merchantCapabilities,
+  payoutMethods,
+  userPath,
+  accountName,
+}: {
+  configurations: ConfigurationKind[]
+  merchantCapabilities: string[]
+  payoutMethods: PayoutMethod[]
+  userPath?: UserPath
+  accountName?: string
+}) {
+  const type = useCardCreateTypeScale()
+  const merchant = userPath !== "direct" && configurations.includes("merchant")
+  const customer = configurations.includes("customer")
+  const recipient = configurations.includes("recipient")
+  const summary = describeFundsFlow({
+    merchant,
+    customer,
+    recipient,
+    merchantCapabilities,
+    payoutMethods,
+    accountName,
+  })
+  if (!summary) return null
+  return <p className={type.previewCapability}>{summary}</p>
 }
 
 function initialsFor(name: string) {
@@ -113,12 +208,15 @@ function initialsFor(name: string) {
 function PreviewModeToggle({
   value,
   onChange,
+  showApi,
 }: {
-  value: "dashboard" | "api"
-  onChange: (next: "dashboard" | "api") => void
+  value: PreviewMode
+  onChange: (next: PreviewMode) => void
+  showApi: boolean
 }) {
+  const type = useCardCreateTypeScale()
   const itemClass = (selected: boolean) =>
-    `flex h-[32px] min-w-[108px] items-center justify-center gap-[6px] rounded-[6px] px-[14px] text-[12px] leading-[16px] tracking-[-0.02px] transition-colors ${
+    `flex h-[32px] items-center justify-center gap-[6px] rounded-[6px] px-[12px] ${type.previewToggle} transition-colors ${
       selected ? "bg-[#F4F6F8] font-[600] text-[#1A2C44]" : "font-[500] text-[#6C7688] hover:text-[#1A2C44]"
     }`
 
@@ -129,14 +227,16 @@ function PreviewModeToggle({
           <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.3" />
           <path d="M1.5 5h11M5.5 5v7.5" stroke="currentColor" strokeWidth="1.3" />
         </svg>
-        Dashboard
+        Preview
       </button>
-      <button type="button" className={itemClass(value === "api")} onClick={() => onChange("api")} aria-pressed={value === "api"}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M5 3.5L2.5 7 5 10.5M9 3.5L11.5 7 9 10.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        API
-      </button>
+      {showApi ? (
+        <button type="button" className={itemClass(value === "api")} onClick={() => onChange("api")} aria-pressed={value === "api"}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M5 3.5L2.5 7 5 10.5M9 3.5L11.5 7 9 10.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          API
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -147,7 +247,7 @@ function PreviewModeFrame({
   api,
   showShadow,
 }: {
-  mode: "dashboard" | "api"
+  mode: PreviewMode
   dashboard: ReactNode
   api: ReactNode
   showShadow: boolean
@@ -161,9 +261,10 @@ function PreviewModeFrame({
   const heightRef = useRef<number | undefined>(undefined)
   const animatingRef = useRef(false)
 
-  const measure = (nextMode: "dashboard" | "api") => (
-    (nextMode === "api" ? apiRef.current : dashboardRef.current)?.offsetHeight ?? 0
-  )
+  const measure = (nextMode: PreviewMode) => {
+    if (nextMode === "api") return apiRef.current?.offsetHeight ?? 0
+    return dashboardRef.current?.offsetHeight ?? 0
+  }
 
   const applyHeight = (next: number, shouldAnimate: boolean) => {
     const current = heightRef.current
@@ -187,16 +288,14 @@ function PreviewModeFrame({
   }, [mode, reduceMotion])
 
   useEffect(() => {
-    const dashboardPane = dashboardRef.current
-    const apiPane = apiRef.current
-    if (!dashboardPane || !apiPane) return
+    const panes = [dashboardRef.current, apiRef.current].filter(Boolean) as HTMLDivElement[]
+    if (panes.length === 0) return
     const observer = new ResizeObserver(() => {
       if (animatingRef.current) return
       const next = measure(modeRef.current)
       if (next) applyHeight(next, false)
     })
-    observer.observe(dashboardPane)
-    observer.observe(apiPane)
+    panes.forEach((pane) => observer.observe(pane))
     return () => observer.disconnect()
   }, [])
 
@@ -225,8 +324,8 @@ function PreviewModeFrame({
       >
         <div
           className="absolute inset-x-0 top-0 min-h-full w-full bg-white transition-opacity duration-300 ease-out motion-reduce:transition-none"
-          style={{ opacity: isApi ? 0 : 1, pointerEvents: isApi ? "none" : "auto" }}
-          aria-hidden={isApi}
+          style={{ opacity: mode === "dashboard" ? 1 : 0, pointerEvents: mode === "dashboard" ? "auto" : "none" }}
+          aria-hidden={mode !== "dashboard"}
         >
           <div ref={dashboardRef}>{dashboard}</div>
         </div>
@@ -243,13 +342,14 @@ function PreviewModeFrame({
 }
 
 function EmptyAccountPreview() {
+  const type = useCardCreateTypeScale()
   return (
     <div className="w-full rounded-[14px] border border-dashed border-[#C9D3DF] bg-white/70 px-[28px] py-[46px] text-center">
       <div className="mx-auto flex h-[44px] w-[44px] items-center justify-center rounded-[12px] bg-[#F1EEFF] text-[#675DFF]">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M5.5 7.5h11M5.5 11h7M5.5 14.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><rect x="2.75" y="3.25" width="16.5" height="15.5" rx="3.25" stroke="currentColor" strokeWidth="1.5" /></svg>
       </div>
-      <h3 className="mt-[14px] text-[14px] font-[600] leading-[20px] text-[#1A2C44]">Account configuration</h3>
-      <p className="mx-auto mt-[5px] max-w-[310px] text-[12px] leading-[18px] text-[#596171]">As you create the account, its configurations and capabilities will appear here.</p>
+      <h3 className={`mt-[14px] ${type.previewSection}`}>Account configuration</h3>
+      <p className={`mx-auto mt-[5px] max-w-[310px] ${type.previewEmpty}`}>As you create the account, its configurations and capabilities will appear here.</p>
     </div>
   )
 }
@@ -267,6 +367,7 @@ export function AccountConfigurationPreview({
   details: AccountDetailsDraft
   userPath?: UserPath
 }) {
+  const type = useCardCreateTypeScale()
   const isNewAccount = source === "new"
   const showEmpty = !isNewAccount && !selectedAccount
   const draftName = getDraftName(details) || "New account"
@@ -279,9 +380,19 @@ export function AccountConfigurationPreview({
     initials: initialsFor(draftName),
   }
   const account = isNewAccount ? draftAccount : selectedAccount ?? draftAccount
+  const [emailSettled, setEmailSettled] = useState(false)
+  useEffect(() => {
+    if (!EMAIL_PATTERN.test(details.accountEmail.trim())) {
+      setEmailSettled(false)
+      return
+    }
+    const timeout = window.setTimeout(() => setEmailSettled(true), 500)
+    return () => window.clearTimeout(timeout)
+  }, [details.accountEmail])
+  const visibleConfigurations = configurations
   const hasPopulatedDetail = Boolean(
     getDraftName(details)
-    || details.accountEmail.trim()
+    || emailSettled
     || details.country
     || configurations.length > 0,
   )
@@ -289,45 +400,13 @@ export function AccountConfigurationPreview({
   const existingConfigurations = isNewAccount ? [] : account.configurations
   const effectiveConfigurations = Array.from(new Set([
     ...existingConfigurations,
-    ...configurations,
+    ...visibleConfigurations,
   ]))
   const listedOptions = getConfigurationOptions(userPath)
   const hasGroups = listedOptions.some((option) => effectiveConfigurations.includes(option.id))
   const lastSelectedId = [...listedOptions].reverse().find((option) => effectiveConfigurations.includes(option.id))?.id
-  const [previewMode, setPreviewMode] = useState<"dashboard" | "api">("dashboard")
-  const existingKey = existingConfigurations.join(",")
-  const selectedConfigIds = listedOptions
-    .filter((option) => effectiveConfigurations.includes(option.id))
-    .map((option) => option.id)
-  const selectedConfigKey = selectedConfigIds.join(",")
-  const [expandedIds, setExpandedIds] = useState<string[]>(() => [...existingConfigurations])
-  const previewAccountKey = `${source}:${account.id}`
-  const selectionRef = useRef({
-    accountKey: previewAccountKey,
-    ids: existingConfigurations,
-  })
-
-  useLayoutEffect(() => {
-    const previous = selectionRef.current
-    const accountChanged = previous.accountKey !== previewAccountKey
-    const added = selectedConfigIds.filter((id) => !previous.ids.includes(id))
-    selectionRef.current = {
-      accountKey: previewAccountKey,
-      ids: selectedConfigIds,
-    }
-
-    if (accountChanged) {
-      setExpandedIds(existingKey.split(",").filter(Boolean))
-      return
-    }
-
-    if (added.length === 0) return
-    setExpandedIds((current) => Array.from(new Set([
-      ...current,
-      ...added,
-    ])))
-  }, [existingKey, previewAccountKey, selectedConfigKey])
-
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("dashboard")
+  const showApi = SHOW_API_PREVIEW && userPath !== "direct"
   return (
     <div className="relative flex h-full w-full flex-col" data-configuration-preview data-preview-mode={previewMode}>
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -336,7 +415,7 @@ export function AccountConfigurationPreview({
         <EmptyAccountPreview />
       ) : (
         <PreviewModeFrame
-          mode={SHOW_API_PREVIEW ? previewMode : "dashboard"}
+          mode={previewMode === "api" && !showApi ? "dashboard" : previewMode}
           showShadow={showPreviewShadow}
           dashboard={(
         <div>
@@ -345,16 +424,16 @@ export function AccountConfigurationPreview({
               <AccountAvatar
                 account={account}
                 size={44}
-                awaken={isNewAccount ? Boolean(getDraftName(details)) : undefined}
+                awaken={isNewAccount ? details.accountEmail.trim().length > 0 : undefined}
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-[8px]">
-                  <p data-preview-account-name className="min-w-0 flex-1 truncate text-[16px] font-[650] leading-[22px] tracking-[-0.18px] text-[#1A2C44]">{account.name}</p>
+                  <p data-preview-account-name className={`min-w-0 flex-1 truncate ${type.previewName}`}>{account.name}</p>
                   {(!isNewAccount || details.country) ? <CountryBadge country={isNewAccount ? details.country : account.country} /> : null}
                 </div>
-                <p className="mt-[2px] flex min-w-0 items-center text-[12px] leading-[17px]">
+                <p className={`mt-[2px] flex min-w-0 items-center ${type.previewMeta}`}>
                   <span className={`min-w-0 truncate ${account.email ? "text-[#596171]" : "text-[#818DA0]"}`}>
-                    {account.email || "Add an account email"}
+                    {account.email || "email@example.com"}
                   </span>
                   {!isNewAccount && account.id ? (
                     <>
@@ -367,15 +446,11 @@ export function AccountConfigurationPreview({
             </div>
           </div>
 
-          <div className="border-t border-[#EBEEF1] px-[22px] py-[18px]">
-            <div className="inline-flex items-center gap-[4px]">
-              <p className="text-[13px] font-[600] leading-[22px] text-[#1A2C44]">Configurations and capabilities</p>
-              <FieldHint label="Configurations and capabilities">
-                A configuration represents what an account can do, and capabilities are the features it enables.
-              </FieldHint>
-            </div>
+          <div className="mx-[22px] border-t border-[#F0F3F7]" />
+          <div className="px-[22px] py-[18px]">
+            <p className={type.previewSection}>Configurations</p>
             <Expand open={!hasGroups}>
-              <p className="mt-[6px] text-[12px] leading-[17px] text-[#818DA0]">
+              <p className={`mt-[6px] ${type.previewMeta} text-[#818DA0]`}>
                 As you select configurations in the form, its associated capabilities are added.
               </p>
             </Expand>
@@ -393,19 +468,26 @@ export function AccountConfigurationPreview({
                         id={option.id}
                         title={option.title}
                         capabilities={capabilities}
-                        expanded={expandedIds.includes(option.id)}
-                        onToggle={() => setExpandedIds((current) => (
-                          current.includes(option.id)
-                            ? current.filter((id) => id !== option.id)
-                            : [...current, option.id]
-                        ))}
-                        collapsible={capabilities.length > 0}
                       />
                     </div>
                   </Expand>
                 )
               })}
             </div>
+            <Expand open={hasGroups}>
+              <div className="mt-[28px]">
+                <p className={type.previewSection}>Funds flow</p>
+                <div className="mt-[8px]">
+                  <FundsFlowLines
+                    configurations={effectiveConfigurations}
+                    merchantCapabilities={getCapabilitiesForGroup("merchant", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities)}
+                    payoutMethods={details.payoutMethods}
+                    userPath={userPath}
+                    accountName={account.name}
+                  />
+                </div>
+              </div>
+            </Expand>
           </div>
         </div>
           )}
@@ -414,7 +496,7 @@ export function AccountConfigurationPreview({
               embedded
               source={source}
               selectedAccount={selectedAccount}
-              configurations={configurations}
+              configurations={visibleConfigurations}
               details={details}
               userPath={userPath}
             />
@@ -423,9 +505,9 @@ export function AccountConfigurationPreview({
       )}
         </div>
       </div>
-      {SHOW_API_PREVIEW && !showEmpty && userPath !== "direct" ? (
+      {!showEmpty ? (
         <div className="flex shrink-0 justify-center pb-[8px] pt-[18px]">
-          <PreviewModeToggle value={previewMode} onChange={setPreviewMode} />
+          <PreviewModeToggle value={previewMode} onChange={setPreviewMode} showApi={showApi} />
         </div>
       ) : null}
     </div>

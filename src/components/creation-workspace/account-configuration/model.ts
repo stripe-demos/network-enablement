@@ -119,20 +119,27 @@ export function getConfigurationOptions(userPath?: UserPath) {
   return CONFIGURATION_OPTIONS
 }
 
+export const SAAS_RECOMMENDED_CONFIGURATIONS: ConfigurationKind[] = ["merchant", "customer"]
+
+export function getRecommendedConfigurations(userPath?: UserPath) {
+  const available = new Set(getConfigurationOptions(userPath).map((option) => option.id))
+  return SAAS_RECOMMENDED_CONFIGURATIONS.filter((id) => available.has(id))
+}
+
 export const CONFIGURATION_OPTIONS: ConfigurationOption[] = [
-  {
-    id: "customer",
-    title: "Customer",
-    relationship: "Makes payments to you",
-    description: "This account will be able to make single or recurring payments to you, for example paying a monthly subscription.",
-    capabilities: [],
-  },
   {
     id: "merchant",
     title: "Merchant",
-    relationship: "Accepts customer payments",
-    description: "This account will be able to sell products and services and accept payments from their customers, for example a Shopify merchant who accepts card payments from shoppers on their own storefront.",
+    relationship: "Accepts payments from its own customers",
+    description: "This account will be able to accept card payments from their own customers for goods or services sold.",
     capabilities: ["Card payments"],
+  },
+  {
+    id: "customer",
+    title: "Customer",
+    relationship: "Makes one-time or recurring payments to you",
+    description: "This account will be able to make single or recurring payments to you, for example paying a monthly subscription.",
+    capabilities: [],
   },
   {
     id: "recipient",
@@ -146,6 +153,8 @@ export const CONFIGURATION_OPTIONS: ConfigurationOption[] = [
 export type CapabilityItem = {
   name: string
   required?: boolean
+  section?: "default" | "local"
+  country?: string
 }
 
 export type CapabilityGroup = {
@@ -160,35 +169,35 @@ export const CAPABILITY_GROUPS: CapabilityGroup[] = [
     title: "Merchant",
     items: [
       { name: "Card payments", required: true },
-      { name: "Canadian pre-authorized debit payments" },
-      { name: "Affirm payments" },
-      { name: "Afterpay Clearpay payments" },
-      { name: "Amazon Pay payments" },
-      { name: "Bacs Debit payments" },
-      { name: "Bancontact payments" },
-      { name: "BLIK payments" },
-      { name: "Cartes Bancaires payments" },
-      { name: "Cash App Pay payments" },
-      { name: "EPS payments" },
-      { name: "UK Bank Transfer payments" },
-      { name: "iDEAL payments" },
-      { name: "Kakao Pay payments" },
-      { name: "Klarna payments" },
-      { name: "Korean cards payments" },
-      { name: "Link payments" },
-      { name: "Multibanco payments" },
-      { name: "Naver Pay payments" },
-      { name: "OXXO payments" },
-      { name: "P24 payments" },
-      { name: "Pay by Bank payments" },
-      { name: "PAYCO payments" },
-      { name: "Samsung Pay payments" },
-      { name: "SEPA Bank Transfer payments" },
-      { name: "SEPA Direct Debit payments" },
-      { name: "ACH debit payments" },
-      { name: "US Bank Transfer payments" },
-      { name: "Zip payments" },
-      { name: "Sunbit payments" },
+      { name: "Afterpay Clearpay payments", section: "local", country: "Australia" },
+      { name: "Zip payments", section: "local", country: "Australia" },
+      { name: "EPS payments", section: "local", country: "Austria" },
+      { name: "Bancontact payments", section: "local", country: "Belgium" },
+      { name: "Canadian pre-authorized debit payments", section: "local", country: "Canada" },
+      { name: "SEPA Bank Transfer payments", section: "local", country: "Europe" },
+      { name: "SEPA Direct Debit payments", section: "local", country: "Europe" },
+      { name: "Cartes Bancaires payments", section: "local", country: "France" },
+      { name: "OXXO payments", section: "local", country: "Mexico" },
+      { name: "iDEAL payments", section: "local", country: "Netherlands" },
+      { name: "BLIK payments", section: "local", country: "Poland" },
+      { name: "P24 payments", section: "local", country: "Poland" },
+      { name: "Multibanco payments", section: "local", country: "Portugal" },
+      { name: "Kakao Pay payments", section: "local", country: "South Korea" },
+      { name: "Korean cards payments", section: "local", country: "South Korea" },
+      { name: "Naver Pay payments", section: "local", country: "South Korea" },
+      { name: "PAYCO payments", section: "local", country: "South Korea" },
+      { name: "Samsung Pay payments", section: "local", country: "South Korea" },
+      { name: "Klarna payments", section: "local", country: "Sweden" },
+      { name: "Bacs Debit payments", section: "local", country: "United Kingdom" },
+      { name: "Pay by Bank payments", section: "local", country: "United Kingdom" },
+      { name: "UK Bank Transfer payments", section: "local", country: "United Kingdom" },
+      { name: "ACH debit payments", section: "local", country: "United States" },
+      { name: "Affirm payments", section: "local", country: "United States" },
+      { name: "Amazon Pay payments", section: "local", country: "United States" },
+      { name: "Cash App Pay payments", section: "local", country: "United States" },
+      { name: "Link payments", section: "local", country: "United States" },
+      { name: "Sunbit payments", section: "local", country: "United States" },
+      { name: "US Bank Transfer payments", section: "local", country: "United States" },
     ],
   },
   {

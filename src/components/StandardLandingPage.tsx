@@ -340,13 +340,10 @@ function StandardDocs() {
   }
 
   const goToPreviousPage = () => {
-    if (demoFromHistoryState(window.history.state)) {
-      window.history.back()
-      return
-    }
     setActiveDemo(null)
-    if (window.location.hash) {
-      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`)
+    const cleanUrl = `${window.location.pathname}${window.location.search}`
+    if (demoFromHistoryState(window.history.state) || window.location.hash) {
+      window.history.replaceState(null, "", cleanUrl)
     }
   }
 
