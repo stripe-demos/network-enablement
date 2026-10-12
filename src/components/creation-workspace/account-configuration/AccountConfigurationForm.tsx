@@ -307,11 +307,11 @@ function AccountIdentityFields({
   const emailField = (
     <div className="flex flex-col gap-[6px]">
       <Field label="Account email">
-        <span className="relative block">
+        <span className="group relative block">
           <input
             ref={emailFirst ? firstInputRef : undefined}
             type="email"
-            className={`${tokens.inputClass}${emailFirst && lookupStatus === "checking" ? " pr-[32px]" : ""}`}
+            className={`${tokens.inputClass}${!details.accountEmail.trim() && !(emailFirst && lookupStatus === "checking") ? " pr-[62px]" : ""}${emailFirst && lookupStatus === "checking" ? " pr-[32px]" : ""}`}
             placeholder="email@example.com"
             value={details.accountEmail}
             onChange={(event) => onChange({ accountEmail: event.target.value })}
@@ -319,6 +319,19 @@ function AccountIdentityFields({
             aria-invalid={details.accountEmail.length > 0 && !EMAIL_PATTERN.test(details.accountEmail)}
             aria-busy={emailFirst && lookupStatus === "checking"}
           />
+          {!details.accountEmail.trim() && !(emailFirst && lookupStatus === "checking") ? (
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onChange({ accountEmail: "accounts@juniperyoga.example" })
+                onCommitEmail?.()
+              }}
+              className="pointer-events-none absolute right-[6px] top-1/2 flex h-[20px] -translate-y-1/2 items-center rounded-[5px] bg-[#EFECFC] px-[6px] text-[11px] font-[600] leading-[14px] text-[#533AFD] opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+            >
+              Autofill
+            </button>
+          ) : null}
           {emailFirst && lookupStatus === "checking" ? (
             <span className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#6C7688]" aria-hidden="true">
               <svg className="animate-spin" width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -603,7 +616,7 @@ function ConfigurationPicker({
         <p className={`mt-[6px] ${type.helper}`}>
           {isNewAccount ? (
             <>
-              Choose what this account can do. Based on your business, we recommend Merchant and Customer.{" "}
+              Select all roles that apply. For your platform's accounts, we recommend Merchant and Customer.{" "}
               <button
                 type="button"
                 className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
@@ -614,10 +627,15 @@ function ConfigurationPicker({
             </>
           ) : (
             <>
-              Select all roles that apply to this account. Not sure?{" "}
-              <button type="button" className="font-[500] text-[#533AFD] hover:text-[#4730E0]" onClick={() => setDescribeMode("describe")}>
+              Select all roles that apply to this account. Unsure?{" "}
+              <button
+                type="button"
+                className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
+                onClick={() => setDescribeMode("describe")}
+              >
                 Tell us about the account
-              </button>.
+              </button>
+              .
             </>
           )}
         </p>

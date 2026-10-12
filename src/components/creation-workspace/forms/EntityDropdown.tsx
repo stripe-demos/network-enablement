@@ -312,7 +312,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
           <div
             ref={listRef}
             role="listbox"
-            className={`absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-[8px] border ${isRefresh ? "border-[#EAF0F6]" : "border-[#E3E8EF]"} bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)]`}
+            className={`absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-[8px] border ${isRefresh ? "border-[#EAF0F6]" : "border-[#E3E8EF]"} bg-white shadow-[0_8px_24px_rgba(20,34,52,0.12)]`}
           >
             {isRefresh && !hideSearch && (
               <div className="border-b border-[#EAF0F6] px-[10px] py-[7px]">

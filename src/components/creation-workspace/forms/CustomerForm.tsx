@@ -694,20 +694,17 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     const isSingleConfig = layout === "single-config"
     const accountType = data.accountType === "Individual" ? "Individual" : "Company"
     const accountEmail = data.accountEmail ?? data.email ?? ""
-    const displayName = data.displayName ?? ""
     const registeredName = data.registeredName ?? ""
     const firstName = data.firstName ?? ""
     const lastName = data.lastName ?? ""
     const accountCountry = data.accountCountry ?? ""
     const syncIdentity = (patch: Record<string, unknown>) => {
       const nextType = patch.accountType ?? accountType
-      const nextDisplay = String(patch.displayName ?? displayName)
       const nextRegistered = String(patch.registeredName ?? registeredName)
       const nextFirst = String(patch.firstName ?? firstName)
       const nextLast = String(patch.lastName ?? lastName)
       const nextEmail = String(patch.accountEmail ?? accountEmail)
-      const name = (!isSingleConfig && nextDisplay.trim())
-        || (nextType === "Individual" ? `${nextFirst} ${nextLast}`.trim() : nextRegistered.trim())
+      const name = nextType === "Individual" ? `${nextFirst} ${nextLast}`.trim() : nextRegistered.trim()
       onChange({ ...patch, email: nextEmail, name })
     }
 
@@ -724,7 +721,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       </div>
     )
     const nameField = accountType === "Company" ? (
-      <Field label="Registered name">
+      <Field label="Company name">
         <input
           className={ic("name")}
           placeholder="Example Corp Inc"
@@ -732,7 +729,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
           onChange={(e) => syncIdentity({ registeredName: e.target.value })}
         />
         {errorFields?.has("name") && (
-          <p className="text-[11px] text-[#DF1B41]">Enter a registered name</p>
+          <p className="text-[11px] text-[#DF1B41]">Enter a company name</p>
         )}
       </Field>
     ) : (
@@ -758,13 +755,25 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     const emailField = (
       <div className="flex flex-col gap-[6px]">
         <Field label="Account email">
-          <input
-            type="email"
-            className={ic("email")}
-            placeholder="email@example.com"
-            value={accountEmail}
-            onChange={(e) => syncIdentity({ accountEmail: e.target.value })}
-          />
+          <span className="group relative block">
+            <input
+              type="email"
+              className={`${ic("email")}${!accountEmail.trim() ? " pr-[62px]" : ""}`}
+              placeholder="email@example.com"
+              value={accountEmail}
+              onChange={(e) => syncIdentity({ accountEmail: e.target.value })}
+            />
+            {!accountEmail.trim() ? (
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => syncIdentity({ accountEmail: "accounts@juniperyoga.example" })}
+                className="pointer-events-none absolute right-[6px] top-1/2 flex h-[20px] -translate-y-1/2 items-center rounded-[5px] bg-[#EFECFC] px-[6px] text-[11px] font-[600] leading-[14px] text-[#533AFD] opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+              >
+                Autofill
+              </button>
+            ) : null}
+          </span>
           {errorFields?.has("email") && (
             <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
           )}
@@ -795,14 +804,6 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
             </>
           ) : (
             <>
-              <Field label="Display name">
-                <input
-                  className={tokens.inputClass}
-                  placeholder="Shown on this account"
-                  value={displayName}
-                  onChange={(e) => syncIdentity({ displayName: e.target.value })}
-                />
-              </Field>
               {emailField}
               {typeField}
               {nameField}

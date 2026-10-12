@@ -304,7 +304,7 @@ export function AccountSummaryCard({
       )}
       <div className={`flex min-w-0 flex-1 flex-col justify-center ${isFlow ? "leading-[20px]" : "leading-[16px]"}`}>
         <div className="flex items-center gap-[8px]">
-          <p className={`min-w-0 flex-1 truncate text-[#1A2C44] ${isFlow ? type.rowTitle : "text-[13px] font-[600] leading-[16px] tracking-[-0.08px]"}`}>
+          <p className={`min-w-0 flex-1 truncate text-[#1A2C44] ${isFlow ? "text-[14px] font-[500] leading-[20px] tracking-[-0.08px]" : "text-[13px] font-[600] leading-[16px] tracking-[-0.08px]"}`}>
             {account.name}
           </p>
           <span className="relative shrink-0">
@@ -325,7 +325,7 @@ export function AccountSummaryCard({
             ) : null}
           </span>
         </div>
-        <p className={isFlow ? `truncate ${type.rowDetail}` : "truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]"}>
+        <p className={isFlow ? "truncate text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#596171]" : "truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]"}>
           {subtitle ?? account.email}
         </p>
       </div>
@@ -344,17 +344,13 @@ export function DuplicateAccountNudge({
   onDismiss,
   description = "This email is linked to an existing account in your Network. Continue with it to add configurations instead of creating a duplicate.",
   actionLabel = "Use existing account",
-  size = "default",
 }: {
   account: NetworkAccount
   onUseExisting: () => void
   onDismiss: () => void
   description?: string
   actionLabel?: string
-  size?: "default" | "flow"
 }) {
-  const type = useCardCreateTypeScale()
-  const isFlow = type.matchCard || size === "flow"
   return (
     <div
       className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white shadow-[0_8px_24px_rgba(26,44,68,0.12)]"
@@ -362,30 +358,23 @@ export function DuplicateAccountNudge({
       role="region"
       aria-label="Existing account found"
     >
-      <div className={isFlow ? "p-[12px]" : "p-[8px]"}>
-        <AccountSummaryCard account={account} subtitle={account.id} size={isFlow ? "flow" : size} />
-        <p className={isFlow
-          ? `px-[8px] pb-[4px] pt-[12px] ${type.helper}`
-          : "px-[8px] pb-[4px] pt-[12px] text-[12px] leading-[16px] text-[#3C4F69]"}
-        >
+      <div className="p-[12px]">
+        <AccountSummaryCard account={account} subtitle={account.id} size="flow" />
+        <p className="px-[8px] pb-[4px] pt-[12px] text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#596171]">
           {description}
         </p>
       </div>
-      <div className={`flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] ${isFlow ? "p-[12px]" : "p-[8px]"}`}>
+      <div className="flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] p-[12px]">
         <button
           type="button"
-          className={isFlow
-            ? "rounded-[6px] px-[8px] py-[4px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#EEF2F6]"
-            : "rounded-[6px] px-[8px] py-[4px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#EEF2F6]"}
+          className="rounded-[6px] px-[8px] py-[4px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#EEF2F6]"
           onClick={onDismiss}
         >
           Create new anyway
         </button>
         <button
           type="button"
-          className={isFlow
-            ? "rounded-[6px] bg-[#675DFF] px-[10px] py-[6px] text-[12px] font-[600] leading-[16px] text-white hover:bg-[#5B52F0]"
-            : "rounded-[6px] bg-[#675DFF] px-[8px] py-[5px] text-[11px] font-[600] text-white hover:bg-[#5B52F0]"}
+          className="rounded-[6px] bg-[#675DFF] px-[10px] py-[6px] text-[12px] font-[600] leading-[16px] text-white hover:bg-[#5B52F0]"
           onClick={onUseExisting}
         >
           {actionLabel}

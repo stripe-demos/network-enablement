@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import SelectChevron from '../../ui/SelectChevron';
 import { Icon } from '../../../../icons/SailIcons';
 import { useFlow } from '../../flow/FlowProvider';
@@ -21,6 +21,9 @@ import PopoverPanel from '../../ui/PopoverPanel';
 import Reveal from '../../ui/Reveal';
 import Checkbox, { CheckboxBox } from '../../ui/Checkbox';
 import TextInput from '../../ui/TextInput';
+import { DuplicateAccountNudge } from '@/components/creation-workspace/account-configuration/AccountConfigurationPrimitives';
+import { findMatchingNetworkAccount } from '@/components/creation-workspace/account-configuration/model';
+import { methodsForRecipient } from '../../data/payoutMethods';
 
 /**
  * Send via email — 429:225139 (compose) and 429:225269 (methods open).
@@ -28,8 +31,11 @@ import TextInput from '../../ui/TextInput';
  * Every field feeds EmailPreviewPane on the right, which re-renders as you type.
  */
 export default function EmailComposeStep() {
-  const { state, patchEmailInvite } = useFlow();
+  const { state, dispatch, patchEmailInvite } = useFlow();
   const invite = state.emailInvite;
+  const [dismissedMatchId, setDismissedMatchId] = useState(null);
+  const matchingAccount = findMatchingNetworkAccount(invite.email ?? '');
+  const showNudge = Boolean(matchingAccount && dismissedMatchId !== matchingAccount.id);
 
   const chosenAccount = account(invite.sourceAccountId);
   const sourceCurrency = chosenAccount?.currency ?? 'USD';
@@ -91,9 +97,35 @@ export default function EmailComposeStep() {
           type="email"
           value={invite.email}
           onChange={(v) => patchEmailInvite('email', v)}
-          placeholder="name@example.com"
+          placeholder="e.g. name@example.com"
+          autofill="accounts@juniperyoga.example"
           ariaLabel="Recipient email"
         />
+        {showNudge ? (
+          <div className="mt-1.5">
+            <DuplicateAccountNudge
+              account={matchingAccount}
+              description="This email is already linked to an account in your Network. Continue with the existing account to save time. We’ll pre-fill identity and payout details."
+              onDismiss={() => setDismissedMatchId(matchingAccount.id)}
+              onUseExisting={() => {
+                dispatch({
+                  type: 'ADOPT_RECIPIENT',
+                  recipient: {
+                    id: matchingAccount.id,
+                    name: matchingAccount.name,
+                    email: matchingAccount.email,
+                    initials: matchingAccount.initials,
+                    country: matchingAccount.country === 'UK' ? 'GB' : matchingAccount.country,
+                    entity: 'recipient',
+                    methods: methodsForRecipient(matchingAccount.id),
+                    logo: matchingAccount.hasBrandIcon ? '/unified-account-icon.png' : undefined,
+                    hasBrandIcon: matchingAccount.hasBrandIcon,
+                  },
+                });
+              }}
+            />
+          </div>
+        ) : null}
       </Field>
 
       <Field label="Pay from">

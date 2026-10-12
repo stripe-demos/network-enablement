@@ -323,7 +323,7 @@ export const STEPS = {
     rail: 'addRecipient',
     breadcrumb: addRecipientCrumbs,
     heading: (s) => {
-      if (!attachingToExistingRecipient(s)) return 'Recipient destination';
+      if (!attachingToExistingRecipient(s)) return 'Recipient email and destination';
       const name = attachRecipientName(s);
       return name ? `Add a destination for ${name}` : 'Add a destination';
     },
@@ -369,8 +369,9 @@ export const STEPS = {
     breadcrumb: addRecipientCrumbs,
     heading: 'Recipient personal details',
     layout: 'column',
-    // Requirements come from the Global Payouts KYC table (data/kyc.js): email
-    // and a name always, plus an address for some country/type/rail combinations.
+    // Requirements come from the Global Payouts KYC table (data/kyc.js): a name
+    // always, plus an address for some country/type/rail combinations. Email is
+    // collected on the destination step.
     canContinue: (s) => recipientComplete(s.newRecipient),
     primaryLabel: () => 'Save', // 429:225650
     showBack: true,

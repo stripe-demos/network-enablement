@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useFlow } from '../../flow/FlowProvider';
 import InfoIcon from '../../ui/InfoIcon';
 import SegmentedControl from '../../ui/SegmentedControl';
@@ -6,9 +6,6 @@ import Reveal from '../../ui/Reveal';
 import TextInput from '../../ui/TextInput';
 import FieldNote from '../../ui/FieldNote';
 import { deliveryMethod } from '../../data/deliveryMethods';
-import { DuplicateAccountNudge } from '@/components/creation-workspace/account-configuration/AccountConfigurationPrimitives';
-import { findMatchingNetworkAccount } from '@/components/creation-workspace/account-configuration/model';
-import { methodsForRecipient } from '../../data/payoutMethods';
 import {
   ADDRESS_FIELDS,
   addressRequired,
@@ -28,12 +25,9 @@ import {
  * than informing this one.
  */
 export default function PersonalDetailsStep() {
-  const { state, dispatch, patchNewRecipient } = useFlow();
+  const { state, patchNewRecipient } = useFlow();
   const n = state.newRecipient;
   const needsAddress = needsAddressFor(n);
-  const [dismissedMatchId, setDismissedMatchId] = useState(null);
-  const matchingAccount = findMatchingNetworkAccount(n.email ?? '');
-  const showNudge = Boolean(matchingAccount && dismissedMatchId !== matchingAccount.id);
 
   /**
    * When the RAIL is what's asking, say so. Entered from the Destination step, the
@@ -63,7 +57,7 @@ export default function PersonalDetailsStep() {
   if (onFile.current === null) {
     onFile.current = new Set(
       enteredForAddress
-        ? ['email', 'firstName', 'lastName', 'companyName'].filter((k) =>
+        ? ['firstName', 'lastName', 'companyName'].filter((k) =>
             String(n[k] ?? '').trim(),
           )
         : [],
@@ -129,43 +123,6 @@ export default function PersonalDetailsStep() {
             destination.
           </p>
         </div>
-      </div>
-
-      <div>
-        <TextField
-          label="Email address"
-          type="email"
-          placeholder="accounts@juniperyoga.example"
-          disabled={locked('email')}
-          value={n.email}
-          onChange={(v) => patchNewRecipient('email', v)}
-        />
-        {showNudge ? (
-          <div className="mt-1.5">
-            <DuplicateAccountNudge
-              size="flow"
-              account={matchingAccount}
-              description="This email matches an existing account in your Network. Continue with it instead of creating a duplicate."
-              onDismiss={() => setDismissedMatchId(matchingAccount.id)}
-              onUseExisting={() => {
-                dispatch({
-                  type: 'ADOPT_RECIPIENT',
-                  recipient: {
-                    id: matchingAccount.id,
-                    name: matchingAccount.name,
-                    email: matchingAccount.email,
-                    initials: matchingAccount.initials,
-                    country: matchingAccount.country === 'UK' ? 'GB' : matchingAccount.country,
-                    entity: 'recipient',
-                    methods: methodsForRecipient(matchingAccount.id),
-                    logo: matchingAccount.hasBrandIcon ? '/unified-account-icon.png' : undefined,
-                    hasBrandIcon: matchingAccount.hasBrandIcon,
-                  },
-                });
-              }}
-            />
-          </div>
-        ) : null}
       </div>
 
       {n.type === 'company' ? (
