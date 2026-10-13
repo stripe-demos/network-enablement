@@ -1,407 +1,218 @@
-// Network onboarding step 3: find businesses already on Stripe and invite them
-// to connect. Selection lives in state.selectedAccountIds; invites go out when
-// the user clicks "Done" in the shell's footer.
-import { useMemo, useState } from 'react'
+// Network onboarding step 3: pick a few businesses already on Stripe to invite.
+// One job, top to bottom: a short list recommended from the platform's business
+// description (with the "why" for each), a quiet count toward the 4 accounts it
+// takes to go live, then search with inline filter chips for everything else.
+// Selection lives in state.selectedAccountIds; invites go out when the user
+// clicks "Done" in the shell's footer.
+import { useId, useMemo, useState } from 'react'
+import { NETWORK_CANDIDATES, VOLUME_RANGES } from '../networkCandidates'
+import { PLATFORM_PROFILE } from '../platformProfile'
+import { rankCandidates, recommendCandidates } from '../recommendAccounts'
 import {
-  Badge,
-  Button,
-  Card,
-  CheckCircleIcon,
-  Checkbox,
-  ChevronDownIcon,
-  EmptyState,
-  SearchField,
-  StarIcon,
-  Tabs,
-  color,
-  radius,
-  type,
-} from '@dashboard/ui'
-import { NETWORK_CANDIDATES } from '../networkCandidates'
+  ChoiceRow,
+  FilterSelect,
+  FilterToggle,
+  RecommendedGroup,
+  SearchInput,
+  SectionLabel,
+  StepHeading,
+  TextButton,
+} from '../networkControls'
+import { ink, text } from '../networkTokens'
 
-const GO_LIVE_GOAL = 4
+const GO_LIVE_ACCOUNTS = 4
+const PAGE_SIZE = 5
 
-const TABS = [
-  { id: 'recommended', label: 'Recommended' },
-  { id: 'search', label: 'Search' },
-]
+const RANKED = rankCandidates(NETWORK_CANDIDATES, PLATFORM_PROFILE)
+const RECOMMENDED = recommendCandidates(RANKED, GO_LIVE_ACCOUNTS)
+const RECOMMENDED_IDS = new Set(RECOMMENDED.map(r => r.candidate.id))
+const ORDER = RANKED.map(r => r.candidate.id)
 
-const VOLUME_ORDER = ['Under $10k/mo', '$10k–$50k/mo', '$50k–$100k/mo', '$100k–$500k/mo', '$500k–$1M/mo']
+const uniqueOptions = values => [...new Set(values)].sort().map(v => ({ value: v, label: v }))
+const INDUSTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.industry))
+const COUNTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.country))
+const VOLUME_OPTIONS = VOLUME_RANGES.map(v => ({ value: v, label: v.replace('/mo', '') }))
 
-const uniqueSorted = key => [...new Set(NETWORK_CANDIDATES.map(c => c[key]))].sort()
-const INDUSTRIES = uniqueSorted('industry')
-const COUNTRIES = uniqueSorted('country')
-const VOLUMES = VOLUME_ORDER.filter(v => NETWORK_CANDIDATES.some(c => c.volumeRange === v))
-const RECOMMENDED = NETWORK_CANDIDATES.filter(c => c.recommended)
+const NO_FILTERS = { industry: '', country: '', volumeRange: '', readyOnly: false }
 
-const EMPTY_FILTERS = { industry: '', country: '', volume: '', readyOnly: false }
+const describe = c => [c.industry, c.country, c.readyToConnect && 'Ready to connect'].filter(Boolean).join(' · ')
 
-function plural(n, one, many = `${one}s`) {
-  return `${n} ${n === 1 ? one : many}`
+function matches(candidate, query, filters) {
+  if (filters.industry && candidate.industry !== filters.industry) return false
+  if (filters.country && candidate.country !== filters.country) return false
+  if (filters.volumeRange && candidate.volumeRange !== filters.volumeRange) return false
+  if (filters.readyOnly && !candidate.readyToConnect) return false
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  return [candidate.name, candidate.description, candidate.industry, candidate.country].some(v => v.toLowerCase().includes(q))
 }
 
-function ReadyBadge() {
-  return <Badge tone="success">Ready to connect</Badge>
-}
-
-function Meta({ candidate }) {
-  return (
-    <div style={{ ...type.caption, color: color.subdued }}>
-      {[candidate.industry, candidate.country, candidate.volumeRange].join(' · ')}
-    </div>
-  )
-}
-
-/** Go-live nudge with an "N of 4" progress meter. */
-function GoLiveNudge({ count }) {
-  const done = Math.min(count, GO_LIVE_GOAL)
-  const reached = count >= GO_LIVE_GOAL
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 24,
-        padding: '12px 16px',
-        borderRadius: radius.lg,
-        background: color.wellBackground,
-        outline: `1px solid ${color.borderSubtle}`,
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0, ...type.body }}>
-        {reached
-          ? "You've invited enough accounts to go live once they connect."
-          : `Platforms go live with ${GO_LIVE_GOAL} connected accounts. Invite at least ${GO_LIVE_GOAL} to get there sooner.`}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <div
-          role="progressbar"
-          aria-label="Invites toward going live"
-          aria-valuemin={0}
-          aria-valuemax={GO_LIVE_GOAL}
-          aria-valuenow={done}
-          style={{ display: 'flex', gap: 4 }}
-        >
-          {Array.from({ length: GO_LIVE_GOAL }, (_, i) => (
-            <span
-              key={i}
-              style={{ width: 24, height: 6, borderRadius: 3, background: i < done ? color.brand500 : color.neutral100, transition: 'background 150ms' }}
-            />
-          ))}
-        </div>
-        <span style={{ ...type.label, fontVariantNumeric: 'tabular-nums' }}>{`${done} of ${GO_LIVE_GOAL}`}</span>
-      </div>
-    </div>
-  )
-}
-
-/** Sticky selection summary, pinned to the top of the dialog's scroll area. */
-function SelectionSummary({ count, onClear }) {
-  return (
-    <div
-      aria-live="polite"
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        minHeight: 32,
-        padding: '10px 0',
-        background: color.surface,
-        borderBottom: `1px solid ${color.neutral50}`,
-      }}
-    >
-      <span style={{ ...type.body, color: count ? color.text : color.subdued }}>
-        {count
-          ? `${plural(count, 'account')} selected. We'll send invites when you finish.`
-          : 'No accounts selected yet. Invite businesses below.'}
-      </span>
-      {count > 0 && (
-        <Button variant="ghost" size="sm" onClick={onClear}>Clear selection</Button>
-      )}
-    </div>
-  )
-}
-
-function InviteButton({ name, invited, onToggle }) {
-  return (
-    <Button
-      variant={invited ? 'secondary' : 'primary'}
-      size="sm"
-      aria-pressed={invited}
-      aria-label={invited ? `Invited ${name}. Click to remove.` : `Invite ${name}`}
-      onClick={onToggle}
-      icon={invited ? <span style={{ display: 'inline-flex', color: color.positive }}><CheckCircleIcon size={12} /></span> : null}
-    >
-      {invited ? 'Invited' : 'Invite'}
-    </Button>
-  )
-}
-
-function RecommendedCard({ candidate, invited, onToggle }) {
-  return (
-    <Card
-      bordered
-      style={{
-        padding: 20,
-        gap: 12,
-        height: '100%',
-        boxSizing: 'border-box',
-        ...(invited ? { borderColor: color.brand300, boxShadow: `0 0 0 1px ${color.brand300}` } : null),
-        transition: 'border-color 150ms, box-shadow 150ms',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ ...type.subsectionTitle, marginBottom: 2 }}>{candidate.name}</div>
-          <Meta candidate={candidate} />
-        </div>
-        {candidate.readyToConnect && <ReadyBadge />}
-      </div>
-      <div style={{ ...type.body, color: color.subdued }}>{candidate.description}</div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 8,
-          padding: '8px 10px',
-          borderRadius: radius.md,
-          background: color.neutral25,
-          ...type.bodySmall,
-        }}
-      >
-        <span aria-hidden="true" style={{ display: 'inline-flex', marginTop: 2, color: color.brand500 }}><StarIcon size={14} /></span>
-        <span>
-          <span style={{ display: 'block', fontWeight: 600 }}>Recommended because</span>
-          {candidate.reason}
-        </span>
-      </div>
-      <div style={{ marginTop: 'auto', paddingTop: 4, display: 'flex', justifyContent: 'flex-end' }}>
-        <InviteButton name={candidate.name} invited={invited} onToggle={onToggle} />
-      </div>
-    </Card>
-  )
-}
-
-/** Filter pill with a transparent native <select> over it (stays above the dialog, unlike popovers). */
-function SelectPill({ label, value, options, onChange, allLabel }) {
-  const [focused, setFocused] = useState(false)
-  const active = value !== ''
+/** 40px tile with the business initial (Modal / 86 leading icon). */
+function InitialTile({ name }) {
   return (
     <span
-      className={`dui-filter-pill${active ? ' dui-filter-pill--active' : ''}`}
-      style={{ position: 'relative', ...(focused ? { outline: '2px solid #8DC4F6', outlineOffset: 1 } : null) }}
+      aria-hidden="true"
+      style={{
+        flexShrink: 0,
+        width: 40,
+        height: 40,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: ink.areaFill,
+        borderRadius: 4,
+        ...text.title,
+        color: ink.secondary,
+      }}
     >
-      <span style={{ color: active ? color.subdued : undefined }}>{label}</span>
-      {active && (
-        <>
-          <span aria-hidden="true" style={{ width: 1, height: 12, background: color.neutral100, margin: '0 2px', display: 'inline-block' }} />
-          <span style={{ color: color.actionPrimary }}>{value}</span>
-        </>
-      )}
-      <ChevronDownIcon style={{ width: 10, height: 10 }} />
-      <select
-        aria-label={label}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{ position: 'absolute', inset: 0, width: '100%', opacity: 0, cursor: 'pointer', font: 'inherit' }}
-      >
-        <option value="">{allLabel}</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
+      {name.charAt(0)}
     </span>
   )
 }
 
-function matchesQuery(candidate, q) {
-  if (!q) return true
-  const haystack = [candidate.name, candidate.description, candidate.industry, candidate.country].join(' ').toLowerCase()
-  return q.toLowerCase().split(/\s+/).filter(Boolean).every(word => haystack.includes(word))
+function CandidateRow({ candidate, description, checked, onToggle }) {
+  return (
+    <ChoiceRow
+      type="checkbox"
+      checked={checked}
+      onChange={next => onToggle(candidate.id, next)}
+      leading={<InitialTile name={candidate.name} />}
+      title={candidate.name}
+      description={description ?? describe(candidate)}
+    />
+  )
 }
 
-const th = { ...type.caption, fontWeight: 600, color: color.subdued, textAlign: 'left', padding: '8px 12px', whiteSpace: 'nowrap' }
-const td = { ...type.body, padding: '12px', verticalAlign: 'top' }
-
-function SearchPanel({ selected, onToggle, onSetMany }) {
-  const [query, setQuery] = useState('')
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
-  const setFilter = patch => setFilters(prev => ({ ...prev, ...patch }))
-
-  const results = useMemo(
-    () => NETWORK_CANDIDATES.filter(c =>
-      matchesQuery(c, query.trim())
-      && (!filters.industry || c.industry === filters.industry)
-      && (!filters.country || c.country === filters.country)
-      && (!filters.volume || c.volumeRange === filters.volume)
-      && (!filters.readyOnly || c.readyToConnect)),
-    [query, filters],
-  )
-
-  const hasCriteria = query.trim() !== '' || filters.industry || filters.country || filters.volume || filters.readyOnly
-  const clearAll = () => { setQuery(''); setFilters(EMPTY_FILTERS) }
-
-  const selectedInResults = results.filter(c => selected.has(c.id)).length
-  const allChecked = results.length > 0 && selectedInResults === results.length
-  const someChecked = selectedInResults > 0 && !allChecked
-
+/** Group label: what the list is based on, quoting the platform's own words. */
+function BasedOnLabel() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div
-        onKeyDown={e => {
-          // Escape clears the search first instead of closing the dialog.
-          if (e.key === 'Escape' && query && e.target.tagName === 'INPUT') {
-            e.preventDefault()
-            setQuery('')
-          }
-        }}
-      >
-        <SearchField value={query} onChange={setQuery} placeholder="Search by business name, industry, or location" />
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <SelectPill label="Industry" allLabel="All industries" value={filters.industry} options={INDUSTRIES} onChange={v => setFilter({ industry: v })} />
-        <SelectPill label="Country" allLabel="All countries" value={filters.country} options={COUNTRIES} onChange={v => setFilter({ country: v })} />
-        <SelectPill label="Monthly volume" allLabel="Any volume" value={filters.volume} options={VOLUMES} onChange={v => setFilter({ volume: v })} />
-        <button
-          type="button"
-          className={`dui-filter-pill${filters.readyOnly ? ' dui-filter-pill--active' : ''}`}
-          aria-pressed={filters.readyOnly}
-          onClick={() => setFilter({ readyOnly: !filters.readyOnly })}
+    <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span>Recommended from your business description</span>
+      <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span
+          title={PLATFORM_PROFILE.businessDescription}
+          style={{ ...text.body, flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         >
-          {filters.readyOnly && <CheckCircleIcon size={10} />}
-          Ready to connect only
-        </button>
-        {hasCriteria && (
-          <Button variant="ghost" size="sm" onClick={clearAll}>Clear all</Button>
-        )}
-      </div>
+          {`“${PLATFORM_PROFILE.businessDescription}”`}
+        </span>
+        <TextButton onClick={() => {}}>Edit</TextButton>
+      </span>
+    </span>
+  )
+}
 
-      <div style={{ ...type.caption, color: color.subdued, paddingTop: 4 }} aria-live="polite">
-        {hasCriteria ? `${plural(results.length, 'result')}` : `${plural(results.length, 'business', 'businesses')} on Stripe`}
-      </div>
-
-      {results.length === 0 ? (
-        <div style={{ border: `1px solid ${color.neutral50}`, borderRadius: radius.xl }}>
-          <EmptyState
-            title="No matching businesses"
-            description="Try a different search term or remove some filters."
-            action={<Button variant="secondary" size="sm" onClick={clearAll}>Clear search and filters</Button>}
-          />
-        </div>
-      ) : (
-        <div style={{ border: `1px solid ${color.neutral50}`, borderRadius: radius.xl, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: color.neutral25, borderBottom: `1px solid ${color.neutral50}` }}>
-                <th style={{ ...th, width: 20, paddingRight: 0 }}>
-                  <Checkbox
-                    checked={allChecked}
-                    indeterminate={someChecked}
-                    onChange={() => onSetMany(results.map(c => c.id), !allChecked)}
-                    label={<span className="sr-only">Select all results</span>}
-                  />
-                </th>
-                <th style={th}>Business</th>
-                <th style={th}>Industry</th>
-                <th style={th}>Country</th>
-                <th style={th}>Monthly volume</th>
-                <th style={th}><span className="sr-only">Status</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((c, i) => {
-                const checked = selected.has(c.id)
-                return (
-                  <tr
-                    key={c.id}
-                    onClick={() => onToggle(c.id)}
-                    style={{
-                      cursor: 'pointer',
-                      background: checked ? '#F7F6FF' : undefined,
-                      borderTop: i ? `1px solid ${color.neutral50}` : undefined,
-                    }}
-                  >
-                    <td style={{ ...td, paddingRight: 0 }} onClick={e => e.stopPropagation()}>
-                      <Checkbox checked={checked} onChange={() => onToggle(c.id)} label={<span className="sr-only">{`Select ${c.name}`}</span>} />
-                    </td>
-                    <td style={td}>
-                      <div style={type.label}>{c.name}</div>
-                      <div style={{ ...type.caption, marginTop: 2 }}>{c.description}</div>
-                    </td>
-                    <td style={{ ...td, whiteSpace: 'nowrap' }}>{c.industry}</td>
-                    <td style={{ ...td, whiteSpace: 'nowrap' }}>{c.country}</td>
-                    <td style={{ ...td, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{c.volumeRange}</td>
-                    <td style={{ ...td, textAlign: 'right' }}>{c.readyToConnect && <ReadyBadge />}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+/** Quiet count toward go-live, with four small marks. */
+function GoalProgress({ count }) {
+  const message = count >= GO_LIVE_ACCOUNTS
+    ? `${count} selected · We’ll send invites when you click Done`
+    : `${count} of ${GO_LIVE_ACCOUNTS} selected · Going live takes ${GO_LIVE_ACCOUNTS} connected accounts`
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px' }}>
+      <span aria-hidden="true" style={{ display: 'flex', gap: 2 }}>
+        {Array.from({ length: GO_LIVE_ACCOUNTS }, (_, i) => (
+          <span key={i} style={{ width: 12, height: 4, borderRadius: 2, background: i < count ? ink.strong : ink.divider }} />
+        ))}
+      </span>
+      <p aria-live="polite" style={{ ...text.body, margin: 0 }}>{message}</p>
     </div>
   )
 }
 
 export default function FindAccountsStep({ state, setState }) {
-  const [tab, setTab] = useState('recommended')
-  const selectedIds = state.selectedAccountIds
-  const selected = useMemo(() => new Set(selectedIds ?? []), [selectedIds])
+  const inputId = useId()
+  const [query, setQuery] = useState('')
+  const [filters, setFilters] = useState(NO_FILTERS)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const selected = useMemo(() => new Set(state.selectedAccountIds ?? []), [state.selectedAccountIds])
 
-  // Preserve candidate order so the list sent on "Done" is stable.
-  const commit = nextSet => setState({ selectedAccountIds: NETWORK_CANDIDATES.map(c => c.id).filter(id => nextSet.has(id)) })
+  const filtering = query.trim().length > 0 || Object.keys(NO_FILTERS).some(k => filters[k] !== NO_FILTERS[k])
+  // Unfiltered, the list continues where the recommendations stop. Once the user
+  // searches or filters, every match shows, recommended ones included.
+  const results = useMemo(
+    () => RANKED.map(r => r.candidate).filter(c => (filtering || !RECOMMENDED_IDS.has(c.id)) && matches(c, query, filters)),
+    [query, filters, filtering],
+  )
+  const visible = results.slice(0, visibleCount)
+  // Businesses picked from search stay on screen after the search changes.
+  const visibleIds = new Set(visible.map(c => c.id))
+  const pinned = RANKED.map(r => r.candidate).filter(c => selected.has(c.id) && !RECOMMENDED_IDS.has(c.id) && !visibleIds.has(c.id))
 
-  const toggle = id => {
-    const next = new Set(selected)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
-    commit(next)
+  const updateQuery = next => {
+    setQuery(next)
+    setVisibleCount(PAGE_SIZE)
+  }
+  const updateFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+    setVisibleCount(PAGE_SIZE)
+  }
+  const clearFilters = () => {
+    setQuery('')
+    setFilters(NO_FILTERS)
+    setVisibleCount(PAGE_SIZE)
   }
 
-  const setMany = (ids, on) => {
-    const next = new Set(selected)
-    ids.forEach(id => (on ? next.add(id) : next.delete(id)))
-    commit(next)
+  const toggle = (id, next) => {
+    const nextSet = new Set(selected)
+    if (next) nextSet.add(id)
+    else nextSet.delete(id)
+    // Keep a stable order that matches the ranking.
+    setState({ selectedAccountIds: ORDER.filter(cid => nextSet.has(cid)) })
   }
 
-  const count = selected.size
+  const n = results.length
+  const countLabel = filtering
+    ? `${n} ${n === 1 ? 'business matches' : 'businesses match'}`
+    : `${n} more businesses, best match first`
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <h1 style={{ ...type.pageTitle, margin: 0 }}>Find connected accounts</h1>
-      <p style={{ ...type.body, fontSize: 16, lineHeight: '24px', color: color.subdued, margin: '8px 0 0', maxWidth: 640 }}>
-        Invite businesses already on Stripe. They can connect by reusing information they've already verified.
-      </p>
-
-      <div style={{ marginTop: 24 }}>
-        <GoLiveNudge count={count} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ paddingBottom: 20 }}>
+        <StepHeading title="Find your first connected accounts.">
+          Invite businesses already on Stripe. Ready-to-connect businesses can reuse details they’ve already given Stripe.
+        </StepHeading>
       </div>
 
-      <div style={{ marginTop: 24 }}>
-        <Tabs tabs={TABS} value={tab} onChange={setTab} />
-      </div>
+      <RecommendedGroup label={<BasedOnLabel />}>
+        {RECOMMENDED.map(({ candidate, why }) => (
+          <CandidateRow key={candidate.id} candidate={candidate} description={why} checked={selected.has(candidate.id)} onToggle={toggle} />
+        ))}
+      </RecommendedGroup>
 
-      <SelectionSummary count={count} onClear={() => setState({ selectedAccountIds: [] })} />
+      <GoalProgress count={selected.size} />
 
-      <div style={{ marginTop: 16 }}>
-        {tab === 'recommended' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ ...type.caption, color: color.subdued }}>
-              Matched to your connected accounts: DTC brands in apparel, beauty, home and accessories.
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <SectionLabel>
+          <label htmlFor={inputId}>Find more businesses</label>
+        </SectionLabel>
+        <SearchInput id={inputId} value={query} onChange={updateQuery} placeholder="Search by name or keyword" />
+
+        <div role="group" aria-label="Filters" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+          <FilterSelect label="Industry" allLabel="All industries" value={filters.industry} options={INDUSTRY_OPTIONS} onChange={v => updateFilter('industry', v)} />
+          <FilterSelect label="Country" allLabel="All countries" value={filters.country} options={COUNTRY_OPTIONS} onChange={v => updateFilter('country', v)} />
+          <FilterSelect label="Monthly volume" allLabel="Any volume" value={filters.volumeRange} options={VOLUME_OPTIONS} onChange={v => updateFilter('volumeRange', v)} />
+          <FilterToggle label="Ready to connect only" pressed={filters.readyOnly} onChange={v => updateFilter('readyOnly', v)} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 16 }}>
+          <p aria-live="polite" style={{ ...text.body, flex: '1 0 0', margin: 0 }}>{countLabel}</p>
+          {filtering && <TextButton onClick={clearFilters}>Clear filters</TextButton>}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+          {pinned.map(c => <CandidateRow key={c.id} candidate={c} checked onToggle={toggle} />)}
+          {visible.map(c => <CandidateRow key={c.id} candidate={c} checked={selected.has(c.id)} onToggle={toggle} />)}
+          {n === 0 && (
+            <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <p style={{ ...text.bodyEmphasized, margin: 0 }}>No businesses match</p>
+              <p style={{ ...text.body, margin: 0 }}>Try a different search or fewer filters.</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-              {RECOMMENDED.map(c => (
-                <RecommendedCard key={c.id} candidate={c} invited={selected.has(c.id)} onToggle={() => toggle(c.id)} />
-              ))}
-            </div>
+          )}
+        </div>
+
+        {n > visible.length && (
+          <div style={{ marginTop: 12 }}>
+            <TextButton onClick={() => setVisibleCount(c => c + PAGE_SIZE)}>Show more</TextButton>
           </div>
-        ) : (
-          <SearchPanel selected={selected} onToggle={toggle} onSetMany={setMany} />
         )}
       </div>
     </div>

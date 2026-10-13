@@ -10,7 +10,7 @@ const DashboardApps = lazyPage(() => import('./pages/AppsOverview').then(m => m.
 const DashboardComponents = lazyPage(() => import('./pages/component-library/ComponentLibrary').then(m => m.default));
 const DashboardTransactions = lazyPage(() => import('./pages/listPages').then(m => m.TransactionsTab));
 const DashboardCustomers = lazyPage(() => import('./pages/listPages').then(m => m.CustomersTab));
-const DashboardNetwork = lazyPage(() => import('./pages/network/NetworkPage').then(m => m.default));
+const DashboardNetwork = lazyPage(() => import('./pages/listPages').then(m => m.NetworkTab));
 const DashboardProducts = lazyPage(() => import('./pages/listPages').then(m => m.ProductCatalogTab));
 const DashboardEnablement = lazyPage(() => import('./pages/enablement/Enablement').then(m => m.default));
 

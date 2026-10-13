@@ -1,25 +1,30 @@
 // Enablement "Get more from your platform" checklist (Figma 11038:39006,
-// "Recommended"). Each row links to the page that completes the step.
-import { useState } from 'react'
+// "Recommended"). Each row links to the page that completes the step; the
+// Stripe network row opens the network onboarding dialog instead.
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { color, type, radius, tokens } from '@dashboard/ui'
+import { dashboardStorage } from '../../lib/storage'
+import NetworkOnboarding from '../network/NetworkOnboarding'
 
 const ASSETS = '/dashboard-assets/enablement'
 
 const ITEMS = [
-  { to: '/connect/accounts', before: 'Onboard faster with accounts already on the ', highlight: 'Stripe network', after: '' },
-  { to: '/connect/capital', before: 'Add capabilities like ', highlight: 'Capital and Treasury', after: ' to your connected accounts' },
-  { to: '/apps', before: 'Supercharge your platform with ', highlight: 'prebuilt skills and agents', after: ' from Platform Apps' },
+  { id: 'network', opensNetwork: true, before: 'Onboard faster with accounts already on the ', highlight: 'Stripe network', after: '' },
+  { id: 'capital', to: '/connect/capital', before: 'Add capabilities like ', highlight: 'Capital and Treasury', after: ' to your connected accounts' },
+  { id: 'apps', to: '/apps', before: 'Supercharge your platform with ', highlight: 'prebuilt skills and agents', after: ' from Platform Apps' },
 ]
 
 const text = { ...type.bodySmall, lineHeight: '18px' }
 
-function ChecklistRow({ item }) {
+function ChecklistRow({ item, onOpenNetwork }) {
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
+  const Row = item.opensNetwork ? 'button' : Link
+  const rowProps = item.opensNetwork ? { type: 'button', onClick: onOpenNetwork } : { to: item.to }
   return (
-    <Link
-      to={item.to}
+    <Row
+      {...rowProps}
       data-wireframe-frame="card"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -36,6 +41,10 @@ function ChecklistRow({ item }) {
         outline: 'none',
         boxShadow: focused ? `0 0 0 2px ${color.surface}, 0 0 0 4px ${color.brand500}` : 'none',
         textDecoration: 'none',
+        width: '100%',
+        textAlign: 'left',
+        font: 'inherit',
+        cursor: 'pointer',
         transition: `background ${tokens.ease.fast}, border-color ${tokens.ease.fast}`,
       }}
     >
@@ -45,11 +54,19 @@ function ChecklistRow({ item }) {
         {item.after}
       </span>
       <img src={`${ASSETS}/progress-ring-0.svg`} alt="" style={{ display: 'block', flexShrink: 0 }} />
-    </Link>
+    </Row>
   )
 }
 
 export default function GoLiveChecklist() {
+  const [networkOpen, setNetworkOpen] = useState(false)
+  const openNetwork = useCallback(() => setNetworkOpen(true), [])
+  const closeNetwork = useCallback(() => setNetworkOpen(false), [])
+  const completeNetwork = useCallback(({ optedIn, selectedAccountIds }) => {
+    dashboardStorage.setItem('network-onboarding', JSON.stringify({ optedIn, selectedAccountIds, completedAt: new Date().toISOString() }))
+    setNetworkOpen(false)
+  }, [])
+
   return (
     <section
       aria-label="Go live checklist"
@@ -87,8 +104,9 @@ export default function GoLiveChecklist() {
         <span style={{ ...text, color: color.actionPrimary }}>Get more from your platform</span>
       </div>
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {ITEMS.map(item => <ChecklistRow key={item.to} item={item} />)}
+        {ITEMS.map(item => <ChecklistRow key={item.id} item={item} onOpenNetwork={openNetwork} />)}
       </div>
+      <NetworkOnboarding open={networkOpen} onClose={closeNetwork} onComplete={completeNetwork} />
     </section>
   )
 }
