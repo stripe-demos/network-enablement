@@ -9,9 +9,9 @@ import {
   AccountMenu, AppIcon, AppListItem, AppsIcon, LinkListItem, Popover, StarIcon, AddIcon, BusinessIcon, EditIcon, PersonIcon, SandboxIcon, SettingsIcon, SignOutIcon, SailChevronRightIcon, SailInfoIcon,
   ActionMenu, NotificationsMenu, InvoiceIcon, SubscriptionIcon, DocumentIcon, LinkIcon, PayoutIcon,
   ChevronUpCircleIcon, ExplorerIcon, TransferIcon, WarningIcon, WebhookIcon,
-  Badge, Button, Card, CardFooterLink, CardGrid, ChartHoverCard, ConsoleIcon, DashboardThinkingIcon, ScrollArea, CardHeader, CardMetric, Checkbox, Collapse, DataTable, DateRangePicker, Drawer, FadeSlideIn,
+  BarChart, Badge, Button, Card, CardFooterLink, CardGrid, ChartHoverCard, ConsoleIcon, DashboardThinkingIcon, ScrollArea, CardHeader, CardMetric, Checkbox, Switch, Collapse, DataTable, DateRangePicker, Drawer, FadeSlideIn,
   DatePicker, SelectMenu, StatDropdown, formatDateRange, formatShortDate, getPresetRange,
-  EmptyState, FilterPill, FilterPillValue, FOCUS_TRACE_SPEEDS, FocusTrace, Icon, IconButton, ICON_NAMES, InfoIcon, KeyValueList,
+  EmptyState, FilterPill, FunnelMeter, FilterPillValue, FOCUS_TRACE_SPEEDS, FocusTrace, Icon, IconButton, ICON_NAMES, InfoIcon, KeyValueList,
   Legend, LineChart, LiveDot, Menu, MeterBar, OverflowMenu, PageHeader, PlusCircleIcon, PlusIcon, SearchField,
   Radio, SectionHeader, SelectButton, Sparkline, Stat, StatusBadge, Tabs, TextField, TextLink, Toast,
   Tooltip, ViewChips, Well, color, setConsoleIconVariant, status, type, useConsoleIconVariant, useDashboardConsole, useToast,
@@ -241,6 +241,19 @@ function CheckboxDemo() {
       <Checkbox checked={b} onChange={setB} label="Unchecked" />
       <Checkbox indeterminate label="Indeterminate" />
       <Checkbox disabled label="Disabled" />
+    </div>
+  )
+}
+
+function SwitchDemo() {
+  const [a, setA] = useState(true)
+  const [b, setB] = useState(false)
+  return (
+    <div className="flex items-center gap-[24px]">
+      <Switch checked={a} onChange={setA} label="On" />
+      <Switch checked={b} onChange={setB} label="Off" />
+      <Switch checked={a} onChange={setA} label="Payment receipts" hideLabel />
+      <Switch disabled label="Disabled" />
     </div>
   )
 }
@@ -614,6 +627,13 @@ export const CATALOG = [
     props: [['checked', 'boolean'], ['indeterminate', 'boolean'], ['onChange(checked)', 'fn'], ['label', 'node'], ['disabled', 'boolean']],
   },
   {
+    id: 'switch', name: 'Switch', category: 'Inputs',
+    description: 'On/off setting that applies right away. Use `hideLabel` when the setting name sits elsewhere in the row.',
+    demo: SwitchDemo,
+    code: `<Switch checked={on} onChange={setOn} label="Payment receipts" hideLabel />`,
+    props: [['checked', 'boolean'], ['onChange(checked)', 'fn'], ['label', 'node, also the accessible name'], ['hideLabel', 'boolean'], ['disabled', 'boolean']],
+  },
+  {
     id: 'radio', name: 'Radio', category: 'Inputs',
     description: 'Single choice from a small set. Give every radio in a group the same `name`. Controlled.',
     demo: RadioDemo,
@@ -759,7 +779,47 @@ export const CATALOG = [
       </div>
     ),
     code: `<LineChart data={[5, 7, 6, 9]} compareData={[4, 5, 5, 6]}\n  yLabels={['20', '15', '10', '5', '0']} xStart="Dec 1" xEnd="Dec 7"\n  hover={{ labels: ['Dec 1', …], compareLabels: ['Nov 24', …], format: (n) => \`$\${n}\` }} />`,
-    props: [['data / compareData', 'number[]'], ['path1 / path2', 'raw SVG paths in a 0 0 100 {height} viewBox, points evenly spaced'], ['yLabels', 'string[] top → bottom'], ['xStart / xEnd', 'strings'], ['height', 'px (default 188)'], ['hover', '{ labels, compareLabels?, format?, yMax? } — yMax scales path heights to values when using paths']],
+    props: [['data / compareData', 'number[]'], ['path1 / path2', 'raw SVG paths in a 0 0 100 {height} viewBox, points evenly spaced'], ['yLabels', 'string[] top → bottom'], ['xStart / xEnd', 'strings'], ['height', 'px (default 188)'], ['hover', '{ labels, compareLabels?, format?, yMax? } — yMax scales path heights to values when using paths'], ['stroke / strokeWidth', 'primary line color (default color.brand500) and width (default 1.5)'], ['yMax', 'number — fixed top of the scale for `data` series (default: max of all series)'], ['rows', 'grid intervals (default 4)'], ['bands', '[{ data, color?, dashed? = true }] — extra comparison lines under the primary, same scale']],
+  },
+  {
+    id: 'line-chart-bands', name: 'LineChart with bands', category: 'Charts',
+    description: 'LineChart with dashed comparison bands (e.g. peer benchmarks) under a categorical primary line, a fixed `yMax` and 2 grid rows (Enablement cards).',
+    demo: () => (
+      <div style={{ width: 420 }}>
+        <LineChart
+          data={[22, 28, 31, 35, 41, 46, 52]} yMax={80} rows={2} yLabels={['80%', '40%', '0%']} height={128}
+          stroke={color.chartCategorical[0]} strokeWidth={2}
+          bands={[{ data: [30, 34, 38, 42, 46, 50, 54] }, { data: [12, 14, 16, 18, 20, 22, 24] }]}
+          xStart="Jan" xEnd="Jul"
+        />
+      </div>
+    ),
+    code: `<LineChart data={[22, 28, 31, …]} yMax={80} rows={2} yLabels={['80%', '40%', '0%']}\n  stroke={color.chartCategorical[0]} strokeWidth={2}\n  bands={[{ data: [30, 34, …] }, { data: [12, 14, …], dashed: false }]} />`,
+  },
+  {
+    id: 'bar-chart', name: 'BarChart', category: 'Charts',
+    description: 'Card-sized vertical bar chart laid out like LineChart: bars fill the width with 1px gaps, 2px top radius, gridlines and right-hand y labels.',
+    demo: () => (
+      <div style={{ width: 420 }}>
+        <BarChart
+          data={[4, 6, 5, 8, 7, 9, 12, 10, 11, 14, 13, 16, 15, 18, 17, 20, 19, 22, 21, 24]}
+          yMax={30} yLabels={['30', '15', '0']} xStart="Sep 1" xEnd="Sep 20"
+        />
+      </div>
+    ),
+    code: `<BarChart data={[4, 6, 5, 8, …]} yMax={30} yLabels={['30', '15', '0']}\n  xStart="Sep 1" xEnd="Sep 20" />`,
+    props: [['data', 'number[]'], ['yMax', 'number — top of the scale (default data max)'], ['yLabels', 'string[] top → bottom'], ['rows', 'grid intervals (default 2)'], ['xStart / xEnd', 'strings'], ['height', 'px (default 128)'], ['color', 'bar fill (default color.chartCategorical[0])']],
+  },
+  {
+    id: 'funnel-meter', name: 'FunnelMeter', category: 'Charts',
+    description: 'Stacked rows of horizontal meters for funnel stages, each filled to its percentage, with the stage label on the right and a shared 0–100% scale below.',
+    demo: () => (
+      <div style={{ width: 420 }}>
+        <FunnelMeter stages={[{ label: 'Started onboarding', value: 100 }, { label: 'Submitted details', value: 72 }, { label: 'Charges enabled', value: 54 }, { label: 'Payouts enabled', value: 38 }]} />
+      </div>
+    ),
+    code: `<FunnelMeter stages={[{ label: 'Started onboarding', value: 100 }, { label: 'Charges enabled', value: 54 }]} />`,
+    props: [['stages', '[{ label, value }] — value 0–100'], ['scaleLabels', "string[] spread start → end (default ['0%', '50%', '100%'])"], ['labelWidth', 'px (default 120); labels may wrap'], ['barHeight', 'px (default 20)'], ['color', 'fill (default color.chartCategorical[0])']],
   },
   {
     id: 'chart-hover-card', name: 'ChartHoverCard / LineChartHover', category: 'Charts',

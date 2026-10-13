@@ -43,6 +43,8 @@ export const color = {
 
   // Data viz series, in order
   chart: ['#675DFF', '#8B83FF', '#0055BC', '#33BBFF', '#FF8C21'],
+  // Sail color.chart.categorical.1–3 (Enablement cards)
+  chartCategorical: ['#9A65FF', '#0055BC', '#00A1C2'],
   // Payment outcome series (Dashboard Payments card), in display order
   paymentStatus: {
     succeeded:  '#9A65FF',
