@@ -145,7 +145,7 @@ export function playReveal({ source, getPaths, origin, color, reverse = false, o
  *
  * @returns whether it started; when false, `teardown` has not been called
  */
-export function playLeave({ getPaths, origin, color, teardown, onDone }) {
+export function playLeave({ getPaths, origin, color, mask, teardown, onDone }) {
   if (!document.startViewTransition) return false;
 
   const root = document.documentElement;
@@ -154,6 +154,8 @@ export function playLeave({ getPaths, origin, color, teardown, onDone }) {
   gray.className = 'ps-grayscale';
   gray.setAttribute('data-wireframe-ui', '');
   gray.setAttribute('aria-hidden', 'true');
+  // Picks shown in color stay in color in the snapshot.
+  if (mask) gray.style.mask = mask;
   root.appendChild(gray);
 
   root.setAttribute('data-ps-leaving', '');

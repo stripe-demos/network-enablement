@@ -47,6 +47,7 @@ function readSettings(key) {
   const saved = readJson(key);
   return {
     enabled: saved?.enabled === true,
+    color: saved?.color === true,
   };
 }
 
@@ -166,6 +167,7 @@ export default function PrototypeSettings({
     return () => host.remove();
   }, [host]);
   const titleId = useId();
+  const colorId = useId();
   // Picking blocks the page, so it only starts on its own when nothing is picked yet.
   const [picking, setPicking] = useState(() => flowState.picks.length === 0);
   const [exporting, setExporting] = useState(false);
@@ -186,7 +188,7 @@ export default function PrototypeSettings({
   // Where the outline dissolve starts and ends, handed to the engine by the
   // toggle: only a user toggle plays it, not loading the page with wireframe on.
   const dissolve = useRef({ intro: null, outro: null });
-  const { enabled } = settings;
+  const { enabled, color } = settings;
   const docked = enabled || closing;
   const { picks, flows, activeFlowId } = flowState;
   const activeFlow = flows.find(f => f.id === activeFlowId);
@@ -259,7 +261,7 @@ export default function PrototypeSettings({
   async function onExport() {
     setExporting(true);
     try {
-      await exportScreenshot(`${surface}-wireframe`);
+      await exportScreenshot(`${surface}-wireframe`, wireframe.current?.colorRegions());
     } catch (error) {
       console.error('Screenshot export failed', error);
     } finally {
@@ -273,7 +275,7 @@ export default function PrototypeSettings({
   useEffect(() => {
     if (!enabled) return undefined;
     const origins = dissolve.current;
-    const engine = startWireframe({ palette: palette ?? derivePalette(), keep, intro: origins.intro });
+    const engine = startWireframe({ palette: palette ?? derivePalette(), keep, color, intro: origins.intro });
     origins.intro = null;
     wireframe.current = engine;
     return () => {
@@ -288,6 +290,10 @@ export default function PrototypeSettings({
   useEffect(() => {
     wireframe.current?.setKeep(keep);
   }, [keep]);
+
+  useEffect(() => {
+    wireframe.current?.setColor(color);
+  }, [color]);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -446,6 +452,16 @@ export default function PrototypeSettings({
               )}
             </div>
             <span className="ps-bar-spacer" />
+            {/* Shows picks in their real colors; the wireframe itself stays gray. */}
+            <div className="ps-bar-toggle">
+              <span id={colorId}>Color</span>
+              <Switch
+                checked={color}
+                labelledBy={colorId}
+                onToggle={() => setSettings(prev => ({ ...prev, color: !prev.color }))}
+              />
+            </div>
+            <span className="ps-toast-divider" aria-hidden="true" />
             <div className="ps-bar-toggle">
               <PenIcon />
               <span id={titleId}>Wireframe</span>

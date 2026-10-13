@@ -27,9 +27,12 @@ What you get:
 - **Pick what to show**: click or drag over content to bring it back at full
   fidelity. **Done** makes the page usable again with the picks kept, including
   across pages. Menus opened from picked buttons show too.
+- **Color**: a switch on the bar, off by default, that shows picked content in
+  its real colors. Everything else stays a gray wireframe either way.
 - **Flows**: save the current picks under a name, switch between them (from
   the flow name on the bar), override or save as new, discard.
-- **Export screenshot**: downloads the current view as a grayscale PNG.
+- **Export screenshot**: downloads the current view as a grayscale PNG (with
+  picks in color while Color is on).
 
 ## Requirements
 
@@ -111,7 +114,7 @@ None are needed. Add them where the default look isn't right:
 
 Two `localStorage` keys, shared by every page on the same origin and key prefix:
 
-- `<prefix>-settings-v1`: whether wireframe is on.
+- `<prefix>-settings-v1`: whether wireframe is on, and whether Color is on.
 - `<prefix>-flows-v1`: the current picks, saved flows, and the active flow.
 
 A pick is stored as a CSS path (anchored on a stable `id` where there is one)
@@ -129,6 +132,13 @@ elements (`data-wf-pick`, `data-wf-reveal`) are skipped by both. Nothing in your
 DOM is moved or removed. Everything the tool adds is marked
 `data-wireframe-ui` and ignored by the engine. (The bar's host element and the
 `html[data-ps-bar]` flag are the only changes outside the page's own content.)
+
+The page is grayscale through one backdrop-filter overlay (`.ps-grayscale`).
+With Color on, each redraw also masks that overlay away over the outermost
+picks (clipped by their scroll areas), so only they show in color. Where a
+layer that isn't picked (menu, dialog, sticky bar) sits on top of a pick, one
+hit test confirms it and that part stays gray. The same regions are used by the
+export and by the leave transition's snapshot. It adds nothing while Color is off.
 
 The outline dissolve (`revealEffect.js`) is one extra canvas for about 700ms. Each
 frame it copies the engine's finished canvas through a few ring-shaped clips and
@@ -186,6 +196,9 @@ the tool works and how to measure a change.
 - Pointer-transparent text laid over something (e.g. a placeholder `span` over
   an `input`) is treated as covered, so it isn't drawn.
 - Saved picks are tied to the page's markup: big restructures can orphan them.
+- With Color on, a pick shows color across its whole box: rounded corners and
+  transparent gaps let the (flattened, gray) background behind it show through
+  in color, and its shadow outside the box stays gray.
 - Export screenshot captures the visible page area (the viewport minus the bar),
   not the whole page, and may miss cross-origin images that block it.
 - The bar doesn't collapse on narrow screens; it is built for desktop widths.

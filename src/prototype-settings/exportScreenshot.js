@@ -32,8 +32,12 @@ function pageHeight() {
   return window.innerHeight - bar;
 }
 
-/** Downloads the visible page, without the prototype controls, as a grayscale PNG. */
-export async function exportScreenshot(name) {
+/**
+ * Downloads the visible page, without the prototype controls, as a grayscale PNG.
+ * `holes` stay in color, except for the `covers` inside them, matching the
+ * grayscale overlay's mask (see `colorRegions` in the engine).
+ */
+export async function exportScreenshot(name, { holes = [], covers = [] } = {}) {
   const { domToCanvas } = await import('modern-screenshot');
   const unmark = markScrolled();
   let shot;
@@ -57,6 +61,20 @@ export async function exportScreenshot(name) {
   const ctx = out.getContext('2d');
   ctx.filter = 'grayscale(1)';
   ctx.drawImage(shot, 0, 0);
+  const scale = shot.width / window.innerWidth;
+  const region = rects => {
+    const path = new Path2D();
+    for (const r of rects) path.rect(r.left * scale, r.top * scale, (r.right - r.left) * scale, (r.bottom - r.top) * scale);
+    return path;
+  };
+  for (const [rects, filter] of [[holes, 'none'], [covers, 'grayscale(1)']]) {
+    if (!rects.length) continue;
+    ctx.save();
+    ctx.filter = filter;
+    ctx.clip(region(rects));
+    ctx.drawImage(shot, 0, 0);
+    ctx.restore();
+  }
   // The wireframe blocks live on the engine's own viewport-sized canvas.
   const blocks = document.querySelector('.wf-canvas');
   if (blocks) ctx.drawImage(blocks, 0, 0);

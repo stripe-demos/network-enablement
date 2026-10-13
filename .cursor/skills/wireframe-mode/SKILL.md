@@ -58,7 +58,7 @@ what can be checked automatically (`npm test`).
 | `revealEffect.js` | The outline dissolve in (`playReveal`) and the View Transitions wipe out (`playLeave`) |
 | `customPicker.js` | Click-and-drag picking and the marquee |
 | `flowPicks.js`, `FlowMenu.jsx`, `FlowDialog.jsx`, `DiscardDialog.jsx` | Saved flows |
-| `exportScreenshot.js` | Grayscale PNG export (lazy `modern-screenshot`) |
+| `exportScreenshot.js` | Grayscale PNG export, picks in color when Color is on (lazy `modern-screenshot`) |
 | `palette.js` | Colors and theme derived from the page |
 | `mount.jsx` | `mountPrototypeSettings()` for entries that don't import the app |
 | `mountDashboard.jsx` | Repo-only: Dashboard's mount |
@@ -69,7 +69,10 @@ what can be checked automatically (`npm test`).
   `.ps-trigger { z-index: 0 }`). The `.ps-grayscale` overlay is a
   backdrop-filter at `z-index: 2147483000`. Anything that must stay *colored* (the
   dissolve `.wf-fx`, the marquee) is appended to `<html>` **after** that overlay,
-  or it gets desaturated.
+  or it gets desaturated. The Color switch keeps picks colored by masking that
+  overlay (`colorRegionsOf` / `applyColorMask` in the engine, recomputed on each
+  redraw); never color picks by filtering page elements, which would change
+  their containing blocks.
 - **The bar host is a child of `<html>`**, outside `<body>`. `html[data-ps-bar]`
   plus the registered `--ps-bar-h` reserve the bar's height on `<body>`.
 - **Leaving wireframe** (`stopWireframe` then `playLeave`) is sequenced: the bar slides

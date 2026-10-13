@@ -11,6 +11,8 @@ const UI_SELECTOR = '[data-wireframe-ui]';
 const DARK_ZONE = '[data-wireframe-tone="dark"]';
 // Content shown at full fidelity in Custom mode (see customPicker.js).
 const REVEALED = '[data-wf-reveal], [data-wf-preview]';
+// The tool's own grayscale overlay, masked over picks when `color` is on.
+const GRAYSCALE = '.ps-grayscale';
 const SKIPPED_TAGS = new Set(['script', 'style', 'noscript', 'template', 'title', 'textarea', 'select', 'option']);
 const SHAPE_TAGS = new Set(['rect', 'path', 'circle', 'ellipse', 'polygon', 'polyline', 'line']);
 const TEXT_FIELDS = 'textarea, input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="number"], input[type="tel"], input[type="url"], input[type="password"]';
@@ -249,11 +251,18 @@ const textFilter = {
 // A wireframe that is waiting out its `delay` before leaving (see `stop`).
 let pendingLeave = null;
 
-export function startWireframe({ palette, keep: initialKeep = '', intro }) {
+// `color` shows picked content in color: the grayscale overlay is masked away over it.
+export function startWireframe({ palette, keep: initialKeep = '', intro, color: initialColor = false }) {
   pendingLeave?.();
   // A previous run's outro can still be fading out.
   document.querySelectorAll('.wf-canvas[data-leaving], .wf-fx').forEach(el => el.remove());
   let keep = initialKeep;
+  let color = initialColor;
+  // What the overlay mask leaves in color, in viewport pixels (also used by the export).
+  let colorRegions = { holes: [], covers: [] };
+  let colorMask = '';
+  let maskedOverlay = null;
+  let appliedMask = '';
   const root = document.documentElement;
   const cssVar = name => `--wf-${name.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}`;
   for (const [name, value] of Object.entries(palette)) root.style.setProperty(cssVar(name), value);
@@ -507,6 +516,58 @@ export function startWireframe({ palette, keep: initialKeep = '', intro }) {
       ctx.fillStyle = palette.darkBlock;
       ctx.fill(darkBlocks);
     }
+
+    colorRegions = color ? colorRegionsOf(clipOf, viewport, layers) : { holes: [], covers: [] };
+    applyColorMask();
+  }
+
+  // Each outermost pick, as far as its clip shows it, is a hole in the grayscale
+  // overlay. Where another layer (a menu, a sticky bar) is on top of a pick, that
+  // part is a cover: it stays gray. One hit test per overlapping layer tells
+  // whether the layer is above the pick or beneath it.
+  function colorRegionsOf(clipOf, viewport, layers) {
+    const clipFor = el => (getComputedStyle(el).position === 'fixed' ? viewport : clipOf(el.parentElement));
+    const overlap = (a, b) => {
+      const left = Math.floor(Math.max(a.left, b.left));
+      const top = Math.floor(Math.max(a.top, b.top));
+      const right = Math.ceil(Math.min(a.right, b.right));
+      const bottom = Math.ceil(Math.min(a.bottom, b.bottom));
+      return right - left >= 1 && bottom - top >= 1 ? { left, top, right, bottom } : null;
+    };
+    const holes = [];
+    for (const el of document.querySelectorAll(REVEALED)) {
+      if (el.parentElement?.closest(REVEALED) || el.closest(UI_SELECTOR) || !isVisible(el)) continue;
+      const rect = overlap(el.getBoundingClientRect(), clipFor(el));
+      if (rect) holes.push({ el, ...rect });
+    }
+    const covers = [];
+    for (const layer of holes.length ? layers : []) {
+      if (layer.el.closest(REVEALED)) continue;
+      const shown = overlap(layer, clipFor(layer.el));
+      for (const hole of shown ? holes : []) {
+        const part = layer.el.contains(hole.el) ? null : overlap(shown, hole);
+        if (!part) continue;
+        const hit = pageElementAt((part.left + part.right) / 2, (part.top + part.bottom) / 2);
+        if (hit && layer.el.contains(hit)) covers.push(part);
+      }
+    }
+    return { holes, covers };
+  }
+
+  // Mask layers composite bottom up: the holes add up, the full layer subtracts
+  // them, and the covers are added back on top.
+  function applyColorMask() {
+    const box = r => `linear-gradient(#000 0 0) ${r.left}px ${r.top}px / ${r.right - r.left}px ${r.bottom - r.top}px no-repeat`;
+    const { holes, covers } = colorRegions;
+    colorMask = holes.length
+      ? [...covers.map(r => `${box(r)} add`), 'linear-gradient(#000 0 0) subtract', ...holes.map(box)].join(', ')
+      : '';
+    const overlay = document.querySelector(GRAYSCALE);
+    if (overlay === maskedOverlay && colorMask === appliedMask) return;
+    if (overlay !== maskedOverlay) maskedOverlay?.style.removeProperty('mask');
+    maskedOverlay = overlay;
+    appliedMask = colorMask;
+    if (overlay) overlay.style.mask = colorMask;
   }
 
   // The dissolve starts once there is a finished frame to dissolve into. The
@@ -637,6 +698,8 @@ export function startWireframe({ palette, keep: initialKeep = '', intro }) {
       classify();
       draw();
     }
+    const mask = colorMask;
+    maskedOverlay?.style.removeProperty('mask');
     stopped = true;
     cancelAnimationFrame(frame);
     clearTimeout(animationTimer);
@@ -652,6 +715,7 @@ export function startWireframe({ palette, keep: initialKeep = '', intro }) {
       getPaths: currentShapes,
       origin: outro,
       color: accent,
+      mask,
       teardown: () => {
         canvas.remove();
         restorePage();
@@ -693,5 +757,11 @@ export function startWireframe({ palette, keep: initialKeep = '', intro }) {
     }
   }
 
-  return { stop: stopWireframe, setKeep };
+  function setColor(next) {
+    if (next === color) return;
+    color = next;
+    schedule(QUICK_SETTLE_FRAMES);
+  }
+
+  return { stop: stopWireframe, setKeep, setColor, colorRegions: () => colorRegions };
 }
