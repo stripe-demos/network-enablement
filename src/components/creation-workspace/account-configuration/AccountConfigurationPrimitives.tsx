@@ -354,8 +354,7 @@ export function DuplicateAccountNudge({
   actionLabel?: string
   dense?: boolean
 }) {
-  const type = useCardCreateTypeScale()
-  const compact = !type.matchCard
+  const compact = dense
   const mark = compact ? 28 : 36
 
   return (

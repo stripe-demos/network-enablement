@@ -570,13 +570,13 @@ function ConfigurationRow({
   const capabilityCount = capabilityNames?.length ?? 0
   const inlineEdit = showInlineEdit ? (
     <div className={`flex h-[28px] shrink-0 items-stretch overflow-hidden rounded-[8px] bg-[#F4F6F8] ${canEdit ? "" : "px-[10px]"}`}>
-      <span className={`flex items-center text-[13px] font-[400] leading-[18px] text-[#273951] ${canEdit ? "pl-[10px] pr-[8px]" : ""}`}>
+      <span className={`flex items-center text-[13px] font-[400] leading-[18px] text-[#273951] ${canEdit ? "pl-[10px] pr-[4px]" : ""}`}>
         {capabilityCount === 1 ? "1 capability" : `${capabilityCount} capabilities`}
       </span>
       {canEdit ? (
         <button
           type="button"
-          className="px-[10px] text-[13px] font-[500] leading-[18px] text-[#533AFD] outline-none transition-colors hover:bg-[#F0EDFF] hover:text-[#4730E0]"
+          className="pl-[4px] pr-[10px] text-[13px] font-[500] leading-[18px] text-[#533AFD] outline-none transition-colors hover:bg-[#F0EDFF] hover:text-[#4730E0]"
           onClick={(event) => {
             event.stopPropagation()
             onOpen?.()

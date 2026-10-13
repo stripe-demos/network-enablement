@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { getFormTokens } from "./shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
-import { SegmentedControl } from "@/components/SegmentedControl"
 import { CustomSelect } from "./shared/CustomSelect"
 import { AddressFields, CountrySelect, formatAddressSummary, phoneCountryFromBillingCountry } from "./shared/AddressFields"
 import type { CustomerFormLayout } from "@/components/creation-workspace/customerFormLayout"
@@ -710,16 +709,12 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     }
 
     const typeField = (
-      <div className="flex flex-col gap-[6px]">
-        <span className={tokens.labelClass}>Account type</span>
-        <SegmentedControl
-          value={accountType}
-          options={ACCOUNT_TYPE_OPTIONS}
-          onChange={(type) => syncIdentity({ accountType: type })}
-          variantOverride="segmented"
-          buttonClassName="text-[11px] leading-[16px] tracking-[-0.02px]"
-        />
-      </div>
+      <CustomSelect
+        label="Account type"
+        value={accountType}
+        onChange={(type) => syncIdentity({ accountType: type })}
+        options={ACCOUNT_TYPE_OPTIONS.map((type) => ({ value: type, label: type }))}
+      />
     )
     const nameField = accountType === "Company" ? (
       <Field label="Company name">

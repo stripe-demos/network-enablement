@@ -7,7 +7,7 @@ import { UxRationaleToast } from "@/components/creation-workspace/UxRationaleToa
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 
-import { ACCOUNT_ONBOARDING_LINK, PAYOUT_METHODS, type AccountConfigurationPayload, type PayoutMethod } from "./model"
+import { ACCOUNT_ONBOARDING_LINK, CONFIGURATION_OPTIONS, PAYOUT_METHODS, getDraftName, type AccountConfigurationPayload, type PayoutMethod } from "./model"
 
 export async function copyAccountOnboardingLink(link: string) {
   try {
@@ -248,6 +248,29 @@ function ShareLinkButton({ onCopy }: { onCopy: () => Promise<void> }) {
   )
 }
 
+function payloadAccountName(payload: AccountConfigurationPayload) {
+  if ("name" in payload.account && payload.account.name) return payload.account.name
+  return getDraftName(payload.details) || "this account"
+}
+
+function addedConfigurationLabels(payload: AccountConfigurationPayload) {
+  return payload.configurations.map((id) => CONFIGURATION_OPTIONS.find((option) => option.id === id)?.title ?? id)
+}
+
+function joinLabels(labels: string[]) {
+  if (labels.length <= 1) return labels[0] ?? ""
+  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`
+  return `${labels.slice(0, -1).join(", ")}, and ${labels[labels.length - 1]}`
+}
+
+function addedConfigurationCopy(payload: AccountConfigurationPayload) {
+  const labels = addedConfigurationLabels(payload)
+  const name = payloadAccountName(payload)
+  if (labels.length === 0) return "The selected account has been updated."
+  if (labels.length === 1) return `The ${labels[0]} configuration has been added to ${name}.`
+  return `The ${joinLabels(labels)} configurations have been added to ${name}.`
+}
+
 function payoutContact(payload: AccountConfigurationPayload) {
   return "email" in payload.account && payload.account.email
     ? payload.account.email
@@ -342,7 +365,7 @@ export function AccountSuccessPage({ payload, hugContent = false, onClose, onVie
   const primaryButtonClass = `${tokens.primaryButtonClass} !h-[32px] !px-[14px] !text-[13px]`
   const secondaryButtonClass = `${tokens.secondaryButtonClass} !h-[32px] !px-[14px] !text-[13px]`
   const accountCreated = payload.source === "new"
-  const accountUpdated = !accountCreated && Boolean(payload.deactivatedConfigurations?.length)
+  const successTitle = accountCreated ? "Account created" : "Account updated"
   const onboarding = payload.onboarding
   const recipientAdded = payload.configurations.includes("recipient")
   const payoutEmail = payload.recipient?.email || payoutContact(payload)
@@ -372,7 +395,7 @@ export function AccountSuccessPage({ payload, hugContent = false, onClose, onVie
     return (
       <>
         <PreviewSuccessLayout
-          title={accountCreated ? "Account created" : `Configuration${payload.configurations.length === 1 ? "" : "s"} added`}
+          title={successTitle}
           description={
             <>
               Send an email to <span className="font-[600] text-[#1A2C44]">{payoutEmail || "the account"}</span> to collect payout details.
@@ -399,7 +422,7 @@ export function AccountSuccessPage({ payload, hugContent = false, onClose, onVie
     return (
       <>
         <PreviewSuccessLayout
-          title={accountCreated ? "Account created" : `Configuration${payload.configurations.length === 1 ? "" : "s"} added`}
+          title={successTitle}
           description={
             <>
               Send an email to <span className="font-[600] text-[#1A2C44]">{onboardingEmail || "the account"}</span> to collect remaining information, or <ShareLinkButton onCopy={copyLink} />.
@@ -427,13 +450,13 @@ export function AccountSuccessPage({ payload, hugContent = false, onClose, onVie
     <div className={`relative flex min-h-0 flex-1 flex-col items-center justify-center text-center ${hugContent ? "p-[120px]" : "px-[24px] py-[48px]"}`} data-account-success-page>
       <SuccessDismissChrome onClose={dismiss} viewAccountClassName={primaryButtonClass} />
       <SuccessMark />
-      <h2 className="mt-[24px] text-[24px] font-[650] leading-[30px] tracking-[-0.35px] text-[#1A2C44]">{accountCreated ? "Account created" : accountUpdated ? "Account updated" : `Configuration${payload.configurations.length === 1 ? "" : "s"} added`}</h2>
+      <h2 className="mt-[24px] text-[24px] font-[650] leading-[30px] tracking-[-0.35px] text-[#1A2C44]">{successTitle}</h2>
       <p className="mt-[8px] max-w-[600px] text-[13px] leading-[20px] text-[#596171]">
         {isDirectCustomerCreated
           ? "Edit account details or add configurations from this account’s page."
           : showOnboardingActions
             ? <><span className="block">The account can now finish any remaining setup.</span><span className="block">Send the onboarding link by email or copy it to share yourself.</span></>
-            : accountCreated ? "The account can now finish any remaining setup." : "The selected account has been updated."}
+            : accountCreated ? "The account can now finish any remaining setup." : addedConfigurationCopy(payload)}
       </p>
       {isDirectCustomerCreated || !showOnboardingActions ? (
         <div className="mt-[16px]">
