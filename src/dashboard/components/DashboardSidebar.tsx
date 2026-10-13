@@ -923,10 +923,10 @@ export default function DashboardSidebar({
                       isActive={isActive('/transactions')}
                     />
                     <NavItem collapsed={collapsed} v2={version === 'v2'}
-                      href={buildDashboardHref('/customers/all-customers')}
+                      href={buildDashboardHref('/network/all')}
                       icon={<PersonIcon />}
-                      label="Directory"
-                      isActive={isActive('/customers')}
+                      label="Network"
+                      isActive={isActive('/network')}
                     />
                     <NavItem collapsed={collapsed} v2={version === 'v2'}
                       href={buildDashboardHref('/product-catalog/all-products')}

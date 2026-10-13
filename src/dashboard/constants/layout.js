@@ -2,7 +2,7 @@ export const HOME_CONTENT_GUTTER = 40
 
 /** List views (full-bleed tables) span the window; every other page caps at this width. */
 export const CONTENT_MAX_WIDTH = 1280
-const LIST_VIEW_PREFIXES = ['/transactions', '/customers', '/product-catalog']
+const LIST_VIEW_PREFIXES = ['/transactions', '/customers', '/network', '/product-catalog']
 export const isListViewPath = (pathname) => LIST_VIEW_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 /** Inline padding that keeps at least `gutter` px and centers a CONTENT_MAX_WIDTH column (100% = the padded box's container). */
 export const cappedGutter = (gutter) => `max(${gutter}px, calc((100% - ${CONTENT_MAX_WIDTH}px) / 2))`

@@ -10,6 +10,7 @@ const DashboardApps = lazyPage(() => import('./pages/AppsOverview').then(m => m.
 const DashboardComponents = lazyPage(() => import('./pages/component-library/ComponentLibrary').then(m => m.default));
 const DashboardTransactions = lazyPage(() => import('./pages/listPages').then(m => m.TransactionsTab));
 const DashboardCustomers = lazyPage(() => import('./pages/listPages').then(m => m.CustomersTab));
+const DashboardNetwork = lazyPage(() => import('./pages/listPages').then(m => m.NetworkTab));
 const DashboardProducts = lazyPage(() => import('./pages/listPages').then(m => m.ProductCatalogTab));
 const DashboardEnablement = lazyPage(() => import('./pages/enablement/Enablement').then(m => m.default));
 
@@ -27,6 +28,8 @@ export default function DashboardApp() {
       <Route path="transactions/:tab" element={<DashboardTransactions />} />
       <Route path="customers" element={<Navigate to="/customers/all-customers" replace />} />
       <Route path="customers/:tab" element={<DashboardCustomers />} />
+      <Route path="network" element={<Navigate to="/network/all" replace />} />
+      <Route path="network/:tab" element={<DashboardNetwork />} />
       <Route path="product-catalog" element={<Navigate to="/product-catalog/all-products" replace />} />
       <Route path="product-catalog/:tab" element={<DashboardProducts />} />
       <Route path="connect/enablement" element={<DashboardEnablement />} />
