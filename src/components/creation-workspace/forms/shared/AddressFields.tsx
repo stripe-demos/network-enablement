@@ -215,13 +215,13 @@ export function CountrySelect({
   const selected = items.find((item) => item.id === value || item.code === value)
 
   return (
-    <div ref={menu.rootRef} className="relative">
+    <div ref={menu.rootRef} className="relative w-full">
       <button
         type="button"
         aria-label={ariaLabel}
         aria-expanded={menu.open}
         data-styled-select
-        className={`${className} flex items-center gap-[8px] text-left ${selected ? "" : "font-[400] text-[#6C7688]"}`}
+        className={`${className} flex items-center gap-[8px] py-0 text-left ${selected ? "" : "font-[400] text-[#6C7688]"}`}
         onMouseDown={(event) => event.preventDefault()}
         onClick={(event) => {
           event.preventDefault()
@@ -231,8 +231,17 @@ export function CountrySelect({
       >
         {selected ? <Flag code={selected.code} /> : null}
         <span className="min-w-0 flex-1 truncate">{selected?.label ?? placeholder}</span>
-        <Chevron />
       </button>
+      <svg
+        className="pointer-events-none absolute right-[9px] top-1/2 -translate-y-1/2 text-[#6C7688]"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
       <FlagMenu
         open={menu.open}
         items={items}

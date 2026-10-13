@@ -2,7 +2,7 @@
 
 import { createToggleContext } from "@/lib/createToggleContext"
 
-export type AccountSelectionStyle = "current" | "refined"
+export type AccountSelectionStyle = "current" | "refined" | "repeat"
 
 const { Provider: AccountSelectionStyleProvider, useValue } =
   createToggleContext<AccountSelectionStyle>("AccountSelectionStyle", "refined", true)

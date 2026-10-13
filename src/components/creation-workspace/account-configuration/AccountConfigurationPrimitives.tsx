@@ -294,12 +294,12 @@ export function AccountSummaryCard({
         <Image
           src="/unified-account-icon.png"
           alt=""
-          width={32}
-          height={32}
-          className="h-[32px] w-[32px] shrink-0 rounded-[6px]"
+          width={36}
+          height={36}
+          className="h-[36px] w-[36px] shrink-0 rounded-[7px]"
         />
       ) : (
-        <span className={`relative flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[6px] border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${isFlow ? "text-[13px] font-[500]" : "text-[12px] font-[650]"}`}>
+        <span className={`relative flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[7px] border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${isFlow ? "text-[13px] font-[500]" : "text-[12px] font-[650]"}`}>
           <AvatarInitials initials={account.initials} />
         </span>
       )}
@@ -345,37 +345,66 @@ export function DuplicateAccountNudge({
   onDismiss,
   description = "This email is linked to an existing account in your Network. Continue with it to add configurations instead of creating a duplicate.",
   actionLabel = "Use existing account",
+  dense = false,
 }: {
   account: NetworkAccount
   onUseExisting: () => void
   onDismiss: () => void
   description?: string
   actionLabel?: string
+  dense?: boolean
 }) {
+  const type = useCardCreateTypeScale()
+  const compact = !type.matchCard
+  const mark = compact ? 28 : 36
+
   return (
     <div
-      className="overflow-hidden rounded-[8px] border border-[#D4DEE9] bg-white shadow-[0_8px_24px_rgba(26,44,68,0.12)]"
+      className={`border border-[#E3E8EF] bg-white shadow-[0_8px_24px_rgba(26,44,68,0.08)] ${dense ? "rounded-[8px] p-[12px]" : "rounded-[12px] p-[16px]"}`}
       data-duplicate-account-nudge
       role="region"
       aria-label="Existing account found"
     >
-      <div className="p-[12px]">
-        <AccountSummaryCard account={account} subtitle={account.id} size="flow" />
-        <p className="px-[8px] pb-[4px] pt-[12px] text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#596171]">
-          {description}
-        </p>
+      <div className={`flex items-center ${compact ? "gap-[10px]" : "gap-[12px]"}`}>
+        {account.hasBrandIcon ? (
+          <Image
+            src="/unified-account-icon.png"
+            alt=""
+            width={mark}
+            height={mark}
+            className={`shrink-0 ${dense ? "rounded-[4px]" : "rounded-[7px]"} ${compact ? "h-[28px] w-[28px]" : "h-[36px] w-[36px]"}`}
+          />
+        ) : (
+          <span className={`relative flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${dense ? "rounded-[4px]" : "rounded-[7px]"} ${compact ? "h-[28px] w-[28px] text-[11px] font-[600]" : "h-[36px] w-[36px] text-[13px] font-[500]"}`}>
+            <AvatarInitials initials={account.initials} />
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-[8px]">
+            <p className={`min-w-0 flex-1 truncate text-[#1A2C44] ${compact ? "text-[12px] font-[600] leading-[16px] tracking-[-0.024px]" : "text-[14px] font-[600] leading-[20px]"}`}>{account.name}</p>
+            <CountryBadge country={account.country} size={compact ? "sm" : "default"} tone="deep" />
+          </div>
+          <p className={`truncate text-[#6C7688] ${compact ? "text-[12px] font-[400] leading-[16px]" : "text-[12px] font-[400] leading-[16px]"}`}>{account.displayId ?? account.id}</p>
+        </div>
       </div>
-      <div className="flex justify-end gap-[6px] border-t border-[#ECF1F6] bg-[#F8FAFB] p-[12px]">
+      <p className={`mt-[16px] text-[#1A2C44] ${compact ? "text-[12px] font-[400] leading-[16px] tracking-[-0.024px]" : "text-[13px] font-[400] leading-[18px] tracking-[-0.08px]"}`}>
+        {description}
+      </p>
+      <div className="mt-[12px] flex justify-end gap-[8px]">
         <button
           type="button"
-          className="rounded-[6px] px-[8px] py-[4px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#EEF2F6]"
+          className={dense
+            ? "rounded-[5px] px-[8px] py-[4px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#F5F6F8]"
+            : "rounded-[6px] px-[10px] py-[6px] text-[12px] font-[500] leading-[16px] text-[#526378] hover:bg-[#F5F6F8]"}
           onClick={onDismiss}
         >
           Create new anyway
         </button>
         <button
           type="button"
-          className="rounded-[6px] bg-[#675DFF] px-[10px] py-[6px] text-[12px] font-[600] leading-[16px] text-white hover:bg-[#5B52F0]"
+          className={dense
+            ? "rounded-[5px] bg-[#675DFF] px-[8px] py-[4px] text-[12px] font-[600] leading-[16px] text-white hover:bg-[#5B52F0]"
+            : "rounded-[6px] bg-[#675DFF] px-[10px] py-[6px] text-[12px] font-[600] leading-[16px] text-white hover:bg-[#5B52F0]"}
           onClick={onUseExisting}
         >
           {actionLabel}

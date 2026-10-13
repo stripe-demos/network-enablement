@@ -29,6 +29,8 @@ export type NetworkAccount = {
   country: "UK" | "US" | "CA"
   initials: string
   hasBrandIcon?: boolean
+  /** Stripe-looking id shown in the UI; `id` stays the stable prototype key. */
+  displayId?: string
   /** Person name used when this account appears in the Direct user path. */
   directName?: string
   /** Configurations shown in the Direct user path. Merchant is never shown there. */
@@ -36,7 +38,7 @@ export type NetworkAccount = {
 }
 
 export type AccountDetailsDraft = {
-  type: "Company" | "Individual"
+  type: "Company" | "Individual" | ""
   registeredName: string
   firstName: string
   lastName: string
@@ -221,7 +223,7 @@ function initialsFromName(name: string) {
 export const NETWORK_ACCOUNTS: NetworkAccount[] = [
   { id: "acct_nathan", name: "Nathan Richardson", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "US", initials: "NR" },
   { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "ahart@harbourwell.example", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
-  { id: "acct_juniper", name: "Juniper Yoga Collective", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true },
+  { id: "acct_juniper", name: "Juniper Yoga Collective", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true, displayId: "acct_1N7xKp2eZvKYlo2C" },
   { id: "acct_tandem", name: "Tandem Fitness Network", directName: "Jordan Hale", email: "finance@tandemfitness.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "TF", hasBrandIcon: true },
   { id: "acct_cedar", name: "Cedar Therapy Group", directName: "Elena Voss", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "CG" },
   { id: "acct_lucent", name: "Lucent Recovery Studio", directName: "Marcus Reed", email: "payments@lucentrecovery.example", configurations: ["merchant", "customer"], country: "US", initials: "LS" },
@@ -268,7 +270,7 @@ export function getDisplayedNetworkAccount(account: NetworkAccount, userPath?: U
 }
 
 export const INITIAL_ACCOUNT_DETAILS: AccountDetailsDraft = {
-  type: "Company",
+  type: "",
   registeredName: "",
   firstName: "",
   lastName: "",
@@ -320,6 +322,13 @@ export const INITIAL_ACCOUNT_DETAILS: AccountDetailsDraft = {
     dashboardAccess: "stripe",
     requirementCollection: "stripe",
   },
+}
+
+export const REPEAT_ACCOUNT_DETAILS: AccountDetailsDraft = {
+  ...INITIAL_ACCOUNT_DETAILS,
+  type: "Company",
+  country: "United States",
+  billingCountry: "United States",
 }
 
 export const PAYOUT_METHODS: { id: PayoutMethod; label: string; description: string }[] = [
@@ -392,6 +401,7 @@ export function getOnboardingEmail(details: AccountDetailsDraft) {
 }
 
 export function isNewAccountIdentityValid(details: AccountDetailsDraft) {
+  if (!details.type) return false
   const hasName = details.type === "Company"
     ? Boolean(details.registeredName.trim())
     : Boolean(details.firstName.trim() && details.lastName.trim())

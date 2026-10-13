@@ -3,7 +3,7 @@ import { Icon } from '../../../../icons/SailIcons';
 import { useFlow } from '../../flow/FlowProvider';
 import CountrySelect from '../../ui/CountrySelect';
 import SelectRow from '../../ui/SelectRow';
-import TextInput from '../../ui/TextInput';
+import EmailMatchField from '../../ui/EmailMatchField';
 import { DuplicateAccountNudge } from '@/components/creation-workspace/account-configuration/AccountConfigurationPrimitives';
 import { findMatchingNetworkAccount } from '@/components/creation-workspace/account-configuration/model';
 import { methodsForRecipient } from '../../data/payoutMethods';
@@ -51,18 +51,19 @@ export default function MethodPickerStep() {
     <div className="space-y-5">
       {attaching ? null : (
         <Field label="Email address">
-          <TextInput
+          <EmailMatchField
             type="email"
             placeholder="accounts@juniperyoga.example"
             value={n.email}
             onChange={(v) => patchNewRecipient('email', v)}
+            match={matchingAccount}
             ariaLabel="Email address"
           />
           {showNudge ? (
             <div className="mt-1.5">
               <DuplicateAccountNudge
                 account={matchingAccount}
-                description="This email is already linked to an account in your Network. Continue with the existing account to save time. We’ll pre-fill identity and payout details."
+                description="This email matches an account in your Network. Continue with it to pre-fill payout information, save time, and avoid creating a duplicate."
                 onDismiss={() => setDismissedMatchId(matchingAccount.id)}
                 onUseExisting={() => {
                   dispatch({

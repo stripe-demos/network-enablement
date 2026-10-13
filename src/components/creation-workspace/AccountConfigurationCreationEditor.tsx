@@ -17,9 +17,11 @@ import {
   ACCOUNT_ONBOARDING_LINK,
   EMAIL_PATTERN,
   INITIAL_ACCOUNT_DETAILS,
+  REPEAT_ACCOUNT_DETAILS,
   getCapabilities,
   getOnboardingEmail,
   getPayoutEmail,
+  getRecommendedConfigurations,
   isNewAccountIdentityValid,
   type AccountConfigurationPayload,
   type AccountDetailsDraft,
@@ -68,15 +70,15 @@ export function AccountConfigurationCreationEditor({
   }
 
   useEffect(() => {
-    if (accountSelectionStyle === "current" || accountSelectionStyle === "refined") {
-      setSource("new")
-      setSelectedAccount(null)
-      setDetails(INITIAL_ACCOUNT_DETAILS)
-      setConfigurations([])
+    setSource("new")
+    setSelectedAccount(null)
+    if (accountSelectionStyle === "repeat") {
+      setDetails(REPEAT_ACCOUNT_DETAILS)
+      setConfigurations(getRecommendedConfigurations(userPath))
       return
     }
-    setSource("existing")
-    setSelectedAccount(null)
+    setDetails(INITIAL_ACCOUNT_DETAILS)
+    setConfigurations([])
   }, [accountSelectionStyle, userPath])
 
   const selectExistingAccount = (account: NetworkAccount) => {
@@ -100,19 +102,20 @@ export function AccountConfigurationCreationEditor({
   }
 
   const prepareNew = () => {
-    setDetails(INITIAL_ACCOUNT_DETAILS)
+    setDetails(accountSelectionStyle === "repeat" ? REPEAT_ACCOUNT_DETAILS : INITIAL_ACCOUNT_DETAILS)
   }
 
   const chooseNew = () => {
     setSource("new")
-    setConfigurations([])
+    setDetails(accountSelectionStyle === "repeat" ? REPEAT_ACCOUNT_DETAILS : INITIAL_ACCOUNT_DETAILS)
+    setConfigurations(accountSelectionStyle === "repeat" ? getRecommendedConfigurations(userPath) : [])
   }
 
   const clearSelectedAccount = () => {
     setSource("new")
     setSelectedAccount(null)
-    setDetails(INITIAL_ACCOUNT_DETAILS)
-    setConfigurations([])
+    setDetails(accountSelectionStyle === "repeat" ? REPEAT_ACCOUNT_DETAILS : INITIAL_ACCOUNT_DETAILS)
+    setConfigurations(accountSelectionStyle === "repeat" ? getRecommendedConfigurations(userPath) : [])
   }
 
   const accountReady = source === "existing" ? Boolean(selectedAccount) : isNewAccountIdentityValid(details)
@@ -127,7 +130,7 @@ export function AccountConfigurationCreationEditor({
     if (source === "existing" && !selectedAccount) return "Select an account to continue."
     if (source === "new" && !accountReady) {
       const missing = [
-        details.type === "Company"
+        !details.type ? "an account type" : details.type === "Company"
           ? (!details.registeredName.trim() ? "an account name" : null)
           : (!(details.firstName.trim() && details.lastName.trim()) ? "the account holder’s full name" : null),
         !EMAIL_PATTERN.test(details.accountEmail.trim()) ? "a valid account email" : null,
@@ -221,7 +224,7 @@ export function AccountConfigurationCreationEditor({
     )
   }
 
-  const noPicker = accountSelectionStyle === "current" || accountSelectionStyle === "refined"
+  const noPicker = accountSelectionStyle === "current" || accountSelectionStyle === "refined" || accountSelectionStyle === "repeat"
   const creatingWithoutPicker = noPicker && source === "new"
   const parentTitle = creatingWithoutPicker ? "Create account" : "Add configurations"
   const submitLabel = "Save"
@@ -258,7 +261,7 @@ export function AccountConfigurationCreationEditor({
     </div>
   )
 
-  if (accountSelectionStyle === "refined") {
+  if (accountSelectionStyle === "refined" || accountSelectionStyle === "repeat") {
     return (
       <ProductFormStyleProvider initial="sail" ignorePersisted>
         <CardCreateShell

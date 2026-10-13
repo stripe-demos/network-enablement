@@ -173,6 +173,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       account={matchingAccount}
       description="This email matches an existing account in your Network. Continue with it instead of creating a duplicate."
       actionLabel={layout === "single-config" ? "View existing account" : "Use existing account"}
+      dense
       onUseExisting={() => applyExistingAccount(matchingAccount)}
       onDismiss={() => setDismissedMatchId(matchingAccount.id)}
     />
@@ -755,6 +756,33 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     const emailField = (
       <div className="flex flex-col gap-[6px]">
         <Field label="Account email">
+          {matchingAccount ? (
+            <div className={`${tokens.inputClass} flex items-center px-[6px]`}>
+              <span className="flex h-[22px] max-w-full items-center gap-[6px] rounded-full bg-[#F4F6F8] pl-[3px] pr-[6px]">
+                {matchingAccount.hasBrandIcon ? (
+                  <img src="/unified-account-icon.png" alt="" className="h-[16px] w-[16px] shrink-0 rounded-full object-cover" />
+                ) : (
+                  <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-[#ECF1F6] text-[9px] font-[600] leading-none text-[#1A2C44]">
+                    {matchingAccount.initials}
+                  </span>
+                )}
+                <span className="min-w-0 truncate text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44]">{matchingAccount.name}</span>
+                <button
+                  type="button"
+                  aria-label="Clear email"
+                  className="flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full text-[#6C7688] hover:bg-[#E8EDF3] hover:text-[#1A2C44]"
+                  onClick={() => {
+                    syncIdentity({ accountEmail: "" })
+                    onChange({ customerId: undefined })
+                  }}
+                >
+                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                    <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </span>
+            </div>
+          ) : (
           <span className="group relative block">
             <input
               type="email"
@@ -774,6 +802,7 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
               </button>
             ) : null}
           </span>
+          )}
           {errorFields?.has("email") && (
             <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
           )}

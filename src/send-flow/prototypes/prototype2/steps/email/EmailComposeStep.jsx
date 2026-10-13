@@ -21,6 +21,7 @@ import PopoverPanel from '../../ui/PopoverPanel';
 import Reveal from '../../ui/Reveal';
 import Checkbox, { CheckboxBox } from '../../ui/Checkbox';
 import TextInput from '../../ui/TextInput';
+import EmailMatchField from '../../ui/EmailMatchField';
 import { DuplicateAccountNudge } from '@/components/creation-workspace/account-configuration/AccountConfigurationPrimitives';
 import { findMatchingNetworkAccount } from '@/components/creation-workspace/account-configuration/model';
 import { methodsForRecipient } from '../../data/payoutMethods';
@@ -93,10 +94,11 @@ export default function EmailComposeStep() {
       </Field>
 
       <Field label="Recipient email">
-        <TextInput
+        <EmailMatchField
           type="email"
           value={invite.email}
           onChange={(v) => patchEmailInvite('email', v)}
+          match={matchingAccount}
           placeholder="e.g. name@example.com"
           autofill="accounts@juniperyoga.example"
           ariaLabel="Recipient email"
@@ -105,7 +107,7 @@ export default function EmailComposeStep() {
           <div className="mt-1.5">
             <DuplicateAccountNudge
               account={matchingAccount}
-              description="This email is already linked to an account in your Network. Continue with the existing account to save time. We’ll pre-fill identity and payout details."
+              description="This email matches an account in your Network. Continue with it to pre-fill payout information, save time, and avoid creating a duplicate."
               onDismiss={() => setDismissedMatchId(matchingAccount.id)}
               onUseExisting={() => {
                 dispatch({

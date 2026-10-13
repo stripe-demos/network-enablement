@@ -11,6 +11,7 @@ import { useInputFill } from "@/components/creation-workspace/inputFill"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useAccountConflictNudgeMode, type AccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
 import type { AccountOnboardingStyle } from "@/components/creation-workspace/accountOnboardingStyle"
+import { useAccountPropertiesLayout } from "@/components/creation-workspace/accountPropertiesLayout"
 import type { AccountSelectionStyle } from "@/components/creation-workspace/accountSelectionStyle"
 
 import { EntityDropdown } from "@/components/creation-workspace/forms/EntityDropdown"
@@ -255,7 +256,7 @@ function AccountIdentityFields({
       {typeScale.matchCard ? (
         <EntityDropdown
           label=""
-          placeholder="Select…"
+          placeholder="Select account type"
           searchPlaceholder="Search"
           hideSearch
           insetOptionHover
@@ -279,6 +280,7 @@ function AccountIdentityFields({
           ariaLabel={typeLabel}
           onChange={(next) => onChange({ type: next as AccountDetailsDraft["type"] })}
         >
+          <option value="">Select account type</option>
           {ACCOUNT_TYPE_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>{option.name}</option>
           ))}
@@ -286,7 +288,7 @@ function AccountIdentityFields({
       )}
     </Field>
   )
-  const nameField = details.type === "Company" ? (
+  const nameField = !details.type ? null : details.type === "Company" ? (
     <Field label="Company name">
       <input
         ref={emailFirst ? undefined : firstInputRef}
@@ -307,6 +309,30 @@ function AccountIdentityFields({
   const emailField = (
     <div className="flex flex-col gap-[6px]">
       <Field label="Account email">
+        {matchingAccount ? (
+          <div className={`${tokens.inputClass} flex items-center px-[6px]`}>
+            <span className="flex h-[22px] max-w-full items-center gap-[6px] rounded-full bg-[#F4F6F8] pl-[3px] pr-[6px]">
+              {matchingAccount.hasBrandIcon ? (
+                <img src="/unified-account-icon.png" alt="" className="h-[16px] w-[16px] shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-[#ECF1F6] text-[9px] font-[600] leading-none text-[#1A2C44]">
+                  {matchingAccount.initials}
+                </span>
+              )}
+              <span className="min-w-0 truncate text-[14px] font-[400] leading-[20px] text-[#353A44]">{matchingAccount.name}</span>
+              <button
+                type="button"
+                aria-label="Clear email"
+                className="flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full text-[#6C7688] hover:bg-[#E8EDF3] hover:text-[#1A2C44]"
+                onClick={() => onChange({ accountEmail: "" })}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                  <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+              </button>
+            </span>
+          </div>
+        ) : (
         <span className="group relative block">
           <input
             ref={emailFirst ? firstInputRef : undefined}
@@ -341,6 +367,7 @@ function AccountIdentityFields({
             </span>
           ) : null}
         </span>
+        )}
       </Field>
       {showMatch && matchingAccount ? (
         <DuplicateAccountNudge
@@ -435,7 +462,7 @@ function AccountSelector({
       onUseExisting={onSelectExisting}
       autoFocus
       typeLabel="Account type"
-      emailFirst={style === "refined"}
+      emailFirst={style === "refined" || style === "repeat"}
       lookupStatus={lookupStatus}
       lookupMatch={lookupMatch}
       dismissedMatchId={dismissedMatchId}
@@ -456,35 +483,70 @@ function AccountSelector({
   )
 }
 
+function capabilityListLabel(names: string[]) {
+  if (names.length === 0) return "No capabilities"
+  if (names.length <= 3) return names.join(", ")
+  const extra = names.length - 3
+  return `${names.slice(0, 3).join(", ")} + ${extra} more`
+}
+
+function ConfigurationNestedCapabilities({
+  names,
+  onEdit,
+  columnsClass,
+}: {
+  names: string[]
+  onEdit?: () => void
+  columnsClass: string
+}) {
+  const type = useCardCreateTypeScale()
+  return (
+    <div
+      className={`grid items-center bg-[#F4F6F8] py-[12px] ${columnsClass}`}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      <span aria-hidden="true" />
+      <div className="flex min-w-0 items-center justify-between gap-[12px]">
+        <p className="min-w-0 truncate text-[13px] font-[400] leading-[18px] text-[#1A2C44]">{capabilityListLabel(names)}</p>
+        {onEdit ? (
+          <button
+            type="button"
+            className={type.edit}
+            onClick={(event) => {
+              event.stopPropagation()
+              onEdit()
+            }}
+          >
+            Edit
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function ConfigurationRow({
   option,
   checked,
   locked,
-  capabilityCount,
+  capabilityNames,
+  separate,
   onToggle,
   onOpen,
 }: {
   option: ConfigurationOption
   checked: boolean
   locked?: boolean
-  capabilityCount?: number
+  capabilityNames?: string[]
+  separate?: boolean
   onToggle?: () => void
   onOpen?: () => void
 }) {
   const type = useCardCreateTypeScale()
-  const canOpen = Boolean(onOpen) && checked && !locked
-  const capabilityLink = canOpen && capabilityCount ? (
-    <button
-      type="button"
-      className={`${type.edit} self-center`}
-      onClick={(event) => {
-        event.stopPropagation()
-        onOpen?.()
-      }}
-    >
-      {capabilityCount === 1 ? "1 capability" : `${capabilityCount} capabilities`}
-    </button>
-  ) : null
+  const canEdit = Boolean(onOpen) && checked && !locked
+  const showNested = Boolean(separate) && checked && capabilityNames !== undefined
+  const showInlineEdit = !separate && checked && capabilityNames !== undefined
 
   const label = locked
     ? `${option.title} is on this account`
@@ -504,9 +566,31 @@ function ConfigurationRow({
     />
   )
 
+  const title = option.title
+  const capabilityCount = capabilityNames?.length ?? 0
+  const inlineEdit = showInlineEdit ? (
+    <div className={`flex h-[28px] shrink-0 items-stretch overflow-hidden rounded-[8px] bg-[#F4F6F8] ${canEdit ? "" : "px-[10px]"}`}>
+      <span className={`flex items-center text-[13px] font-[400] leading-[18px] text-[#273951] ${canEdit ? "pl-[10px] pr-[8px]" : ""}`}>
+        {capabilityCount === 1 ? "1 capability" : `${capabilityCount} capabilities`}
+      </span>
+      {canEdit ? (
+        <button
+          type="button"
+          className="px-[10px] text-[13px] font-[500] leading-[18px] text-[#533AFD] outline-none transition-colors hover:bg-[#F0EDFF] hover:text-[#4730E0]"
+          onClick={(event) => {
+            event.stopPropagation()
+            onOpen?.()
+          }}
+        >
+          Edit
+        </button>
+      ) : null}
+    </div>
+  ) : null
+
   const rowProps = {
     role: "button" as const,
-    tabIndex: locked && !canOpen ? -1 : 0,
+    tabIndex: locked ? -1 : 0,
     "aria-pressed": checked,
     "aria-label": label,
     onClick: activate,
@@ -518,36 +602,47 @@ function ConfigurationRow({
     },
   }
 
+  const columnsClass = type.matchCard
+    ? "grid-cols-[16px_minmax(0,1fr)] gap-[12px] px-[16px]"
+    : "grid-cols-[14px_minmax(0,1fr)] gap-[8px] px-[12px]"
+
+  const nested = showNested ? (
+    <ConfigurationNestedCapabilities
+      names={capabilityNames ?? []}
+      onEdit={canEdit ? onOpen : undefined}
+      columnsClass={columnsClass}
+    />
+  ) : null
+
   if (type.matchCard) {
     return (
       <div
         data-configuration={option.id}
         data-selected={checked ? "true" : "false"}
         data-existing={locked ? "true" : "false"}
-        className={`overflow-hidden rounded-[8px] border ${
-          locked
-            ? "border-[#E3E8EF] bg-white opacity-55"
-            : checked
-              ? "border-[#C8C0FF] bg-[#F8F7FF]"
-              : "border-[#E3E8EF] bg-white"
-        }`}
-        onClick={activate}
-        onKeyDown={rowProps.onKeyDown}
-        role="button"
-        tabIndex={rowProps.tabIndex}
-        aria-pressed={checked}
-        aria-label={label}
+        className={`overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white ${locked ? "opacity-55" : ""}`}
       >
-        <div className={`flex min-h-[60px] items-start gap-[12px] px-[16px] py-[12px] text-left outline-none ${
-          locked && !canOpen ? "cursor-default" : "cursor-pointer"
-        } ${checked || locked ? "" : "transition-colors hover:bg-[#FAFBFC]"}`}>
+        <div
+          className={`grid min-h-[60px] items-start py-[12px] text-left outline-none ${columnsClass} ${
+            locked ? "cursor-default" : "cursor-pointer"
+          } ${checked || locked ? "" : "transition-colors hover:bg-[#FAFBFC]"}`}
+          onClick={rowProps.onClick}
+          onKeyDown={rowProps.onKeyDown}
+          role="button"
+          tabIndex={rowProps.tabIndex}
+          aria-pressed={checked}
+          aria-label={label}
+        >
           <span className="mt-[2px] flex h-[20px] items-center">{checkbox}</span>
-          <span className="min-w-0 flex-1">
-            <span className={`block text-[14px] font-[500] leading-[20px] tracking-[-0.08px] ${checked && !locked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
-            <span className="mt-[2px] block text-[13px] font-[400] leading-[18px] text-[#596171]">{option.relationship}</span>
+          <span className="flex min-w-0 items-center justify-between gap-[12px]">
+            <span className="min-w-0">
+              <span className="block text-[14px] font-[500] leading-[20px] tracking-[-0.08px] text-[#1A2C44]">{title}</span>
+              <span className="mt-[2px] block text-[13px] font-[400] leading-[18px] text-[#596171]">{option.relationship}</span>
+            </span>
+            {inlineEdit}
           </span>
-          {capabilityLink}
         </div>
+        {nested}
       </div>
     )
   }
@@ -557,22 +652,28 @@ function ConfigurationRow({
       data-configuration={option.id}
       data-selected={checked ? "true" : "false"}
       data-existing={locked ? "true" : "false"}
-      className={`flex items-start gap-[8px] ${type.rowPad} outline-none ${
-        locked ? "bg-[#F8FAFB]" : checked ? "bg-[#F8F7FF]" : "hover:bg-[#F8FAFB]"
-      } ${locked && !canOpen ? "cursor-default" : "cursor-pointer"}`}
-      onClick={activate}
-      onKeyDown={rowProps.onKeyDown}
-      role="button"
-      tabIndex={rowProps.tabIndex}
-      aria-pressed={checked}
-      aria-label={label}
     >
-      <span className="mt-[2px]">{checkbox}</span>
-      <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
-        <span className={`${type.rowTitle} ${locked ? "text-[#596171]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>{option.title}</span>
-        <span className={type.rowDetail}>{option.relationship}</span>
-      </span>
-      {capabilityLink}
+      <div
+        className={`grid items-start py-[10px] outline-none ${columnsClass} ${
+          locked ? "bg-[#F8FAFB]" : "hover:bg-[#F8FAFB]"
+        } ${locked ? "cursor-default" : "cursor-pointer"}`}
+        onClick={rowProps.onClick}
+        onKeyDown={rowProps.onKeyDown}
+        role="button"
+        tabIndex={rowProps.tabIndex}
+        aria-pressed={checked}
+        aria-label={label}
+      >
+        <span className="mt-[2px]">{checkbox}</span>
+        <span className="flex min-w-0 items-center justify-between gap-[12px]">
+          <span className="flex min-w-0 flex-col gap-[2px]">
+            <span className={`${type.rowTitle} ${locked ? "text-[#596171]" : "text-[#1A2C44]"}`}>{title}</span>
+            <span className={type.rowDetail}>{option.relationship}</span>
+          </span>
+          {inlineEdit}
+        </span>
+      </div>
+      {nested}
     </div>
   )
 }
@@ -581,48 +682,54 @@ function ConfigurationPicker({
   selected,
   existing,
   userPath,
-  capabilityCounts,
   details,
   onChange,
   onDetailsChange,
   isNewAccount,
+  isRepeat,
 }: {
   selected: ConfigurationKind[]
   existing: ConfigurationKind[]
   userPath?: UserPath
-  capabilityCounts: Partial<Record<"merchant" | "recipient", number>>
   details: AccountDetailsDraft
   onChange: (next: ConfigurationKind[]) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
   isNewAccount?: boolean
+  isRepeat?: boolean
 }) {
   const { productFormStyle } = useProductFormStyle()
+  const { accountPropertiesLayout } = useAccountPropertiesLayout()
   const tokens = getFormTokens(productFormStyle)
   const type = useCardCreateTypeScale()
+  const separate = accountPropertiesLayout === "separate"
   const options = getConfigurationOptions(userPath)
   const existingOptions = options.filter((option) => existing.includes(option.id))
   const addableOptions = options.filter((option) => !existing.includes(option.id))
+  const activeConfigurations = Array.from(new Set([...existing, ...selected]))
   const [describeMode, setDescribeMode] = useState<"describe" | "recommend" | null>(null)
   const [editingGroup, setEditingGroup] = useState<"merchant" | "recipient" | null>(null)
   const toggle = (option: ConfigurationOption) => {
     onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])
   }
   const canOpen = (id: ConfigurationKind): id is "merchant" | "recipient" => id === "merchant" || id === "recipient"
+  const capabilityNamesFor = (id: "merchant" | "recipient") => (
+    getCapabilitiesForGroup(id, activeConfigurations, details.disabledCapabilities, details.additionalCapabilities)
+  )
   const closeCapabilities = () => setEditingGroup(null)
   return (
     <section className={type.headingContent} data-configuration-picker>
       <div>
         <h3 className={type.fieldLabel}>Configurations</h3>
         <p className={`mt-[6px] ${type.helper}`}>
-          {isNewAccount ? (
+          {isNewAccount && !isRepeat ? (
             <>
-              Select all roles that apply. For your platform's accounts, we recommend Merchant and Customer.{" "}
+              Select all roles that apply to this account. Unsure?{" "}
               <button
                 type="button"
                 className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
                 onClick={() => setDescribeMode("recommend")}
               >
-                Learn why
+                View recommendation
               </button>
             </>
           ) : (
@@ -654,7 +761,8 @@ function ConfigurationPicker({
                     option={option}
                     checked
                     locked
-                    capabilityCount={groupId ? capabilityCounts[groupId] : undefined}
+                    capabilityNames={groupId ? capabilityNamesFor(groupId) : undefined}
+                    separate={separate}
                     onOpen={groupId ? () => setEditingGroup(groupId) : undefined}
                   />
                 )
@@ -676,7 +784,8 @@ function ConfigurationPicker({
                   key={option.id}
                   option={option}
                   checked={selected.includes(option.id)}
-                  capabilityCount={groupId ? capabilityCounts[groupId] : undefined}
+                  capabilityNames={groupId ? capabilityNamesFor(groupId) : undefined}
+                  separate={separate}
                   onToggle={() => toggle(option)}
                   onOpen={groupId ? () => setEditingGroup(groupId) : undefined}
                 />
@@ -909,13 +1018,7 @@ function PayoutInformationSection({
           const open = openMethod === method.id
           const card = (
             <div
-              className={`overflow-hidden rounded-[8px] border ${
-                locked
-                  ? "border-[#E3E8EF] bg-white opacity-55"
-                  : checked
-                    ? "border-[#C8C0FF] bg-[#F8F7FF]"
-                    : "border-[#E3E8EF] bg-white"
-              }`}
+              className={`overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white ${locked ? "opacity-55" : ""}`}
             >
               <div className="flex min-h-[60px] items-start">
                 {open ? (
@@ -931,7 +1034,7 @@ function PayoutInformationSection({
                       />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block ${type.rowTitle} ${checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
+                      <span className={`block ${type.rowTitle} text-[#1A2C44]`}>
                         {method.label}
                       </span>
                       <span className={`mt-[2px] block font-[400] ${type.rowDetail}`}>
@@ -967,7 +1070,7 @@ function PayoutInformationSection({
                       />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block ${type.rowTitle} ${locked ? "text-[#1A2C44]" : checked ? "text-[#533AFD]" : "text-[#1A2C44]"}`}>
+                      <span className={`block ${type.rowTitle} text-[#1A2C44]`}>
                         {method.label}
                       </span>
                       <span className={`mt-[2px] block font-[400] ${type.rowDetail}`}>
@@ -1081,7 +1184,7 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
       <div className={type.cardStack}>
         <ReviewRow title="Billing details" summary={billingDetailsSummary(details)} open={openRow === "billing"} onToggle={() => setOpenRow(openRow === "billing" ? null : "billing")}>
           <div className="flex flex-col gap-[12px]">
-            <div className="flex items-center justify-between gap-[12px]"><div><p className={type.matchCard ? tokens.toggleRow : "text-[12px] font-[400] text-[#273951]"}>Use account email</p><p className={`mt-[2px] ${type.helper}`}>Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
+            <div className="flex items-center justify-between gap-[12px]"><div><p className={`${type.rowTitle} text-[#1A2C44]`}>Use account email</p><p className={`mt-[2px] ${type.helper}`}>Send billing notices to the account address.</p></div><Toggle checked={details.useAccountEmailForBilling} label="Use account email for billing" onChange={(useAccountEmailForBilling) => onChange({ useAccountEmailForBilling, billingEmail: useAccountEmailForBilling ? "" : details.billingEmail })} /></div>
             {!details.useAccountEmailForBilling ? <Field label="Billing email"><input type="email" className={tokens.inputClass} placeholder={details.accountEmail || "billing@example.com"} value={details.billingEmail} onChange={(event) => onChange({ billingEmail: event.target.value })} /></Field> : null}
             <Field label="Billing address">
               <AddressFields
@@ -1105,7 +1208,7 @@ function CustomerDetailsSection({ details, onChange }: { details: AccountDetails
         <ReviewRow title="Shipping details" summary={shippingDetailsSummary(details)} open={openRow === "shipping"} onToggle={() => setOpenRow(openRow === "shipping" ? null : "shipping")}>
           <div className="flex flex-col gap-[12px]">
             <div className="flex items-center justify-between gap-[12px]">
-              <p className={type.matchCard ? tokens.toggleRow : "text-[12px] font-[400] text-[#273951]"}>Same as billing details</p>
+              <p className={`${type.rowTitle} text-[#1A2C44]`}>Same as billing details</p>
               <Toggle checked={details.sameAsBilling} label="Same as billing details" onChange={(sameAsBilling) => onChange({ sameAsBilling })} />
             </div>
             {details.sameAsBilling ? null : (
@@ -1328,7 +1431,7 @@ function OnboardingSection({ details, onChange }: { details: AccountDetailsDraft
         />
       {details.onboardingAction === "send-email" ? (
         <div className="rounded-[8px] border border-[#D4DEE9] bg-[#F8FAFB] p-[12px]">
-          <div className="flex items-center justify-between gap-[12px]"><div><p className={type.matchCard ? tokens.toggleRow : "text-[12px] font-[600] text-[#273951]"}>Use account email</p><p className={`mt-[2px] ${type.helper}`}>Send the secure onboarding link after creation.</p></div><Toggle checked={details.useAccountEmailForOnboarding} label="Use account email for onboarding" onChange={(useAccountEmailForOnboarding) => onChange({ useAccountEmailForOnboarding })} /></div>
+          <div className="flex items-center justify-between gap-[12px]"><div><p className={`${type.rowTitle} text-[#1A2C44]`}>Use account email</p><p className={`mt-[2px] ${type.helper}`}>Send the secure onboarding link after creation.</p></div><Toggle checked={details.useAccountEmailForOnboarding} label="Use account email for onboarding" onChange={(useAccountEmailForOnboarding) => onChange({ useAccountEmailForOnboarding })} /></div>
           {!details.useAccountEmailForOnboarding ? <div className="mt-[10px]"><Field label="Onboarding email"><input type="email" className={tokens.inputClass} placeholder="account@example.com" value={details.onboardingEmail} onChange={(event) => onChange({ onboardingEmail: event.target.value })} aria-invalid={details.onboardingEmail.length > 0 && !EMAIL_PATTERN.test(details.onboardingEmail)} /></Field></div> : null}
         </div>
       ) : (
@@ -1373,13 +1476,8 @@ export function AccountConfigurationForm({
   onConfigurationsChange: (next: ConfigurationKind[]) => void
 }) {
   const type = useCardCreateTypeScale()
-  const refinedLookup = useRefinedEmailLookup(details.accountEmail, selectionStyle === "refined" && source === "new")
+  const refinedLookup = useRefinedEmailLookup(details.accountEmail, (selectionStyle === "refined" || selectionStyle === "repeat") && source === "new")
   const canConfigure = source === "new" || Boolean(selectedAccountId)
-  const effectiveConfigurations = Array.from(new Set([...existingConfigurations, ...configurations]))
-  const capabilityCounts = {
-    merchant: getCapabilitiesForGroup("merchant", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities).length,
-    recipient: getCapabilitiesForGroup("recipient", effectiveConfigurations, details.disabledCapabilities, details.additionalCapabilities).length,
-  }
   return (
     <div className={type.stack}>
       <AccountSelector
@@ -1404,11 +1502,11 @@ export function AccountConfigurationForm({
           selected={configurations}
           existing={existingConfigurations}
           userPath={userPath}
-          capabilityCounts={capabilityCounts}
           details={details}
           onChange={onConfigurationsChange}
           onDetailsChange={onDetailsChange}
           isNewAccount={source === "new"}
+          isRepeat={selectionStyle === "repeat"}
         />
       ) : null}
       {configurations.includes("customer") ? <CustomerDetailsSection details={details} onChange={onDetailsChange} /> : null}

@@ -30,7 +30,7 @@ export function CreateCustomerModal({
       <CreationModalShell
         isOpen={isOpen}
         onClose={onClose}
-        title="Create customer account"
+        title="Create a customer account"
         primaryLabel="Create account"
         primaryDisabled={!isComposeAccountReady(data)}
         onPrimary={onClose}

@@ -34,6 +34,11 @@ const SELECTION_OPTIONS: ReadonlyArray<{
     label: "Refined",
     description: "Start with email. A match appears if one exists; otherwise the rest of the form reveals.",
   },
+  {
+    value: "repeat",
+    label: "Repeat",
+    description: "Same as Refined, with account type, country, and configurations already filled.",
+  },
 ]
 
 const ONBOARDING_OPTIONS: ReadonlyArray<{
@@ -216,7 +221,7 @@ export function AccountConfigurationOptionsPopover() {
 
         <div className="mt-[13px] border-t border-[#EBEEF1] pt-[12px]">
           <p className="text-[11px] font-[600] leading-[16px] text-[#526378]">Account selection</p>
-          <div role="group" aria-label="Account selection" className="mt-[6px] grid grid-cols-2 gap-[2px] rounded-[7px] bg-[#F1F4F7] p-[2px]">
+          <div role="group" aria-label="Account selection" className="mt-[6px] grid grid-cols-3 gap-[2px] rounded-[7px] bg-[#F1F4F7] p-[2px]">
             {SELECTION_OPTIONS.map((option) => {
               const selected = accountSelectionStyle === option.value
               return (
