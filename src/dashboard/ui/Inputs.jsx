@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { CloseCircleIcon, Icon } from './icons'
-import { color, shadow, type } from './tokens'
+import { color, radius, shadow, type } from './tokens'
 
 /** Checkbox using the dashboard's checkbox SVGs. `indeterminate` wins over `checked`. */
 export function Checkbox({ checked = false, indeterminate = false, onChange, label, disabled = false }) {
@@ -19,6 +19,41 @@ export function Checkbox({ checked = false, indeterminate = false, onChange, lab
       <img src={src} alt="" style={{ width: 14, height: 14 }} />
       {label}
     </label>
+  )
+}
+
+/**
+ * On/off switch (Sail Switch). Controlled: `onChange(checked)`. `label` is shown
+ * after the track; with `hideLabel` it only names the switch for screen readers.
+ */
+export function Switch({ checked = false, onChange, label, hideLabel = false, disabled = false }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={hideLabel ? label : undefined}
+      disabled={disabled}
+      onClick={() => onChange?.(!checked)}
+      className="inline-flex items-center gap-[8px] self-start shrink-0"
+      style={{ background: 'none', border: 'none', padding: 0, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1, ...type.body, color: color.textStrong }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'relative', width: 28, height: 16, borderRadius: radius.pill, flex: 'none',
+          background: checked ? color.actionPrimary : color.neutral100, transition: 'background 120ms',
+        }}
+      >
+        <span
+          style={{
+            position: 'absolute', top: 2, left: checked ? 14 : 2, width: 12, height: 12, borderRadius: '50%',
+            background: color.surface, boxShadow: shadow.control, transition: 'left 120ms',
+          }}
+        />
+      </span>
+      {!hideLabel && label}
+    </button>
   )
 }
 

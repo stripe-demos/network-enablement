@@ -138,6 +138,7 @@ const PRODUCT_SECTIONS: Record<'connect' | 'payments' | 'billing' | 'reporting',
   connect: [
     { label: 'Overview', href: '/connect/overview' },
     { label: 'Connected accounts', href: '/connect/accounts' },
+    { label: 'Enablement', href: '/connect/enablement' },
     { label: 'Compliance', href: '/connect/compliance' },
     { label: 'Tax forms', href: '/connect/tax-forms' },
     { label: 'Financial accounts', href: '/connect/financial-accounts' },

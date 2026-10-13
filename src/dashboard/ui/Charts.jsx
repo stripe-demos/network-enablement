@@ -15,17 +15,21 @@ const pathPoints = (d) => (d.match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => Nu
  * `hover` turns on the hover needle and card:
  *   { labels, compareLabels?, format?, yMax? } — one label per point (e.g.
  *   dates); values come from `data`, or from a path's height scaled to `yMax`.
+ *
+ * `stroke` / `strokeWidth` style the primary line. `yMax` fixes the top of the
+ * scale (otherwise the data max). `rows` sets the grid intervals. `bands` adds
+ * extra comparison lines under the primary: [{ data, color?, dashed? = true }].
  */
-export function LineChart({ data, compareData, path1, path2, yLabels = [], xStart = 'Dec 1', xEnd = 'Dec 7', height = 188, hover }) {
-  const rowH = height / 4
+export function LineChart({ data, compareData, path1, path2, yLabels = [], xStart = 'Dec 1', xEnd = 'Dec 7', height = 188, hover, stroke = color.brand500, strokeWidth = 1.5, yMax, rows = 4, bands = [] }) {
+  const rowH = height / rows
   const labelW = 40
   const gap = 8
-  const max = data ? Math.max(...data, ...(compareData ?? [])) : undefined
+  const max = data ? (yMax ?? Math.max(...data, ...(compareData ?? []), ...bands.flatMap((b) => b.data))) : undefined
   const primary = path1 ?? (data ? valuesToPath(data, height, max) : '')
   const secondary = path2 ?? (compareData ? valuesToPath(compareData, height, max) : null)
 
   const hoverSeries = hover && [
-    { path: primary, values: data, color: color.brand500, labels: hover.labels },
+    { path: primary, values: data, color: stroke, labels: hover.labels },
     secondary && { path: secondary, values: compareData, color: color.neutral100, labels: hover.compareLabels ?? hover.labels.map(() => 'Previous period') },
   ].filter(Boolean).map(({ path, values, color: c, labels }) => ({
     color: c,
@@ -40,11 +44,14 @@ export function LineChart({ data, compareData, path1, path2, yLabels = [], xStar
       <div className="flex" style={{ height }}>
         <div className="flex-1 min-w-0 relative" style={{ marginRight: gap }}>
           <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" className="block">
-            {[0, 1, 2, 3, 4].map(i => (
+            {Array.from({ length: rows + 1 }, (_, i) => (
               <line key={i} x1="0" y1={i * rowH} x2="100" y2={i * rowH} stroke={color.neutral50} strokeWidth="1" vectorEffect="non-scaling-stroke" />
             ))}
             {secondary && <path d={secondary} fill="none" stroke={color.neutral100} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
-            <path d={primary} fill="none" stroke={color.brand500} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+            {data && bands.map((b, i) => (
+              <path key={i} d={valuesToPath(b.data, height, max)} fill="none" stroke={b.color ?? color.neutral100} strokeWidth="1.5" strokeDasharray={b.dashed === false ? undefined : '4 4'} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+            ))}
+            <path d={primary} fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
           </svg>
           {hoverSeries && <LineChartHover series={hoverSeries} count={hoverSeries[0].points.length} />}
         </div>
@@ -57,6 +64,72 @@ export function LineChart({ data, compareData, path1, path2, yLabels = [], xStar
       <div className="flex justify-between w-full" style={{ marginTop: 8, fontSize: 11, color: color.subdued, paddingRight: labelW + gap }}>
         <span>{xStart}</span>
         <span>{xEnd}</span>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Small bar chart for metric cards: evenly spaced vertical bars, bottom-aligned,
+ * scaled to `yMax` (or the data max), with gridlines and right-hand y labels
+ * laid out like LineChart.
+ */
+export function BarChart({ data, yLabels = [], yMax, rows = 2, xStart, xEnd, height = 128, color: barColor = color.chartCategorical[0] }) {
+  const labelW = 40
+  const gap = 8
+  const max = yMax ?? Math.max(...data, 0)
+  return (
+    <div className="relative w-full" style={{ height: height + 32 }} data-wireframe-role="chart">
+      <div className="flex" style={{ height }}>
+        <div className="flex-1 min-w-0 relative" style={{ marginRight: gap }}>
+          <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" className="absolute inset-0 block">
+            {Array.from({ length: rows + 1 }, (_, i) => (
+              <line key={i} x1="0" y1={i * (height / rows)} x2="100" y2={i * (height / rows)} stroke={color.neutral50} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            ))}
+          </svg>
+          <div className="absolute inset-0 flex items-end" style={{ gap: 1 }}>
+            {data.map((v, i) => (
+              <div
+                key={i}
+                className="flex-1 min-w-0"
+                style={{ height: max ? (Math.min(v, max) / max) * height : 0, backgroundColor: barColor, borderRadius: '2px 2px 0 0' }}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col justify-between shrink-0" style={{ width: labelW, textAlign: 'right' }}>
+          {yLabels.map((label, i) => (
+            <span key={i} style={{ fontSize: 11, color: color.subdued, lineHeight: '11px' }}>{label}</span>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-between w-full" style={{ marginTop: 8, fontSize: 11, color: color.subdued, paddingRight: labelW + gap }}>
+        <span>{xStart}</span>
+        <span>{xEnd}</span>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Funnel of horizontal meters, one row per stage: a track filled to `value`%
+ * with the stage label to its right, and a shared 0–100% scale underneath.
+ * stages: [{ label, value }], value 0–100.
+ */
+export function FunnelMeter({ stages, scaleLabels = ['0%', '50%', '100%'], labelWidth = 120, barHeight = 20, color: fillColor = color.chartCategorical[0] }) {
+  const labelGap = 24
+  return (
+    <div className="flex flex-col w-full" style={{ gap: 24 }} data-wireframe-role="chart">
+      {stages.map((s, i) => (
+        <div key={i} className="flex items-center" style={{ gap: labelGap }}>
+          <div className="flex-1 min-w-0" style={{ height: barHeight, backgroundColor: color.neutral25 }}>
+            <div style={{ width: `${Math.max(0, Math.min(100, s.value))}%`, height: '100%', backgroundColor: fillColor }} />
+          </div>
+          <span className="shrink-0" style={{ width: labelWidth, fontSize: 14, lineHeight: '20px', color: color.text }}>{s.label}</span>
+        </div>
+      ))}
+      <div className="flex justify-between" style={{ marginTop: -16, paddingRight: labelWidth + labelGap, fontSize: 11, color: color.subdued }}>
+        {scaleLabels.map((label, i) => <span key={i}>{label}</span>)}
       </div>
     </div>
   )
