@@ -100,7 +100,7 @@ function ListPageDemo({
       <DashboardBackdrop
         flow={flow}
         exampleLabel={exampleLabel}
-        patternLabel="Network enablement"
+        patternLabel="Network <> Connect enablement"
         onBack={() => {
           if (isEditorOpen) {
             setIsEditorOpen(false)
@@ -178,7 +178,7 @@ function StandardDocs() {
           style={{ borderLeftWidth: "0.5px", borderRightWidth: "0.5px" }}
         >
           <div className="flex flex-col items-start px-6 pt-[88px] pb-[56px] sm:px-[64px]">
-            <h1 className={TYPE.pageTitle}>Network enablement</h1>
+            <h1 className={TYPE.pageTitle}>Network &lt;&gt; Connect enablement</h1>
             <div className="mt-6">
               <AuthorPill />
             </div>
@@ -263,7 +263,7 @@ function StandardDocs() {
         {activeDemo === "account" ? (
           <div key="account-demo" className="example-ui fixed inset-0 z-[80] overflow-auto bg-white">
             <AccountConfigurationDemo
-              patternLabel="Network enablement"
+              patternLabel="Network <> Connect enablement"
               exampleLabel="Account creation"
               onExit={goToPreviousPage}
             />
