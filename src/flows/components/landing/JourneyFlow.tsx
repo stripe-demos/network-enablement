@@ -3,15 +3,15 @@ import type { DemoKey, Flow } from "@/components/landing/entryPoints"
 
 // The page's chip style, so steps read like the rest of the landing page.
 const STEP_CLASS =
-  "inline-flex cursor-pointer items-center rounded-full border border-[#D5DEE7] bg-white px-[16px] pt-[7px] pb-[8px] text-[15px] font-[500] leading-[16px] text-[#3F5064] transition-colors hover:border-[#C1CCD7] hover:bg-[#F6F8FA] hover:text-[#142234]"
+  "inline-flex cursor-pointer items-center whitespace-nowrap rounded-full border border-[#D5DEE7] bg-white px-[12px] py-[6px] text-[13px] font-[500] leading-[16px] text-[#3F5064] transition-colors hover:border-[#C1CCD7] hover:bg-[#F6F8FA] hover:text-[#142234]"
 
-const TITLE_CLASS = "w-[260px] shrink-0 text-[16px] font-[500] leading-[1.3] text-[#142234]"
+const TITLE_CLASS = "w-[220px] shrink-0 text-[16px] font-[500] leading-[1.3] text-[#142234]"
 
 // Runs from one step's right end to the next step's left end.
 function Connector() {
   return (
-    <svg aria-hidden="true" width="28" height="10" viewBox="0 0 28 10" fill="none" className="shrink-0">
-      <path d="M0 5H26M26 5L22.5 1.5M26 5L22.5 8.5" stroke="#C1CCD7" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    <svg aria-hidden="true" width="20" height="10" viewBox="0 0 20 10" fill="none" className="shrink-0">
+      <path d="M0 5H18M18 5L14.5 1.5M18 5L14.5 8.5" stroke="#C1CCD7" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -36,9 +36,10 @@ function FlowRow({ flow, parent, onOpenDemo }: { flow: Flow; parent?: string; on
         {nested ? <Elbow /> : null}
         <h3>{title}</h3>
       </div>
-      <ol className="flex flex-1 flex-wrap items-center gap-y-2.5">
+      {/* One line, so steps stay connected; scrolls sideways when narrow. */}
+      <ol className="flex min-w-0 flex-1 items-center overflow-x-auto py-[2px]">
         {steps.map((step, index) => (
-          <li key={index} className="flex items-center">
+          <li key={index} className="flex shrink-0 items-center">
             {index > 0 ? <Connector /> : null}
             <EntryLink target={step.target} onOpenDemo={onOpenDemo} label={`Open ${step.title}`} className={STEP_CLASS}>
               {step.title}
