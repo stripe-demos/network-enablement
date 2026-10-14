@@ -14,8 +14,10 @@ export default function CountryTag({ code, tone = 'default', size = 'default' })
   return (
     <span
       className={`flex shrink-0 items-center ${
-        compact ? 'h-5 gap-1 rounded-[4px] px-1.5' : 'h-6 gap-1 rounded-control px-2'
-      } ${tone === 'deep' ? 'bg-panel-deep' : 'bg-panel'}`}
+        tone === 'plain'
+          ? compact ? 'gap-1' : 'gap-1.5'
+          : compact ? 'h-5 gap-1 rounded-[4px] px-1.5' : 'h-6 gap-1 rounded-control px-2'
+      } ${tone === 'deep' ? 'bg-panel-deep' : tone === 'plain' ? '' : 'bg-panel'}`}
     >
       <FlagIcon
         code={code}

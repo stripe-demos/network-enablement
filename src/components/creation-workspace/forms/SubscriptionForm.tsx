@@ -9,7 +9,9 @@ import { getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated,
 
 import { EXISTING_PRODUCTS } from "./shared/mockEntities"
 
-const SUBSCRIPTION_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
+const SUBSCRIPTION_ACCOUNTS = NETWORK_ACCOUNTS
+  .map((account) => getDisplayedNetworkAccount(account, "direct"))
+  .sort((left, right) => Number(Boolean(right.inNetwork)) - Number(Boolean(left.inNetwork)))
 
 function getSubscriptionAccountItems(created: EntityItem[] = []) {
   return [
@@ -21,13 +23,18 @@ function getSubscriptionAccountItems(created: EntityItem[] = []) {
 function subscriptionAccountSearchText(item: EntityItem) {
   const account = SUBSCRIPTION_ACCOUNTS.find((candidate) => candidate.id === item.id)
   return account
-    ? `${account.name} ${account.email} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}`
+    ? `${account.name} ${account.email} ${account.handle ?? ""} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}`
     : `${item.name} ${item.detail ?? ""} ${item.id}`
+}
+
+function subscriptionAccountGroup(item: EntityItem) {
+  const account = SUBSCRIPTION_ACCOUNTS.find((candidate) => candidate.id === item.id)
+  return account?.inNetwork || !account ? "Your Network" : "Stripe's Network"
 }
 
 function SubscriptionAccountOption({ item }: { item: EntityItem }) {
   const account = SUBSCRIPTION_ACCOUNTS.find((candidate) => candidate.id === item.id)
-  if (account) return <NetworkAccountOption account={account} />
+  if (account) return <NetworkAccountOption account={account} compact />
   return (
     <span className="flex min-w-0 flex-1 flex-col py-[2px]">
       <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{item.name}</span>
@@ -922,6 +929,8 @@ function SubscriptionPage({ data, onChange, errorFields, onAddObject, itemsDropd
           searchPlaceholder="Search by name, email, or account ID"
           items={getSubscriptionAccountItems(data._createdCustomers ?? [])}
           getSearchText={subscriptionAccountSearchText}
+          getGroup={subscriptionAccountGroup}
+          groupClassName="text-[11px] font-[400] leading-[14px] text-[#6C7688]"
           renderOption={(item) => <SubscriptionAccountOption item={item} />}
           insetOptionHover
           selectedId={data.customerId ?? ""}

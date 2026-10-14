@@ -22,6 +22,7 @@ import {
   AccountSummaryCard,
   DuplicateAccountNudge,
   Field,
+  NetworkAccountOption,
   ReviewRow,
   SelectControl,
   Toggle,
@@ -35,6 +36,7 @@ import {
   NETWORK_ACCOUNTS,
   PAYOUT_METHODS,
   findMatchingNetworkAccount,
+  getAccountRoles,
   getCapabilities,
   getCapabilitiesForGroup,
   getConfigurationOptions,
@@ -137,7 +139,28 @@ export function FieldHint({ label, children }: { label: string; children: string
 }
 
 function getNetworkAccounts(userPath?: UserPath) {
-  return NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, userPath))
+  return NETWORK_ACCOUNTS
+    .map((account) => getDisplayedNetworkAccount(account, userPath))
+    .sort((left, right) => Number(Boolean(right.inNetwork)) - Number(Boolean(left.inNetwork)))
+}
+
+function getNetworkAccountItems(userPath?: UserPath) {
+  return getNetworkAccounts(userPath).map((account) => ({ id: account.id, name: account.name, detail: account.email }))
+}
+
+function getNetworkAccountSearchText(userPath?: UserPath) {
+  return (item: { id: string; name: string }) => {
+    const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === item.id)
+    return account
+      ? `${account.name} ${account.email} ${account.handle ?? ""} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}`
+      : item.name
+  }
+}
+
+function AccountPickerOption({ id, userPath }: { id: string; userPath?: UserPath }) {
+  const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
+  if (!account) return null
+  return <NetworkAccountOption account={account} />
 }
 
 const EMAIL_SETTLE_MS = 120
@@ -309,30 +332,6 @@ function AccountIdentityFields({
   const emailField = (
     <div className="flex flex-col gap-[6px]">
       <Field label="Account email">
-        {matchingAccount ? (
-          <div className={`${tokens.inputClass} flex items-center px-[6px]`}>
-            <span className="flex h-[22px] max-w-full items-center gap-[6px] rounded-full bg-[#F4F6F8] pl-[3px] pr-[6px]">
-              {matchingAccount.hasBrandIcon ? (
-                <img src="/unified-account-icon.png" alt="" className="h-[16px] w-[16px] shrink-0 rounded-full object-cover" />
-              ) : (
-                <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-[#ECF1F6] text-[9px] font-[600] leading-none text-[#1A2C44]">
-                  {matchingAccount.initials}
-                </span>
-              )}
-              <span className="min-w-0 truncate text-[14px] font-[400] leading-[20px] text-[#353A44]">{matchingAccount.name}</span>
-              <button
-                type="button"
-                aria-label="Clear email"
-                className="flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full text-[#6C7688] hover:bg-[#E8EDF3] hover:text-[#1A2C44]"
-                onClick={() => onChange({ accountEmail: "" })}
-              >
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                  <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
-              </button>
-            </span>
-          </div>
-        ) : (
         <span className="group relative block">
           <input
             ref={emailFirst ? firstInputRef : undefined}
@@ -367,7 +366,6 @@ function AccountIdentityFields({
             </span>
           ) : null}
         </span>
-        )}
       </Field>
       {showMatch && matchingAccount ? (
         <DuplicateAccountNudge
@@ -426,6 +424,8 @@ function AccountSelector({
   selectedAccountId,
   details,
   userPath,
+  onPrepareNew,
+  onChooseNew,
   onSelectExisting,
   onDetailsChange,
   lookupStatus,
@@ -454,6 +454,7 @@ function AccountSelector({
   const selectedAccount = source === "existing"
     ? getNetworkAccounts(userPath).find((account) => account.id === selectedAccountId)
     : undefined
+  const draftName = getDraftName(details)
 
   const identityFields = (
     <AccountIdentityFields
@@ -462,7 +463,7 @@ function AccountSelector({
       onUseExisting={onSelectExisting}
       autoFocus
       typeLabel="Account type"
-      emailFirst={style === "refined" || style === "repeat"}
+      emailFirst={style === "current" || style === "repeat"}
       lookupStatus={lookupStatus}
       lookupMatch={lookupMatch}
       dismissedMatchId={dismissedMatchId}
@@ -470,6 +471,48 @@ function AccountSelector({
       onCommitEmail={onCommitEmail}
     />
   )
+
+  if (style === "profile-discovery") {
+    const selectExisting = (id: string) => {
+      const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === id)
+      if (account) onSelectExisting(account)
+    }
+    return (
+      <section className="flex flex-col gap-[8px]" data-account-selection-style={style}>
+        <EntityDropdown
+          label="Account"
+          placeholder="Find or add an account"
+          searchPlaceholder="Search for all account in Stripe's Network"
+          initialOpen={!selectedAccount && source !== "new"}
+          items={getNetworkAccountItems(userPath)}
+          getSearchText={getNetworkAccountSearchText(userPath)}
+          getGroup={(item) => {
+            const account = getNetworkAccounts(userPath).find((candidate) => candidate.id === item.id)
+            return account?.inNetwork ? "Your Network" : "Stripe's Network"
+          }}
+          renderOption={(item) => <AccountPickerOption id={item.id} userPath={userPath} />}
+          insetOptionHover
+          selectedId={source === "existing" ? selectedAccountId : ""}
+          selectedLabel={source === "new" ? draftName || "New account" : undefined}
+          selectedIsPlaceholder={source === "new" && !draftName}
+          onSelect={selectExisting}
+          addNewLabel="Create new account"
+          labelClassName={type.fieldLabel}
+          addNewClassName="flex w-full items-center gap-[6px] rounded-[4px] px-[6px] py-[8px] text-left text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#533AFD] transition-colors hover:bg-[#F5F6F8]"
+          noResultsClassName="px-[10px] py-[8px] text-[13px] font-[400] leading-[18px] text-[#818DA0]"
+          listClassName="max-h-[380px]"
+          onAddNew={() => {
+            if (source !== "new") onPrepareNew()
+            onChooseNew()
+          }}
+        />
+        {source === "existing" && selectedAccount ? (
+          <SelectedAccountSummary account={selectedAccount} />
+        ) : null}
+        {source === "new" ? identityFields : null}
+      </section>
+    )
+  }
 
   return (
     <section className={type.section} data-account-selection-style={style}>
@@ -532,6 +575,7 @@ function ConfigurationRow({
   locked,
   capabilityNames,
   separate,
+  warning,
   onToggle,
   onOpen,
 }: {
@@ -540,6 +584,7 @@ function ConfigurationRow({
   locked?: boolean
   capabilityNames?: string[]
   separate?: boolean
+  warning?: string
   onToggle?: () => void
   onOpen?: () => void
 }) {
@@ -568,26 +613,25 @@ function ConfigurationRow({
 
   const title = option.title
   const capabilityCount = capabilityNames?.length ?? 0
-  const inlineEdit = showInlineEdit ? (
-    <div className={`flex h-[28px] shrink-0 items-stretch overflow-hidden rounded-[8px] bg-[#F4F6F8] ${canEdit ? "" : "px-[10px]"}`}>
-      <span className={`flex items-center text-[13px] font-[400] leading-[18px] text-[#273951] ${canEdit ? "pl-[10px] pr-[4px]" : ""}`}>
-        {capabilityCount === 1 ? "1 capability" : `${capabilityCount} capabilities`}
+  const capabilityLabel = capabilityCount === 1 ? "1 capability" : `${capabilityCount} capabilities`
+  const capabilityLink = showInlineEdit ? (
+    canEdit ? (
+      <button
+        type="button"
+        className={type.edit}
+        onClick={(event) => {
+          event.stopPropagation()
+          onOpen?.()
+        }}
+      >
+        {capabilityLabel}
+      </button>
+    ) : (
+      <span className={`shrink-0 ${type.matchCard ? "text-[13px] font-[400] leading-[18px] text-[#596171]" : "text-[11px] font-[400] leading-[16px] text-[#6C7688]"}`}>
+        {capabilityLabel}
       </span>
-      {canEdit ? (
-        <button
-          type="button"
-          className="pl-[4px] pr-[10px] text-[13px] font-[500] leading-[18px] text-[#533AFD] outline-none transition-colors hover:bg-[#F0EDFF] hover:text-[#4730E0]"
-          onClick={(event) => {
-            event.stopPropagation()
-            onOpen?.()
-          }}
-        >
-          Edit
-        </button>
-      ) : null}
-    </div>
+    )
   ) : null
-
   const rowProps = {
     role: "button" as const,
     tabIndex: locked ? -1 : 0,
@@ -625,7 +669,7 @@ function ConfigurationRow({
         <div
           className={`grid min-h-[60px] items-start py-[12px] text-left outline-none ${columnsClass} ${
             locked ? "cursor-default" : "cursor-pointer"
-          } ${checked || locked ? "" : "transition-colors hover:bg-[#FAFBFC]"}`}
+          } ${locked ? "" : "transition-colors hover:bg-[#FAFBFC]"}`}
           onClick={rowProps.onClick}
           onKeyDown={rowProps.onKeyDown}
           role="button"
@@ -638,8 +682,11 @@ function ConfigurationRow({
             <span className="min-w-0">
               <span className="block text-[14px] font-[500] leading-[20px] tracking-[-0.08px] text-[#1A2C44]">{title}</span>
               <span className="mt-[2px] block text-[13px] font-[400] leading-[18px] text-[#596171]">{option.relationship}</span>
+              {warning ? (
+                <span className="mt-[6px] block text-[13px] font-[400] leading-[18px] text-[#C45500]">{warning}</span>
+              ) : null}
             </span>
-            {inlineEdit}
+            {capabilityLink}
           </span>
         </div>
         {nested}
@@ -669,8 +716,9 @@ function ConfigurationRow({
           <span className="flex min-w-0 flex-col gap-[2px]">
             <span className={`${type.rowTitle} ${locked ? "text-[#596171]" : "text-[#1A2C44]"}`}>{title}</span>
             <span className={type.rowDetail}>{option.relationship}</span>
+            {warning ? <span className="text-[12px] font-[400] leading-[16px] text-[#C45500]">{warning}</span> : null}
           </span>
-          {inlineEdit}
+          {capabilityLink}
         </span>
       </div>
       {nested}
@@ -681,18 +729,22 @@ function ConfigurationRow({
 function ConfigurationPicker({
   selected,
   existing,
+  accountConfigurations = [],
   userPath,
   details,
   onChange,
+  onExistingChange,
   onDetailsChange,
   isNewAccount,
   isRepeat,
 }: {
   selected: ConfigurationKind[]
   existing: ConfigurationKind[]
+  accountConfigurations?: ConfigurationKind[]
   userPath?: UserPath
   details: AccountDetailsDraft
   onChange: (next: ConfigurationKind[]) => void
+  onExistingChange?: (next: ConfigurationKind[]) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
   isNewAccount?: boolean
   isRepeat?: boolean
@@ -703,12 +755,26 @@ function ConfigurationPicker({
   const type = useCardCreateTypeScale()
   const separate = accountPropertiesLayout === "separate"
   const options = getConfigurationOptions(userPath)
-  const existingOptions = options.filter((option) => existing.includes(option.id))
-  const addableOptions = options.filter((option) => !existing.includes(option.id))
+  const removedExisting = options.filter((option) => accountConfigurations.includes(option.id) && !existing.includes(option.id))
+  const removedExistingLabel = (() => {
+    const names = removedExisting.map((option) => option.title)
+    if (names.length === 0) return ""
+    if (names.length === 1) return names[0]
+    if (names.length === 2) return `${names[0]} and ${names[1]}`
+    return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`
+  })()
   const activeConfigurations = Array.from(new Set([...existing, ...selected]))
   const [describeMode, setDescribeMode] = useState<"describe" | "recommend" | null>(null)
   const [editingGroup, setEditingGroup] = useState<"merchant" | "recipient" | null>(null)
   const toggle = (option: ConfigurationOption) => {
+    if (existing.includes(option.id)) {
+      onExistingChange?.(existing.filter((item) => item !== option.id))
+      return
+    }
+    if (accountConfigurations.includes(option.id)) {
+      onExistingChange?.([...existing, option.id])
+      return
+    }
     onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])
   }
   const canOpen = (id: ConfigurationKind): id is "merchant" | "recipient" => id === "merchant" || id === "recipient"
@@ -717,83 +783,43 @@ function ConfigurationPicker({
   )
   const closeCapabilities = () => setEditingGroup(null)
   return (
-    <section className={type.headingContent} data-configuration-picker>
+    <section className="flex flex-col gap-[16px]" data-configuration-picker>
       <div>
         <h3 className={type.fieldLabel}>Configurations</h3>
         <p className={`mt-[6px] ${type.helper}`}>
-          {isNewAccount && !isRepeat ? (
-            <>
-              Select all roles that apply to this account. Unsure?{" "}
-              <button
-                type="button"
-                className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
-                onClick={() => setDescribeMode("recommend")}
-              >
-                View recommendation
-              </button>
-            </>
-          ) : (
-            <>
-              Select all roles that apply to this account. Unsure?{" "}
-              <button
-                type="button"
-                className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
-                onClick={() => setDescribeMode("describe")}
-              >
-                Tell us about the account
-              </button>
-              .
-            </>
-          )}
+          Select all roles this account should have. Unsure?{" "}
+          <button
+            type="button"
+            className="font-[500] text-[#533AFD] hover:text-[#4730E0]"
+            onClick={() => setDescribeMode(isNewAccount && !isRepeat ? "recommend" : "describe")}
+          >
+            View recommendation
+          </button>
         </p>
       </div>
-      <div className={existingOptions.length > 0 && addableOptions.length > 0 ? "flex flex-col gap-[16px]" : type.cardStack}>
-      {existingOptions.length > 0 ? (
-        <div className={type.cardStack}>
-          <p className={type.helper}>On this account</p>
-          <HoverTip text="You can deactivate configurations from the account details page.">
-            <div className={type.matchCard ? type.cardStack : "divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white"}>
-              {existingOptions.map((option) => {
-                const groupId = canOpen(option.id) ? option.id : null
-                return (
-                  <ConfigurationRow
-                    key={option.id}
-                    option={option}
-                    checked
-                    locked
-                    capabilityNames={groupId ? capabilityNamesFor(groupId) : undefined}
-                    separate={separate}
-                    onOpen={groupId ? () => setEditingGroup(groupId) : undefined}
-                  />
-                )
-              })}
-            </div>
-          </HoverTip>
+      <div className="flex flex-col gap-[8px]">
+        <div className={type.matchCard ? type.cardStack : "divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white"}>
+          {options.map((option) => {
+            const groupId = canOpen(option.id) ? option.id : null
+            const checked = existing.includes(option.id) || selected.includes(option.id)
+            return (
+              <ConfigurationRow
+                key={option.id}
+                option={option}
+                checked={checked}
+                capabilityNames={groupId ? capabilityNamesFor(groupId) : undefined}
+                separate={separate}
+                onToggle={() => toggle(option)}
+                onOpen={groupId ? () => setEditingGroup(groupId) : undefined}
+              />
+            )
+          })}
         </div>
-      ) : null}
-      {addableOptions.length > 0 ? (
-        <div className={type.cardStack}>
-          {existingOptions.length > 0 ? (
-            <p className={type.helper}>Add</p>
-          ) : null}
-          <div className={type.matchCard ? type.cardStack : "divide-y divide-[#ECF1F6] overflow-hidden rounded-[8px] border border-[#E3E8EF] bg-white"}>
-            {addableOptions.map((option) => {
-              const groupId = canOpen(option.id) ? option.id : null
-              return (
-                <ConfigurationRow
-                  key={option.id}
-                  option={option}
-                  checked={selected.includes(option.id)}
-                  capabilityNames={groupId ? capabilityNamesFor(groupId) : undefined}
-                  separate={separate}
-                  onToggle={() => toggle(option)}
-                  onOpen={groupId ? () => setEditingGroup(groupId) : undefined}
-                />
-              )
-            })}
-          </div>
-        </div>
-      ) : null}
+        {removedExisting.length > 0 ? (
+          <p className="text-[13px] font-[400] leading-[18px] text-[#C45500]">
+            {removedExistingLabel} capabilities will be removed but you can still access historical data.
+          </p>
+        ) : null}
       </div>
       <DescribeAccountModal
         isOpen={describeMode !== null}
@@ -1450,6 +1476,7 @@ export function AccountConfigurationForm({
   details,
   configurations,
   existingConfigurations,
+  accountConfigurations = [],
   userPath,
   onChooseExisting,
   onPrepareNew,
@@ -1458,6 +1485,7 @@ export function AccountConfigurationForm({
   onSelectExisting,
   onDetailsChange,
   onConfigurationsChange,
+  onExistingChange,
 }: {
   selectionStyle: AccountSelectionStyle
   onboardingStyle: AccountOnboardingStyle
@@ -1466,6 +1494,7 @@ export function AccountConfigurationForm({
   details: AccountDetailsDraft
   configurations: ConfigurationKind[]
   existingConfigurations: ConfigurationKind[]
+  accountConfigurations?: ConfigurationKind[]
   userPath?: UserPath
   onChooseExisting: () => void
   onPrepareNew: () => void
@@ -1474,9 +1503,10 @@ export function AccountConfigurationForm({
   onSelectExisting: (account: NetworkAccount) => void
   onDetailsChange: (patch: Partial<AccountDetailsDraft>) => void
   onConfigurationsChange: (next: ConfigurationKind[]) => void
+  onExistingChange?: (next: ConfigurationKind[]) => void
 }) {
   const type = useCardCreateTypeScale()
-  const refinedLookup = useRefinedEmailLookup(details.accountEmail, (selectionStyle === "refined" || selectionStyle === "repeat") && source === "new")
+  const refinedLookup = useRefinedEmailLookup(details.accountEmail, (selectionStyle === "current" || selectionStyle === "repeat") && source === "new")
   const canConfigure = source === "new" || Boolean(selectedAccountId)
   return (
     <div className={type.stack}>
@@ -1501,9 +1531,11 @@ export function AccountConfigurationForm({
         <ConfigurationPicker
           selected={configurations}
           existing={existingConfigurations}
+          accountConfigurations={accountConfigurations}
           userPath={userPath}
           details={details}
           onChange={onConfigurationsChange}
+          onExistingChange={onExistingChange}
           onDetailsChange={onDetailsChange}
           isNewAccount={source === "new"}
           isRepeat={selectionStyle === "repeat"}

@@ -9,7 +9,9 @@ import { getAccountRoles, getDisplayedNetworkAccount, networkAccountFromCreated,
 import { CurrencyFlag, hasCurrencyFlag } from "@/components/CurrencyFlag"
 import { EXISTING_PRODUCTS as EXISTING_ITEMS, CURRENCY_OPTIONS } from "./shared/mockEntities"
 
-const INVOICE_ACCOUNTS = NETWORK_ACCOUNTS.map((account) => getDisplayedNetworkAccount(account, "direct"))
+const INVOICE_ACCOUNTS = NETWORK_ACCOUNTS
+  .map((account) => getDisplayedNetworkAccount(account, "direct"))
+  .sort((left, right) => Number(Boolean(right.inNetwork)) - Number(Boolean(left.inNetwork)))
 
 function getInvoiceAccountItems(created: EntityItem[] = []) {
   return [
@@ -21,13 +23,18 @@ function getInvoiceAccountItems(created: EntityItem[] = []) {
 function invoiceAccountSearchText(item: EntityItem) {
   const account = INVOICE_ACCOUNTS.find((candidate) => candidate.id === item.id)
   return account
-    ? `${account.name} ${account.email} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}`
+    ? `${account.name} ${account.email} ${account.handle ?? ""} ${account.id} ${account.country} ${getAccountRoles(account).join(" ")}`
     : `${item.name} ${item.detail ?? ""} ${item.id}`
+}
+
+function invoiceAccountGroup(item: EntityItem) {
+  const account = INVOICE_ACCOUNTS.find((candidate) => candidate.id === item.id)
+  return account?.inNetwork || !account ? "Your Network" : "Stripe's Network"
 }
 
 function InvoiceAccountOption({ item }: { item: EntityItem }) {
   const account = INVOICE_ACCOUNTS.find((candidate) => candidate.id === item.id)
-  if (account) return <NetworkAccountOption account={account} />
+  if (account) return <NetworkAccountOption account={account} compact />
   return (
     <span className="flex min-w-0 flex-1 flex-col py-[2px]">
       <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{item.name}</span>
@@ -739,6 +746,8 @@ export function InvoiceForm({ data, onChange, errorFields, onAddObject }: Invoic
             searchPlaceholder="Search by name, email, or account ID"
             items={getInvoiceAccountItems(data._createdCustomers ?? [])}
             getSearchText={invoiceAccountSearchText}
+            getGroup={invoiceAccountGroup}
+            groupClassName="text-[11px] font-[400] leading-[14px] text-[#6C7688]"
             renderOption={(item) => <InvoiceAccountOption item={item} />}
             insetOptionHover
             selectedId={data.customerId ?? ""}

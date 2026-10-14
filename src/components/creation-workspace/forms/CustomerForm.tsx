@@ -1,16 +1,17 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { getFormTokens } from "./shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 import { useInputFill } from "@/components/creation-workspace/inputFill"
 import { CustomSelect } from "./shared/CustomSelect"
+import { EntityDropdown } from "./EntityDropdown"
 import { AddressFields, CountrySelect, formatAddressSummary, phoneCountryFromBillingCountry } from "./shared/AddressFields"
 import type { CustomerFormLayout } from "@/components/creation-workspace/customerFormLayout"
 import { TrashIcon, LargeChevronIcon } from "@/components/ProductCatalogIcons"
 import { OptionalGroups, type OptionalGroup } from "./shared/ComposeGroup"
 import { useAccountConflictNudgeMode } from "@/components/creation-workspace/accountConflictNudgeMode"
-import { DuplicateAccountNudge, Toggle } from "../account-configuration/AccountConfigurationPrimitives"
+import { AccountSummaryCard, DuplicateAccountNudge, NetworkAccountOption, Toggle } from "../account-configuration/AccountConfigurationPrimitives"
 import { EMAIL_PATTERN, findMatchingNetworkAccount, getDisplayedNetworkAccount, NETWORK_ACCOUNTS, type NetworkAccount } from "../account-configuration/model"
 
 const ACCOUNT_TYPE_OPTIONS = ["Company", "Individual"] as const
@@ -141,6 +142,12 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
   const [shakeEmail, setShakeEmail] = useState(false)
   const [activeSectionId, setActiveSectionId] = useState("account")
   const [dismissedMatchId, setDismissedMatchId] = useState("")
+  const [selectedNetworkAccountId, setSelectedNetworkAccountId] = useState("")
+  const networkAccounts = useMemo(() => (
+    NETWORK_ACCOUNTS
+      .map((account) => getDisplayedNetworkAccount(account))
+      .sort((left, right) => Number(Boolean(right.inNetwork)) - Number(Boolean(left.inNetwork)))
+  ), [])
   const additionalBillingEmails = Array.isArray(data.additionalBillingEmails) ? data.additionalBillingEmails as string[] : []
   const additionalTaxIds = Array.isArray(data.taxIds) ? data.taxIds as { taxIdType?: string; taxId?: string }[] : []
   const accountEmailForMatch = String(data.accountEmail ?? data.email ?? "")
@@ -153,17 +160,26 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
           return match ? COMPOSE_ACCOUNTS.find((account) => account.id === match.id) ?? match : undefined
         })()
 
-  const applyExistingAccount = (account: NetworkAccount) => {
+  const fillFromNetworkAccount = (account: NetworkAccount) => {
     const country = account.country === "UK" ? "United Kingdom" : account.country === "CA" ? "Canada" : "United States"
+    const isCompany = !account.directName
     onChange({
       customerId: account.id,
       name: account.name,
       displayName: account.name,
+      registeredName: isCompany ? account.name : "",
+      firstName: "",
+      lastName: "",
+      accountType: isCompany ? "Company" : "Individual",
       accountEmail: account.email,
       email: account.email,
       accountCountry: country,
       country,
     })
+  }
+
+  const applyExistingAccount = (account: NetworkAccount) => {
+    fillFromNetworkAccount(account)
     onUseExistingAccount?.(account)
   }
 
@@ -177,6 +193,10 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
       onDismiss={() => setDismissedMatchId(matchingAccount.id)}
     />
   ) : null
+
+  useEffect(() => {
+    if (!data.customerId) setSelectedNetworkAccountId("")
+  }, [data.customerId])
 
   useEffect(() => {
     if (!isRefresh || !emailHasError) return
@@ -751,33 +771,6 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
     const emailField = (
       <div className="flex flex-col gap-[6px]">
         <Field label="Account email">
-          {matchingAccount ? (
-            <div className={`${tokens.inputClass} flex items-center px-[6px]`}>
-              <span className="flex h-[22px] max-w-full items-center gap-[6px] rounded-full bg-[#F4F6F8] pl-[3px] pr-[6px]">
-                {matchingAccount.hasBrandIcon ? (
-                  <img src="/unified-account-icon.png" alt="" className="h-[16px] w-[16px] shrink-0 rounded-full object-cover" />
-                ) : (
-                  <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-[#ECF1F6] text-[9px] font-[600] leading-none text-[#1A2C44]">
-                    {matchingAccount.initials}
-                  </span>
-                )}
-                <span className="min-w-0 truncate text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44]">{matchingAccount.name}</span>
-                <button
-                  type="button"
-                  aria-label="Clear email"
-                  className="flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full text-[#6C7688] hover:bg-[#E8EDF3] hover:text-[#1A2C44]"
-                  onClick={() => {
-                    syncIdentity({ accountEmail: "" })
-                    onChange({ customerId: undefined })
-                  }}
-                >
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                    <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </span>
-            </div>
-          ) : (
           <span className="group relative block">
             <input
               type="email"
@@ -797,7 +790,6 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
               </button>
             ) : null}
           </span>
-          )}
           {errorFields?.has("email") && (
             <p className="text-[11px] text-[#DF1B41]">Enter an email address</p>
           )}
@@ -815,16 +807,77 @@ export function CustomerForm({ data, onChange, errorFields, layout = "stacked", 
         />
       </div>
     )
+    const selectedNetworkAccount = networkAccounts.find((account) => account.id === selectedNetworkAccountId)
+    const accountSearch = isSingleConfig ? (
+      <>
+        <EntityDropdown
+          label="Account"
+          placeholder="Find or add an account"
+          searchPlaceholder="Search for all account in Stripe's Network"
+          items={networkAccounts.map((account) => ({ id: account.id, name: account.name, detail: account.email }))}
+          getSearchText={(item) => {
+            const account = networkAccounts.find((candidate) => candidate.id === item.id)
+            return account
+              ? `${account.name} ${account.email} ${account.handle ?? ""} ${account.id} ${account.country}`
+              : item.name
+          }}
+          getGroup={(item) => {
+            const account = networkAccounts.find((candidate) => candidate.id === item.id)
+            return account?.inNetwork ? "Your Network" : "Stripe's Network"
+          }}
+          renderOption={(item) => {
+            const account = networkAccounts.find((candidate) => candidate.id === item.id)
+            return account ? <NetworkAccountOption account={account} compact /> : null
+          }}
+          groupClassName="text-[11px] font-[400] leading-[14px] text-[#6C7688]"
+          addNewClassName="flex w-full items-center gap-[6px] rounded-[4px] px-[6px] py-[6px] text-left text-[12px] font-[500] leading-[16px] text-[#533AFD] transition-colors hover:bg-[#F5F6F8]"
+          noResultsClassName="px-[10px] py-[6px] text-[12px] font-[400] leading-[16px] text-[#6C7688]"
+          insetOptionHover
+          selectedId={selectedNetworkAccountId}
+          selectedLabel={!selectedNetworkAccountId && (registeredName || accountEmail) ? registeredName || "New account" : undefined}
+          selectedIsPlaceholder={!selectedNetworkAccountId && !registeredName}
+          onSelect={(id) => {
+            const account = networkAccounts.find((candidate) => candidate.id === id)
+            if (!account) return
+            setSelectedNetworkAccountId(id)
+            fillFromNetworkAccount(account)
+          }}
+          addNewLabel="Create new account"
+          listClassName="max-h-[280px]"
+          onAddNew={() => {
+            setSelectedNetworkAccountId("")
+            onChange({
+              customerId: "",
+              name: "",
+              displayName: "",
+              registeredName: "",
+              firstName: "",
+              lastName: "",
+              accountEmail: "",
+              email: "",
+            })
+          }}
+        />
+        {selectedNetworkAccount ? (
+          <AccountSummaryCard account={selectedNetworkAccount} />
+        ) : null}
+      </>
+    ) : null
 
     return (
       <div className="flex flex-col gap-[16px]">
         <div className="flex flex-col gap-[16px]">
           {isSingleConfig ? (
             <>
-              {typeField}
-              {nameField}
-              {emailField}
-              {countryField}
+              {accountSearch}
+              {selectedNetworkAccount ? null : (
+                <>
+                  {emailField}
+                  {typeField}
+                  {nameField}
+                  {countryField}
+                </>
+              )}
             </>
           ) : (
             <>

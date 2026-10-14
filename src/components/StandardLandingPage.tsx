@@ -461,7 +461,7 @@ function StandardDocs() {
 
         {activeDemo === "singleConfig" ? (
           <div key="single-config-demo" className="example-ui fixed inset-0 z-[80] bg-white">
-            <ListPageDemo flow="account-configurations" exampleLabel="Single config" ctaLabel="Create customer" onExit={goToPreviousPage}>
+            <ListPageDemo flow="account-configurations" exampleLabel="Single config" ctaLabel="Add customer" onExit={goToPreviousPage}>
               {({ isOpen, onClose }) => (
                 <FlowProviders>
                   <CreateCustomerModal isOpen={isOpen} onClose={onClose} />

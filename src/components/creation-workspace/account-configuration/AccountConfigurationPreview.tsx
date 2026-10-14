@@ -349,7 +349,7 @@ function EmptyAccountPreview() {
       <div className="mx-auto flex h-[44px] w-[44px] items-center justify-center rounded-[12px] bg-[#F1EEFF] text-[#675DFF]">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M5.5 7.5h11M5.5 11h7M5.5 14.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><rect x="2.75" y="3.25" width="16.5" height="15.5" rx="3.25" stroke="currentColor" strokeWidth="1.5" /></svg>
       </div>
-      <h3 className={`mt-[14px] ${type.previewSection}`}>Account configuration</h3>
+      <h3 className={`mt-[14px] ${type.previewSection}`}>Account details</h3>
       <p className={`mx-auto mt-[6px] max-w-[310px] ${type.previewEmpty}`}>As you create the account, its configurations and capabilities will appear here.</p>
     </div>
   )
@@ -433,15 +433,9 @@ export function AccountConfigurationPreview({
                   {(!isNewAccount || details.country) ? <CountryBadge country={isNewAccount ? details.country : account.country} /> : null}
                 </div>
                 <p className={`mt-[2px] flex min-w-0 items-center ${type.previewMeta}`}>
-                  <span className={`min-w-0 truncate ${account.email ? "text-[#596171]" : "text-[#818DA0]"}`}>
-                    {account.email || "email@example.com"}
+                  <span className={`min-w-0 truncate ${account.handle || account.email ? "text-[#596171]" : "text-[#818DA0]"}`}>
+                    {account.handle ? `@${account.handle}` : (account.email || "email@example.com")}
                   </span>
-                  {!isNewAccount && account.id ? (
-                    <>
-                      <span className="shrink-0 px-[4px] text-[#818DA0]">·</span>
-                      <span className="min-w-0 truncate text-[#596171]">{account.id}</span>
-                    </>
-                  ) : null}
                 </p>
               </div>
             </div>

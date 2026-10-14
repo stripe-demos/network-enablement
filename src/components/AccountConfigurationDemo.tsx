@@ -29,7 +29,7 @@ function DemoExperience({
   const [runKey, setRunKey] = useState(0)
   const [accountCompletion, setAccountCompletion] = useState<AccountConfigurationPayload | null>(null)
   const { accountOnboardingStyle } = useAccountOnboardingStyle()
-  const headerActionLabel = "Create account"
+  const headerActionLabel = "Add account"
 
   const launch = () => {
     setAccountCompletion(null)
@@ -112,7 +112,7 @@ export function AccountConfigurationDemo({
       <SegmentedStyleProvider initial="segmented">
         <ProductFormStyleProvider initial="current" ignorePersisted>
           <LayoutSplitProvider initial="fixed" ignorePersisted>
-            <AccountSelectionStyleProvider initial="refined" ignorePersisted>
+            <AccountSelectionStyleProvider initial="profile-discovery" ignorePersisted>
               <AccountConflictNudgeModeProvider initial="automatic" ignorePersisted>
                 <AccountOnboardingStyleProvider initial="success-page" ignorePersisted>
                   <AccountPropertiesLayoutProvider initial="combined" ignorePersisted>

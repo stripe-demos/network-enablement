@@ -31,6 +31,9 @@ type EntityDropdownProps = {
   items: EntityItem[]
   /** Optional searchable text for an item. Defaults to the item name. */
   getSearchText?: (item: EntityItem) => string
+  /** Optional section header. Items with the same label stay grouped in list order. */
+  getGroup?: (item: EntityItem) => string | undefined
+  groupClassName?: string
   selectedId: string
   /** Custom display label when selected item is not in items list (e.g. newly created) */
   selectedLabel?: string
@@ -56,6 +59,7 @@ type EntityDropdownProps = {
   renderOption?: (item: EntityItem) => ReactNode
   addNewClassName?: string
   noResultsClassName?: string
+  listClassName?: string
   autoFocus?: boolean
   /** Inset result and create-action hover surfaces by 4px with a 4px radius. */
   insetOptionHover?: boolean
@@ -68,6 +72,8 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   searchPlaceholder,
   items,
   getSearchText,
+  getGroup,
+  groupClassName,
   selectedId,
   selectedLabel,
   selectedIsPlaceholder,
@@ -89,6 +95,7 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   renderOption,
   addNewClassName,
   noResultsClassName,
+  listClassName,
   autoFocus,
   insetOptionHover = false,
   hideSearch = false,
@@ -142,6 +149,22 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
   const filtered = items.filter((item) =>
     (getSearchText?.(item) ?? item.name).toLowerCase().includes(normalizedSearch)
   )
+  const grouped = (() => {
+    if (!getGroup) return [{ key: "", items: filtered }]
+    const groups: { key: string; items: EntityItem[] }[] = []
+    const indexByKey = new Map<string, number>()
+    for (const item of filtered) {
+      const key = getGroup(item) ?? ""
+      const existing = indexByKey.get(key)
+      if (existing === undefined) {
+        indexByKey.set(key, groups.length)
+        groups.push({ key, items: [item] })
+        continue
+      }
+      groups[existing].items.push(item)
+    }
+    return groups
+  })()
 
   const selected = items.find((item) => item.id === selectedId)
   const selectedIndex = filtered.findIndex((item) => item.id === selectedId)
@@ -327,8 +350,22 @@ export const EntityDropdown = forwardRef<EntityDropdownHandle, EntityDropdownPro
                 />
               </div>
             )}
-            <div className={`max-h-[216px] overflow-y-auto ${insetOptionHover ? "p-[4px]" : "py-[4px]"}`}>
-              {filtered.map((item, index) => optionButton(item, index))}
+            <div className={`${listClassName ?? "max-h-[216px]"} overflow-y-auto ${insetOptionHover ? "p-[4px]" : "py-[4px]"}`}>
+              {grouped.map((group, groupIndex) => {
+                const startIndex = filtered.findIndex((item) => item.id === group.items[0]?.id)
+                return (
+                  <div key={group.key || "ungrouped"}>
+                    {group.key ? (
+                      <div className={`${insetOptionHover ? "px-[6px]" : "px-[10px]"} ${groupIndex > 0 ? "pt-[18px]" : "pt-[8px]"} pb-[6px]`}>
+                        <span className={`block ${groupClassName ?? "text-[12px] font-[400] leading-[16px] text-[#818DA0]"}`}>
+                          {group.key}
+                        </span>
+                      </div>
+                    ) : null}
+                    {group.items.map((item, offset) => optionButton(item, startIndex + offset))}
+                  </div>
+                )
+              })}
             </div>
 
             {filtered.length === 0 && search && (

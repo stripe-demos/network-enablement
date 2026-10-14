@@ -24,6 +24,9 @@ export function useCardCreateTypeScale() {
       ? "text-[14px] font-[500] leading-[20px] tracking-[-0.15px] text-[#273951]"
       : cn(tokens.sectionTitle, "font-[400]"),
     helper: matchCard ? tokens.helperClass : "text-[11px] leading-[16px] text-[#6C7688]",
+    groupLabel: matchCard
+      ? "text-[13px] font-[500] leading-[18px] text-[#596171]"
+      : "text-[11px] font-[600] leading-[16px] text-[#6C7688]",
     rowTitle: matchCard
       ? "text-[14px] font-[500] leading-[20px] tracking-[-0.08px]"
       : "text-[12px] font-[600] leading-[16px]",
@@ -43,8 +46,8 @@ export function useCardCreateTypeScale() {
     reviewPad: matchCard ? "min-h-[60px] px-[16px] py-[12px]" : "min-h-[58px] p-[12px]",
     reviewBody: matchCard ? "p-[16px]" : "p-[12px]",
     previewName: matchCard
-      ? "text-[16px] font-[600] leading-[24px] tracking-[-0.31px] text-[#1A2C44]"
-      : "text-[16px] font-[650] leading-[22px] tracking-[-0.18px] text-[#1A2C44]",
+      ? "text-[16px] font-[500] leading-[24px] tracking-[-0.31px] text-[#1A2C44]"
+      : "text-[16px] font-[500] leading-[22px] tracking-[-0.18px] text-[#1A2C44]",
     previewMeta: matchCard
       ? "text-[13px] font-[400] leading-[18px] tracking-[-0.08px]"
       : "text-[12px] leading-[17px]",
@@ -175,7 +178,7 @@ export function AccountAvatar({
   awaken?: boolean
 }) {
   const gradientId = `avatar-rim-${useId().replace(/:/g, "")}`
-  const typeClass = size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[14px] font-[650]" : "h-[40px] w-[40px] rounded-[6px] text-[12px] font-[650]"
+  const typeClass = size === 44 ? "h-[44px] w-[44px] rounded-[8px] text-[13px] font-[500]" : "h-[40px] w-[40px] rounded-[6px] text-[13px] font-[500]"
   const radius = size === 44 ? 8 : 6
 
   if (account.hasBrandIcon) {
@@ -237,14 +240,20 @@ export function AccountAvatar({
   )
 }
 
-export function NetworkAccountOption({ account }: { account: NetworkAccount }) {
+export function NetworkAccountOption({ account, compact }: { account: NetworkAccount; compact?: boolean }) {
+  const type = useCardCreateTypeScale()
+  const small = compact || !type.matchCard
   return (
     <span className="flex min-w-0 flex-1 items-center justify-between gap-[10px] py-[2px]">
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-[12px] font-[600] text-[#1A2C44]">{account.name}</span>
-        <span className="mt-[1px] truncate text-[11px] leading-[16px] text-[#6C7688]">{account.email}</span>
+        <span className={`truncate ${small ? "text-[12px] font-[500] leading-[16px] tracking-[-0.024px] text-[#353A44]" : "text-[14px] font-[500] leading-[18px] tracking-[-0.08px] text-[#1A2C44]"}`}>
+          {account.name}
+        </span>
+        <span className={`truncate ${small ? "mt-[1px] text-[11px] font-[400] leading-[16px] text-[#6C7688]" : "mt-[2px] text-[13px] font-[400] leading-[16px] tracking-[-0.08px] text-[#596171]"}`}>
+          {account.handle ? `@${account.handle}` : account.email}
+        </span>
       </span>
-      <CountryBadge country={account.country} size="sm" />
+      <CountryBadge country={account.country} size={small ? "sm" : "default"} />
     </span>
   )
 }
@@ -263,10 +272,11 @@ export function CountryBadge({
 }: {
   country: string
   size?: "default" | "sm" | "md" | "flow"
-  tone?: "default" | "deep"
+  tone?: "default" | "deep" | "plain"
 }) {
   const code = countryTagCode(country)
   if (!code) return null
+  if (tone === "plain") return <CountryTag code={code} size={size === "sm" ? "sm" : "default"} tone="plain" />
   const onPanel = tone === "deep" || size === "md" || size === "flow"
   return <CountryTag code={code} size={size === "sm" ? "sm" : "default"} tone={onPanel ? "deep" : "default"} />
 }
@@ -288,24 +298,25 @@ export function AccountSummaryCard({
 }) {
   const type = useCardCreateTypeScale()
   const isFlow = type.matchCard || size === "flow"
+  const avatarPx = isFlow ? 40 : 36
   return (
     <div data-account-summary-card className={`${revealActionOnHover ? "group " : ""}flex items-center gap-[10px] rounded-[8px] bg-[#F6F8FA] ${isFlow ? "p-[12px]" : "p-[10px]"}`}>
       {account.hasBrandIcon ? (
         <Image
           src="/unified-account-icon.png"
           alt=""
-          width={36}
-          height={36}
-          className="h-[36px] w-[36px] shrink-0 rounded-[7px]"
+          width={avatarPx}
+          height={avatarPx}
+          className={`shrink-0 ${isFlow ? "h-[40px] w-[40px] rounded-[8px]" : "h-[36px] w-[36px] rounded-[7px]"}`}
         />
       ) : (
-        <span className={`relative flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[7px] border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${isFlow ? "text-[13px] font-[500]" : "text-[12px] font-[650]"}`}>
+        <span className={`relative flex shrink-0 items-center justify-center border border-[#D8D0FF] bg-[#EEEAFE] leading-none text-[#2C219E] ${isFlow ? "h-[40px] w-[40px] rounded-[8px] text-[13px] font-[500]" : "h-[36px] w-[36px] rounded-[7px] text-[12px] font-[650]"}`}>
           <AvatarInitials initials={account.initials} />
         </span>
       )}
-      <div className={`flex min-w-0 flex-1 flex-col justify-center ${isFlow ? "leading-[20px]" : "leading-[16px]"}`}>
+      <div className={`flex min-w-0 flex-1 flex-col justify-center ${isFlow ? "leading-[18px]" : "leading-[16px]"}`}>
         <div className="flex items-center gap-[8px]">
-          <p className={`min-w-0 flex-1 truncate text-[#1A2C44] ${isFlow ? "text-[14px] font-[500] leading-[20px] tracking-[-0.08px]" : "text-[13px] font-[600] leading-[16px] tracking-[-0.08px]"}`}>
+          <p className={`min-w-0 flex-1 truncate text-[#1A2C44] ${isFlow ? "text-[14px] font-[500] leading-[18px] tracking-[-0.08px]" : "text-[13px] font-[600] leading-[16px] tracking-[-0.08px]"}`}>
             {account.name}
           </p>
           <span className="relative shrink-0">
@@ -326,8 +337,8 @@ export function AccountSummaryCard({
             ) : null}
           </span>
         </div>
-        <p className={isFlow ? "truncate text-[13px] font-[400] leading-[18px] tracking-[-0.08px] text-[#596171]" : "truncate text-[11px] font-[400] leading-[16px] text-[#6C7688]"}>
-          {subtitle ?? account.email}
+        <p className={`min-w-0 truncate text-[#596171] ${isFlow ? "text-[13px] font-[400] leading-[16px] tracking-[-0.08px]" : "text-[11px] font-[400] leading-[16px]"}`}>
+          {account.handle ? `@${account.handle}` : (subtitle ?? account.email)}
         </p>
       </div>
       {actionLabel && onAction && !revealActionOnHover ? (
@@ -381,15 +392,17 @@ export function DuplicateAccountNudge({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-[8px]">
             <p className={`min-w-0 flex-1 truncate text-[#1A2C44] ${compact ? "text-[12px] font-[600] leading-[16px] tracking-[-0.024px]" : "text-[14px] font-[600] leading-[20px]"}`}>{account.name}</p>
-            <CountryBadge country={account.country} size={compact ? "sm" : "default"} tone="deep" />
+            <CountryBadge country={account.country} size={compact ? "sm" : "default"} tone="plain" />
           </div>
-          <p className={`truncate text-[#6C7688] ${compact ? "text-[12px] font-[400] leading-[16px]" : "text-[12px] font-[400] leading-[16px]"}`}>{account.displayId ?? account.id}</p>
+          <p className={`mt-[2px] min-w-0 truncate text-[#6C7688] ${compact ? "text-[12px] font-[400] leading-[16px]" : "text-[12px] font-[400] leading-[16px]"}`}>
+            {account.handle ? `@${account.handle}` : account.email}
+          </p>
         </div>
       </div>
       <p className={`mt-[16px] text-[#1A2C44] ${compact ? "text-[12px] font-[400] leading-[16px] tracking-[-0.024px]" : "text-[13px] font-[400] leading-[18px] tracking-[-0.08px]"}`}>
         {description}
       </p>
-      <div className="mt-[12px] flex justify-end gap-[8px]">
+      <div className="mt-[16px] flex justify-end gap-[8px]">
         <button
           type="button"
           className={dense

@@ -25,19 +25,19 @@ const SELECTION_OPTIONS: ReadonlyArray<{
   description: string
 }> = [
   {
-    value: "current",
-    label: "Current",
-    description: "Skip the account field and start a new account form.",
+    value: "profile-discovery",
+    label: "Profile discovery",
+    description: "Start with a search field to find an existing account or create a new one.",
   },
   {
-    value: "refined",
-    label: "Refined",
+    value: "current",
+    label: "Current",
     description: "Start with email. A match appears if one exists; otherwise the rest of the form reveals.",
   },
   {
     value: "repeat",
     label: "Repeat",
-    description: "Same as Refined, with account type, country, and configurations already filled.",
+    description: "Same as Current, with account type, country, and configurations already filled.",
   },
 ]
 

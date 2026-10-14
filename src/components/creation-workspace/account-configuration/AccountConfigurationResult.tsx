@@ -7,7 +7,7 @@ import { UxRationaleToast } from "@/components/creation-workspace/UxRationaleToa
 import { getFormTokens } from "@/components/creation-workspace/forms/shared/formTokens"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"
 
-import { ACCOUNT_ONBOARDING_LINK, CONFIGURATION_OPTIONS, PAYOUT_METHODS, getDraftName, type AccountConfigurationPayload, type PayoutMethod } from "./model"
+import { ACCOUNT_ONBOARDING_LINK, CONFIGURATION_OPTIONS, PAYOUT_METHODS, getDraftName, type AccountConfigurationPayload, type ConfigurationKind, type PayoutMethod } from "./model"
 
 export async function copyAccountOnboardingLink(link: string) {
   try {
@@ -248,13 +248,8 @@ function ShareLinkButton({ onCopy }: { onCopy: () => Promise<void> }) {
   )
 }
 
-function payloadAccountName(payload: AccountConfigurationPayload) {
-  if ("name" in payload.account && payload.account.name) return payload.account.name
-  return getDraftName(payload.details) || "this account"
-}
-
-function addedConfigurationLabels(payload: AccountConfigurationPayload) {
-  return payload.configurations.map((id) => CONFIGURATION_OPTIONS.find((option) => option.id === id)?.title ?? id)
+function configurationLabels(ids: ConfigurationKind[] | undefined) {
+  return (ids ?? []).map((id) => CONFIGURATION_OPTIONS.find((option) => option.id === id)?.title ?? id)
 }
 
 function joinLabels(labels: string[]) {
@@ -263,12 +258,27 @@ function joinLabels(labels: string[]) {
   return `${labels.slice(0, -1).join(", ")}, and ${labels[labels.length - 1]}`
 }
 
+function configurationChangePhrase(labels: string[], verb: "added" | "removed") {
+  if (labels.length === 0) return ""
+  if (labels.length === 1) return `${labels[0]} configuration ${verb}`
+  return `${joinLabels(labels)} configurations ${verb}`
+}
+
+function payloadAccountName(payload: AccountConfigurationPayload) {
+  if ("name" in payload.account && payload.account.name.trim()) return payload.account.name.trim()
+  return getDraftName(payload.details) || "this account"
+}
+
 function addedConfigurationCopy(payload: AccountConfigurationPayload) {
-  const labels = addedConfigurationLabels(payload)
   const name = payloadAccountName(payload)
-  if (labels.length === 0) return "The selected account has been updated."
-  if (labels.length === 1) return `The ${labels[0]} configuration has been added to ${name}.`
-  return `The ${joinLabels(labels)} configurations have been added to ${name}.`
+  const added = configurationLabels(payload.configurations)
+  const removed = configurationLabels(payload.deactivatedConfigurations)
+  const addedPhrase = configurationChangePhrase(added, "added")
+  const removedPhrase = configurationChangePhrase(removed, "removed")
+  if (addedPhrase && removedPhrase) return `${addedPhrase} to ${name} and ${removedPhrase} from ${name}.`
+  if (addedPhrase) return `${addedPhrase} to ${name}.`
+  if (removedPhrase) return `${removedPhrase} from ${name}.`
+  return "The selected account has been updated."
 }
 
 function payoutContact(payload: AccountConfigurationPayload) {

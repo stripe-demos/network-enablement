@@ -30,12 +30,12 @@ export function CreateCustomerModal({
       <CreationModalShell
         isOpen={isOpen}
         onClose={onClose}
-        title="Create a customer account"
-        primaryLabel="Create account"
+        title="Add a customer account"
+        primaryLabel="Add customer"
         primaryDisabled={!isComposeAccountReady(data)}
         onPrimary={onClose}
       >
-        <ProductFormStyleProvider initial="current">
+        <ProductFormStyleProvider initial="current" ignorePersisted>
           <div className="overflow-y-auto px-[20px] py-[16px]">
             <CustomerForm
               layout="single-config"

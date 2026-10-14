@@ -23,6 +23,7 @@ import {
   getPayoutEmail,
   getRecommendedConfigurations,
   isNewAccountIdentityValid,
+  platformConfigurations,
   type AccountConfigurationPayload,
   type AccountDetailsDraft,
   type AccountSource,
@@ -62,6 +63,7 @@ export function AccountConfigurationCreationEditor({
   const [selectedAccount, setSelectedAccount] = useState<NetworkAccount | null>(null)
   const [details, setDetails] = useState<AccountDetailsDraft>(INITIAL_ACCOUNT_DETAILS)
   const [configurations, setConfigurations] = useState<ConfigurationKind[]>([])
+  const [keptExisting, setKeptExisting] = useState<ConfigurationKind[]>([])
   const [completedPayload, setCompletedPayload] = useState<AccountConfigurationPayload | null>(null)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
@@ -70,21 +72,31 @@ export function AccountConfigurationCreationEditor({
   }
 
   useEffect(() => {
-    setSource("new")
     setSelectedAccount(null)
+    setKeptExisting([])
     if (accountSelectionStyle === "repeat") {
+      setSource("new")
       setDetails(REPEAT_ACCOUNT_DETAILS)
       setConfigurations(getRecommendedConfigurations(userPath))
       return
     }
+    if (accountSelectionStyle === "profile-discovery") {
+      setSource("existing")
+      setDetails(INITIAL_ACCOUNT_DETAILS)
+      setConfigurations([])
+      return
+    }
+    setSource("new")
     setDetails(INITIAL_ACCOUNT_DETAILS)
     setConfigurations([])
   }, [accountSelectionStyle, userPath])
 
   const selectExistingAccount = (account: NetworkAccount) => {
+    const existingOnPlatform = platformConfigurations(account)
     setSource("existing")
     setSelectedAccount(account)
-    setConfigurations((current) => current.filter((configuration) => !account.configurations.includes(configuration)))
+    setKeptExisting(existingOnPlatform)
+    setConfigurations((current) => current.filter((configuration) => !existingOnPlatform.includes(configuration)))
     const country = countryName(account.country)
     setDetails((current) => ({
       ...current,
@@ -97,7 +109,9 @@ export function AccountConfigurationCreationEditor({
   const chooseExisting = () => {
     setSource("existing")
     if (selectedAccount) {
-      setConfigurations((current) => current.filter((configuration) => !selectedAccount.configurations.includes(configuration)))
+      const existingOnPlatform = platformConfigurations(selectedAccount)
+      setKeptExisting(existingOnPlatform)
+      setConfigurations((current) => current.filter((configuration) => !existingOnPlatform.includes(configuration)))
     }
   }
 
@@ -107,6 +121,7 @@ export function AccountConfigurationCreationEditor({
 
   const chooseNew = () => {
     setSource("new")
+    setKeptExisting([])
     setDetails(accountSelectionStyle === "repeat" ? REPEAT_ACCOUNT_DETAILS : INITIAL_ACCOUNT_DETAILS)
     setConfigurations(accountSelectionStyle === "repeat" ? getRecommendedConfigurations(userPath) : [])
   }
@@ -114,6 +129,7 @@ export function AccountConfigurationCreationEditor({
   const clearSelectedAccount = () => {
     setSource("new")
     setSelectedAccount(null)
+    setKeptExisting([])
     setDetails(accountSelectionStyle === "repeat" ? REPEAT_ACCOUNT_DETAILS : INITIAL_ACCOUNT_DETAILS)
     setConfigurations(accountSelectionStyle === "repeat" ? getRecommendedConfigurations(userPath) : [])
   }
@@ -123,7 +139,9 @@ export function AccountConfigurationCreationEditor({
     || accountOnboardingStyle !== "pre-save"
     || details.onboardingAction === "copy-link"
     || EMAIL_PATTERN.test(getOnboardingEmail(details))
-  const hasConfigurationChanges = configurations.length > 0
+  const originalExisting = selectedAccount ? platformConfigurations(selectedAccount) : []
+  const hasRemovedExisting = originalExisting.some((configuration) => !keptExisting.includes(configuration))
+  const hasConfigurationChanges = configurations.length > 0 || hasRemovedExisting
   const configurationsReady = source === "new" ? configurations.length > 0 : hasConfigurationChanges
   const readyToSubmit = accountReady && configurationsReady && onboardingEmailReady
   const submitDisabledReason = (() => {
@@ -156,6 +174,9 @@ export function AccountConfigurationCreationEditor({
       userPath,
       account: source === "existing" ? selectedAccount! : details,
       configurations,
+      deactivatedConfigurations: source === "existing"
+        ? originalExisting.filter((configuration) => !keptExisting.includes(configuration))
+        : undefined,
       details,
       capabilities,
       recipient: configurations.includes("recipient") ? {
@@ -224,9 +245,13 @@ export function AccountConfigurationCreationEditor({
     )
   }
 
-  const noPicker = accountSelectionStyle === "current" || accountSelectionStyle === "refined" || accountSelectionStyle === "repeat"
-  const creatingWithoutPicker = noPicker && source === "new"
-  const parentTitle = creatingWithoutPicker ? "Create account" : "Add configurations"
+  const noPicker = accountSelectionStyle === "current" || accountSelectionStyle === "repeat"
+  const isProfileDiscovery = accountSelectionStyle === "profile-discovery"
+  const parentTitle = isProfileDiscovery
+    ? (source === "existing" && selectedAccount?.inNetwork ? "Manage configurations" : "Add account")
+    : noPicker && source === "new"
+      ? "Add account"
+      : "Manage configurations"
   const submitLabel = "Save"
   const overlay = showDiscardConfirm ? (
     <DiscardConfirmOverlay
@@ -244,7 +269,8 @@ export function AccountConfigurationCreationEditor({
       selectedAccountId={selectedAccount?.id ?? ""}
       details={details}
       configurations={configurations}
-      existingConfigurations={source === "existing" ? selectedAccount?.configurations ?? [] : []}
+      existingConfigurations={source === "existing" ? keptExisting : []}
+      accountConfigurations={source === "existing" && selectedAccount ? platformConfigurations(selectedAccount) : []}
       userPath={userPath}
       onChooseExisting={chooseExisting}
       onPrepareNew={prepareNew}
@@ -253,15 +279,24 @@ export function AccountConfigurationCreationEditor({
       onSelectExisting={selectExistingAccount}
       onDetailsChange={updateDetails}
       onConfigurationsChange={setConfigurations}
+      onExistingChange={setKeptExisting}
     />
   )
   const preview = (
     <div className="relative flex h-full min-h-0 w-full overflow-hidden">
-      <AccountConfigurationPreview source={source} selectedAccount={selectedAccount} configurations={configurations} details={details} userPath={userPath} />
+      <AccountConfigurationPreview
+        source={source}
+        selectedAccount={selectedAccount && source === "existing"
+          ? { ...selectedAccount, configurations: keptExisting }
+          : selectedAccount}
+        configurations={configurations}
+        details={details}
+        userPath={userPath}
+      />
     </div>
   )
 
-  if (accountSelectionStyle === "refined" || accountSelectionStyle === "repeat") {
+  if (accountSelectionStyle === "current" || accountSelectionStyle === "repeat" || isProfileDiscovery) {
     return (
       <ProductFormStyleProvider initial="sail" ignorePersisted>
         <CardCreateShell

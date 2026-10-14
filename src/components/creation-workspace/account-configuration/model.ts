@@ -31,6 +31,10 @@ export type NetworkAccount = {
   hasBrandIcon?: boolean
   /** Stripe-looking id shown in the UI; `id` stays the stable prototype key. */
   displayId?: string
+  /** Public handle shown as an @ badge, without the @. */
+  handle?: string
+  /** Already connected to this platform. Stripe-network-only accounts share identity, not configs. */
+  inNetwork?: boolean
   /** Person name used when this account appears in the Direct user path. */
   directName?: string
   /** Configurations shown in the Direct user path. Merchant is never shown there. */
@@ -221,16 +225,25 @@ function initialsFromName(name: string) {
 }
 
 export const NETWORK_ACCOUNTS: NetworkAccount[] = [
-  { id: "acct_nathan", name: "Nathan Richardson", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "US", initials: "NR" },
-  { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "ahart@harbourwell.example", configurations: ["merchant", "customer"], country: "UK", initials: "HF" },
-  { id: "acct_juniper", name: "Juniper Yoga Collective", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true, displayId: "acct_1N7xKp2eZvKYlo2C" },
-  { id: "acct_tandem", name: "Tandem Fitness Network", directName: "Jordan Hale", email: "finance@tandemfitness.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "TF", hasBrandIcon: true },
-  { id: "acct_cedar", name: "Cedar Therapy Group", directName: "Elena Voss", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "CG" },
-  { id: "acct_lucent", name: "Lucent Recovery Studio", directName: "Marcus Reed", email: "payments@lucentrecovery.example", configurations: ["merchant", "customer"], country: "US", initials: "LS" },
-  { id: "acct_aspen", name: "Aspen Therapy Center", directName: "Sofia Alvarez", email: "info@aspentherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "AT", hasBrandIcon: true },
-  { id: "acct_priya", name: "Priya Shah", email: "priya.shah@example.com", configurations: ["customer"], country: "US", initials: "PS" },
-  { id: "acct_cameron", name: "Cameron Ellis", email: "cameron.ellis@example.com", configurations: ["customer"], additionalRoles: ["Money manager"], country: "US", initials: "CE" },
+  { id: "acct_nathan", name: "Nathan Richardson", email: "nrichards@example.com", configurations: ["merchant", "customer"], country: "US", initials: "NR", inNetwork: true },
+  { id: "acct_harbourwell", name: "Harbourwell Fitness", directName: "Amelia Hart", email: "ahart@harbourwell.example", configurations: ["merchant", "customer"], country: "UK", initials: "HF", handle: "harbourwell" },
+  { id: "acct_juniper", name: "Juniper Yoga Collective", email: "accounts@juniperyoga.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "JY", hasBrandIcon: true, displayId: "acct_1N7xKp2eZvKYlo2C", handle: "juniperyoga", inNetwork: true },
+  { id: "acct_tandem", name: "Tandem Fitness Network", directName: "Jordan Hale", email: "finance@tandemfitness.example", configurations: ["merchant"], directConfigurations: ["recipient"], country: "UK", initials: "TF", hasBrandIcon: true, handle: "tandemfitness", inNetwork: true },
+  { id: "acct_cedar", name: "Cedar Therapy Group", directName: "Elena Voss", email: "info@cedartherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "CG", inNetwork: true },
+  { id: "acct_lucent", name: "Lucent Recovery Studio", directName: "Marcus Reed", email: "payments@lucentrecovery.example", configurations: ["merchant", "customer"], country: "US", initials: "LS", handle: "lucentrecovery" },
+  { id: "acct_aspen", name: "Aspen Therapy Center", directName: "Sofia Alvarez", email: "info@aspentherapy.example", configurations: ["merchant", "customer"], directConfigurations: ["recipient"], country: "US", initials: "AT", hasBrandIcon: true, handle: "aspentherapy" },
+  { id: "acct_priya", name: "Priya Shah", email: "priya.shah@example.com", configurations: ["customer"], country: "US", initials: "PS", handle: "priyashah" },
+  { id: "acct_cameron", name: "Cameron Ellis", email: "cameron.ellis@example.com", configurations: ["customer"], additionalRoles: ["Money manager"], country: "US", initials: "CE", inNetwork: true },
 ]
+
+/** Configs already on this platform. Stripe-network profiles share identity only. */
+export function platformConfigurations(account: NetworkAccount): ConfigurationKind[] {
+  return account.inNetwork ? [...account.configurations] : []
+}
+
+export function networkMembershipLabel(account: NetworkAccount) {
+  return account.inNetwork ? "Your Network" : "Stripe's Network"
+}
 
 export function networkAccountFromCreated(account: {
   id: string
