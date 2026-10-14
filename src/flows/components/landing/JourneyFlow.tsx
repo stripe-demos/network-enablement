@@ -1,5 +1,5 @@
 import { EntryLink } from "@/components/landing/EntryLink"
-import type { DemoKey, Flow } from "@/components/landing/entryPoints"
+import { openFlowTarget, type DemoKey, type Flow } from "@/components/landing/entryPoints"
 
 // The page's chip style, so steps read like the rest of the landing page.
 const STEP_CLASS =
@@ -53,7 +53,7 @@ function FlowRow({ flow, parent, onOpenDemo }: { flow: Flow; parent?: string; on
         </span>
       ) : (
         <EntryLink
-          target={steps[0].target}
+          target={openFlowTarget(flow)}
           onOpenDemo={onOpenDemo}
           label={`Open the ${flowName.toLowerCase()} flow`}
           className="group inline-flex shrink-0 cursor-pointer items-center gap-[4px] text-[15px] font-[500] text-[#533AFD] hover:text-[#2C219E]"

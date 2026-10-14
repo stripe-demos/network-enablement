@@ -1,16 +1,19 @@
 // The one mounted Stripe network onboarding dialog. Open it with
 // openNetworkOnboarding() (Enablement's checklist, the prototype control panel)
 // or a `?network-onboarding=<step>` link (the Network enablement landing page,
-// which can also set `?network-accounts=none|existing`).
+// which can also set `?network-accounts=none|existing`, and adds
+// `?prototype-reset=1` to its Open flow links to start the demo fresh).
 // Finishing the dialog saves the result for Enablement, Network and the sidebar.
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import NetworkOnboarding from './NetworkOnboarding'
-import { saveNetworkOnboarding, setPlatformAccounts } from './networkInvites'
+import { resetNetworkPrototypeControls } from '../../prototype/networkPrototypeControls'
+import { resetNetworkOnboarding, saveNetworkOnboarding, setPlatformAccounts } from './networkInvites'
 import { CLOSE_NETWORK_ONBOARDING_EVENT, OPEN_NETWORK_ONBOARDING_EVENT, openNetworkOnboarding } from './openNetworkOnboarding'
 
 const LINK_PARAM = 'network-onboarding'
 const ACCOUNTS_PARAM = 'network-accounts'
+const RESET_PARAM = 'prototype-reset'
 const LINK_STEPS = new Set(['welcome', 'opt-in', 'find-accounts'])
 
 const CLOSED = { open: false, session: 0, initialStep: undefined, keepFocus: false, jump: { step: undefined, nonce: 0, keepFocus: false } }
@@ -41,16 +44,24 @@ export default function NetworkOnboardingHost() {
   const [searchParams, setSearchParams] = useSearchParams()
   const linkedStep = searchParams.get(LINK_PARAM)
   const linkedAccounts = searchParams.get(ACCOUNTS_PARAM)
+  const linkedReset = searchParams.has(RESET_PARAM)
   useEffect(() => {
-    if (linkedStep === null && linkedAccounts === null) return
+    if (linkedStep === null && linkedAccounts === null && !linkedReset) return
+    // Same as the panel's "Reset network demo", before the link's own settings.
+    if (linkedReset) {
+      setRequest(prev => ({ ...prev, open: false }))
+      resetNetworkOnboarding()
+      resetNetworkPrototypeControls()
+    }
     if (linkedAccounts !== null) setPlatformAccounts(linkedAccounts)
     if (linkedStep !== null) openNetworkOnboarding({ initialStep: LINK_STEPS.has(linkedStep) ? linkedStep : undefined })
     setSearchParams(params => {
       params.delete(LINK_PARAM)
       params.delete(ACCOUNTS_PARAM)
+      params.delete(RESET_PARAM)
       return params
     }, { replace: true })
-  }, [linkedStep, linkedAccounts, setSearchParams])
+  }, [linkedStep, linkedAccounts, linkedReset, setSearchParams])
 
   const close = useCallback(() => setRequest(prev => ({ ...prev, open: false })), [])
   const complete = useCallback(({ optedIn, selectedAccountIds }) => {

@@ -38,6 +38,14 @@ function withAccounts(steps: Step[], accounts: "none" | "existing"): Step[] {
 }
 
 // A flow either has steps, or groups sub-flows (shown indented under it).
+/** Where a flow's Open flow link goes: its first step, with the Dashboard demo reset. */
+export function openFlowTarget(flow: { steps: Step[] }): EntryTarget {
+  const { target } = flow.steps[0]
+  if (target.kind !== "href") return target
+  const separator = target.href.includes("?") ? "&" : "?"
+  return { kind: "href", href: `${target.href}${separator}prototype-reset=1` }
+}
+
 export type Flow = { title: string; steps: Step[]; comingSoon?: boolean; children?: Flow[] }
 
 export type Journey = { title: string; flows: Flow[] }
