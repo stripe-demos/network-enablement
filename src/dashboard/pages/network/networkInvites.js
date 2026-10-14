@@ -78,6 +78,23 @@ export function hasUnseenInvites(record) {
 /** Number of invites added since the Network page was last visited. */
 export const unseenInviteCount = record => (hasUnseenInvites(record) ? invitedAccountIds(record).length : 0)
 
+// Whether the platform already has connected accounts before it joins the
+// network: 'existing' shows the sample accounts in app/network/data.ts on the
+// Network list, 'none' (the default) doesn't. Set from a `?network-accounts=`
+// link (the landing page's journeys); per tab, like the onboarding record.
+const ACCOUNTS_KEY = 'network-platform-accounts'
+
+export const getPlatformAccounts = () => (storage.getItem(ACCOUNTS_KEY) === 'existing' ? 'existing' : 'none')
+
+export function setPlatformAccounts(value) {
+  storage.setItem(ACCOUNTS_KEY, value === 'existing' ? 'existing' : 'none')
+  window.dispatchEvent(new Event(NETWORK_ONBOARDING_EVENT))
+}
+
+export function usePlatformAccounts() {
+  return useSyncExternalStore(subscribe, getPlatformAccounts, () => 'none')
+}
+
 function subscribe(onChange) {
   window.addEventListener(NETWORK_ONBOARDING_EVENT, onChange)
   return () => window.removeEventListener(NETWORK_ONBOARDING_EVENT, onChange)

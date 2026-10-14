@@ -192,7 +192,7 @@ function StandardDocs() {
               <h2 className={TYPE.sectionTitle}>{journey.title}</h2>
               <div className="mt-8 w-full divide-y divide-[#E3E8EE] rounded-[14px] border border-[#E3E8EE] bg-white">
                 {journey.flows.map((flow) => (
-                  <JourneyFlow key={flow.title} title={flow.title} steps={flow.steps} onOpenDemo={openDemo} />
+                  <JourneyFlow key={flow.title} flow={flow} onOpenDemo={openDemo} />
                 ))}
               </div>
             </section>

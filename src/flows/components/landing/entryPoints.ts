@@ -27,21 +27,49 @@ const STEPS = {
   sendMoney: { title: "Send money", target: { kind: "demo", demo: "send" } },
 } satisfies Record<string, Step>
 
-export type Journey = { title: string; flows: { title: string; steps: Step[] }[] }
+// Dashboard steps say whether the platform already has connected accounts, so
+// the Network list shows the right state (see the Dashboard's networkInvites.js).
+function withAccounts(steps: Step[], accounts: "none" | "existing"): Step[] {
+  return steps.map((step) => {
+    if (step.target.kind !== "href") return step
+    const separator = step.target.href.includes("?") ? "&" : "?"
+    return { ...step, target: { kind: "href", href: `${step.target.href}${separator}network-accounts=${accounts}` } }
+  })
+}
+
+// A flow either has steps, or groups sub-flows (shown indented under it).
+export type Flow = { title: string; steps: Step[]; comingSoon?: boolean; children?: Flow[] }
+
+export type Journey = { title: string; flows: Flow[] }
 
 export const JOURNEYS: Journey[] = [
   {
     title: "Platform journey",
     flows: [
-      { title: "New platform", steps: [STEPS.enablement, STEPS.joinNetwork, STEPS.findAccounts, STEPS.networkList] },
-      { title: "Existing platform", steps: [STEPS.networkList, STEPS.joinNetwork, STEPS.findAccounts] },
+      { title: "New platform", steps: withAccounts([STEPS.enablement, STEPS.joinNetwork, STEPS.findAccounts, STEPS.networkList], "none") },
+      {
+        title: "Existing platform",
+        steps: [],
+        children: [
+          { title: "No accounts", steps: withAccounts([STEPS.networkList, STEPS.joinNetwork, STEPS.findAccounts], "none") },
+          {
+            title: "Has accounts",
+            steps: withAccounts([STEPS.networkList, STEPS.joinNetwork, STEPS.findAccounts], "existing"),
+            comingSoon: true,
+          },
+        ],
+      },
     ],
   },
   {
     title: "Connected account journey",
     flows: [
-      { title: "New connected account", steps: [STEPS.createAccount, STEPS.invoice, STEPS.sendMoney] },
-      { title: "Existing connected account", steps: [STEPS.networkList, STEPS.singleConfig, STEPS.subscription] },
+      { title: "New connected account", steps: [STEPS.createAccount, STEPS.invoice, STEPS.sendMoney], comingSoon: true },
+      {
+        title: "Existing connected account",
+        steps: [...withAccounts([STEPS.networkList], "existing"), STEPS.singleConfig, STEPS.subscription],
+        comingSoon: true,
+      },
     ],
   },
 ]

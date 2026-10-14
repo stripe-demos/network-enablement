@@ -2,9 +2,9 @@ import type { PageConfig, TabConfig, FilterDef, ViewChipConfig } from '@dashboar
 import { S } from '@dashboard/lib/listview/statusStyles';
 
 // Rows come from the caller (NetworkTab builds them from the Stripe network
-// onboarding result, and only shows this list once the user has opted in), so
-// it's empty when they joined without inviting anyone. The static sample
-// accounts in ./data.ts are kept for reuse but aren't shown.
+// onboarding result, plus the sample accounts in ./data.ts for a platform with
+// existing accounts), so it's empty when a platform with no accounts joined
+// without inviting anyone.
 
 const STATUSES = ['Invited', 'Enabled', 'Rejected', 'Restricted soon', 'In review', 'Restricted'];
 
