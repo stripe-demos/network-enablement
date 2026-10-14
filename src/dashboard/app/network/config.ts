@@ -2,8 +2,9 @@ import type { PageConfig, TabConfig, FilterDef, ViewChipConfig } from '@dashboar
 import { S } from '@dashboard/lib/listview/statusStyles';
 
 // Rows come from the caller (NetworkTab builds them from the Stripe network
-// onboarding result), so the list starts empty. The static sample accounts in
-// ./data.ts are kept for reuse but aren't shown.
+// onboarding result, and only shows this list once the user has opted in), so
+// it's empty when they joined without inviting anyone. The static sample
+// accounts in ./data.ts are kept for reuse but aren't shown.
 
 const STATUSES = ['Invited', 'Enabled', 'Rejected', 'Restricted soon', 'In review', 'Restricted'];
 
@@ -155,11 +156,13 @@ function viewChips(tabId: string, rows: Record<string, unknown>[]): ViewChipConf
   ];
 }
 
-/** Shown on every tab while the network has no accounts at all. */
+/**
+ * Shown on every tab when the user joined the network but invited no one. No
+ * action: emptyState actions only navigate to a route.
+ */
 const NETWORK_EMPTY_STATE: TabConfig['emptyState'] = {
-  title: 'No accounts in your network yet',
-  description: 'Find businesses already on the Stripe network in Connect › Enablement, then invite them to your platform.',
-  action: { label: 'Go to Enablement', href: '/connect/enablement' },
+  title: 'You’re on the Stripe network',
+  description: 'Businesses you invite to connect to your platform will show up here.',
 };
 
 function networkTab(tabId: string, label: string, data: Record<string, unknown>[], networkEmpty: boolean): TabConfig {

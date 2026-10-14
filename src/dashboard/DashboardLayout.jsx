@@ -10,6 +10,8 @@ import { useSidebarPrototypeControls } from './prototype/useSidebarPrototypeCont
 import { useSearchPrototypeControls } from './prototype/useSearchPrototypeControls'
 import { useCollapsedPrototypeControls } from './prototype/useCollapsedPrototypeControls'
 import { readPrototypeSidebarCollapsed, writePrototypeSidebarCollapsed } from './prototype/prototypeSidebarState'
+import DashboardPrototypePanel from './prototype/DashboardPrototypePanel'
+import NetworkOnboardingHost from './pages/network/NetworkOnboardingHost'
 import { cappedGutter, isListViewPath } from './constants/layout'
 import './dashboard.css'
 
@@ -189,6 +191,9 @@ export default function DashboardLayout() {
             <IconButton variant="dark" label="Webhooks" icon={<WebhookIcon />} />
             <IconButton variant="dark" label="Open Workbench" icon={<ChevronUpCircleIcon size={18} />} style={{ marginLeft: 20 }} />
           </div>
+          {/* Portaled to <body> above the onboarding dialog. */}
+          <DashboardPrototypePanel />
+          <NetworkOnboardingHost />
         </div>
       </div>
       </ToastProvider>

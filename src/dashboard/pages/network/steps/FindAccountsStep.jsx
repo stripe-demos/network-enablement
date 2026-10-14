@@ -1,9 +1,9 @@
 // Network onboarding step 3: pick a few businesses already on Stripe to invite.
-// One job, top to bottom: a note that every business is verified, a short list
-// recommended from the platform's business description (with the "why" for
-// each), a quiet count toward the 4 accounts it takes to go live, then search
+// One job, top to bottom: a short list recommended from the platform's
+// business description (with the "why" for each), a quiet count toward the 4 accounts it takes to go live, then search
 // with inline filter chips for everything else. Each row shows the business
-// profile identity (name, @handle and verified badge, as in BusinessProfileCard).
+// profile identity (name, @handle and verified badge, as in BusinessProfileCard);
+// hovering or focusing the handle explains that the business is verified.
 // Selection lives in state.selectedAccountIds; invites go out when the user
 // clicks "Done" in the shell's footer.
 import { useId, useMemo, useState } from 'react'
@@ -14,6 +14,7 @@ import {
   ChoiceRow,
   FilterSelect,
   FilterToggle,
+  GoalRing,
   RecommendedGroup,
   SearchInput,
   SectionLabel,
@@ -21,6 +22,7 @@ import {
   TextButton,
 } from '../networkControls'
 import { ink, text } from '../networkTokens'
+import { VerifiedHandleTooltip } from '../NetworkTooltip'
 
 const ASSETS = '/dashboard-assets/network'
 const GO_LIVE_ACCOUNTS = 4
@@ -84,12 +86,15 @@ function VerifiedShield({ label }) {
 
 /** Gray @handle pill with the verified badge (Figma "Business Profiles in FOX"). */
 function HandlePill({ handle, verified }) {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 6px', borderRadius: 9999, background: '#F5F6F8' }}>
+  const style = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 6px', borderRadius: 9999, background: '#F5F6F8' }
+  const contents = (
+    <>
       <span style={{ fontSize: 12, fontWeight: 400, lineHeight: '16px', letterSpacing: 0, color: '#353A44', whiteSpace: 'nowrap' }}>{`@${handle}`}</span>
       {verified && <VerifiedShield label="Verified" />}
-    </span>
+    </>
   )
+  // Verified pills explain the badge on hover and focus.
+  return verified ? <VerifiedHandleTooltip style={style}>{contents}</VerifiedHandleTooltip> : <span style={style}>{contents}</span>
 }
 
 /** Name with the profile handle pill beside it, on the same line. */
@@ -99,19 +104,6 @@ function ProfileIdentity({ candidate }) {
       <span>{candidate.name}</span>
       <HandlePill handle={candidate.handle} verified={candidate.verified !== false} />
     </span>
-  )
-}
-
-/** One-line note under the heading: everyone here is verified and onboards fast. */
-function VerifiedNote() {
-  return (
-    <p style={{ ...text.body, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0, padding: '8px 12px', background: ink.areaFill, borderRadius: 8 }}>
-      <span style={{ display: 'flex', paddingTop: 4 }}><VerifiedShield /></span>
-      <span>
-        <span style={{ fontWeight: 500, color: ink.primary }}>All businesses here are verified on Stripe.</span>
-        {' '}They can onboard instantly once they accept your invitation.
-      </span>
-    </p>
   )
 }
 
@@ -146,18 +138,14 @@ function BasedOnLabel() {
   )
 }
 
-/** Quiet count toward go-live, with four small marks. */
+/** Quiet count toward go-live, with a Sail progress ring. */
 function GoalProgress({ count }) {
   const message = count >= GO_LIVE_ACCOUNTS
     ? `${count} selected · We’ll send invites when you click Done`
     : `${count} of ${GO_LIVE_ACCOUNTS} selected · Going live takes ${GO_LIVE_ACCOUNTS} connected accounts`
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px' }}>
-      <span aria-hidden="true" style={{ display: 'flex', gap: 2 }}>
-        {Array.from({ length: GO_LIVE_ACCOUNTS }, (_, i) => (
-          <span key={i} style={{ width: 12, height: 4, borderRadius: 2, background: i < count ? ink.strong : ink.divider }} />
-        ))}
-      </span>
+      <GoalRing count={count} goal={GO_LIVE_ACCOUNTS} />
       <p aria-live="polite" style={{ ...text.body, margin: 0 }}>{message}</p>
     </div>
   )
@@ -215,7 +203,6 @@ export default function FindAccountsStep({ state, setState }) {
         <StepHeading title="Find your first connected accounts.">
           Invite businesses already on Stripe to connect to your platform.
         </StepHeading>
-        <VerifiedNote />
       </div>
 
       <RecommendedGroup label={<BasedOnLabel />}>

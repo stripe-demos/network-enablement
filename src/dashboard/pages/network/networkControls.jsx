@@ -323,3 +323,29 @@ export function TextButton({ children, onClick }) {
     </button>
   )
 }
+
+// Sail ProgressIndicator / ProgressRing Medium (Sail Figma 19946:1648 and
+// 19946:1668): a dashed outline when empty, then fixed 20–80% rings.
+const PROGRESS_RINGS = [
+  [0.2, 'progress-20.svg'],
+  [0.4, 'progress-40.svg'],
+  [0.6, 'progress-60.svg'],
+  [0.8, 'progress-80.svg'],
+]
+
+/** 20px circular progress toward a goal; a brand check once it's reached. */
+export function GoalRing({ count, goal }) {
+  const fraction = Math.min(1, Math.max(0, count / goal))
+  if (fraction >= 1) {
+    return (
+      <span aria-hidden="true" style={{ display: 'inline-flex', width: 20, height: 20, flexShrink: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 9999, background: ink.brand }}>
+        <img src={`${ASSETS}/checkbox-checked.svg`} alt="" width="16" height="16" style={{ display: 'block' }} />
+      </span>
+    )
+  }
+  // Nearest ring, rounding ties up (2 of 4 shows 60%).
+  const src = fraction === 0
+    ? 'progress-empty.svg'
+    : PROGRESS_RINGS.reduce((best, ring) => (Math.abs(ring[0] - fraction) <= Math.abs(best[0] - fraction) ? ring : best))[1]
+  return <img src={`${ASSETS}/${src}`} alt="" aria-hidden="true" width="20" height="20" style={{ display: 'block', flexShrink: 0 }} />
+}

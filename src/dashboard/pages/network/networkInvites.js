@@ -51,6 +51,12 @@ export function saveNetworkOnboarding({ optedIn, selectedAccountIds }) {
   })
 }
 
+/** Forget the onboarding result (prototype reset): the task is not done and there are no invites. */
+export function resetNetworkOnboarding() {
+  storage.removeItem(KEY)
+  window.dispatchEvent(new Event(NETWORK_ONBOARDING_EVENT))
+}
+
 /** Clear the unseen-invites indicator. No-op when there's nothing unseen. */
 export function markNetworkSeen() {
   const record = getNetworkOnboarding()

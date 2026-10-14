@@ -5,7 +5,11 @@
 // no map data ships with the prototype.
 import { useEffect, useRef } from 'react'
 
-const HEIGHT = 220
+const DEFAULT_HEIGHT = 220
+// `height` sets the hero's height (220 in the dialog), or 'fill' to take the
+// container's height. By default only the globe's top half shows, anchored to
+// the bottom edge; `full` shows the whole globe, centered, with platforms and
+// businesses spread into the southern hemisphere too.
 // Light (white globe on light gray) is the default; dark matches the original
 // Figma globe. Pass theme="dark" to switch back.
 const THEMES = {
@@ -60,6 +64,7 @@ const FADE = 700           // ms for a connection to fade
 const POP = 450            // ms for a node to pop in
 const PULSE = 2200         // ms for a pulse to travel a connection
 const BAND = [Math.sin((18 * Math.PI) / 180), Math.sin((64 * Math.PI) / 180)] // latitudes that pass through view
+const FULL_BAND = [Math.sin((-50 * Math.PI) / 180), Math.sin((64 * Math.PI) / 180)] // the same, with the whole globe in view
 
 // Labeled platforms, spread around the globe by longitude offset from the front
 // (radians; negative is to the left, so they turn into view later) and when
@@ -140,7 +145,7 @@ function mulberry32(seed) {
 const fromLatLon = (lat, lon) => [Math.cos(lat) * Math.sin(lon), Math.sin(lat), Math.cos(lat) * Math.cos(lon)]
 const angle = (a, b) => Math.acos(Math.min(1, Math.max(-1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])))
 
-function buildWorld() {
+function buildWorld(full) {
   const land = []
   const golden = Math.PI * (3 - Math.sqrt(5))
   for (let i = 0; i < DOT_COUNT; i++) {
@@ -153,7 +158,8 @@ function buildWorld() {
   }
 
   const rand = mulberry32(16) // seed picked for an even spread of links by longitude
-  const inBand = land.filter(p => p[1] > BAND[0] && p[1] < BAND[1])
+  const band = full ? FULL_BAND : BAND
+  const inBand = land.filter(p => p[1] > band[0] && p[1] < band[1])
   const placed = []
   // Random land points in the visible band, kept a minimum arc apart.
   const scatter = (count, gap) => {
@@ -242,7 +248,7 @@ function arcPoint(a, b, t, omega) {
   return [0, 1, 2].map(j => (a[j] * k0 + b[j] * k1) * lift)
 }
 
-export default function NetworkGlobe({ theme = 'light' }) {
+export default function NetworkGlobe({ theme = 'light', height = DEFAULT_HEIGHT, full = false }) {
   const th = THEMES[theme] ?? THEMES.light
   const canvasRef = useRef(null)
   const labelRefs = useRef({})
@@ -250,38 +256,40 @@ export default function NetworkGlobe({ theme = 'light' }) {
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    const world = buildWorld()
+    const world = buildWorld(full)
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const start = performance.now()
     let width = canvas.parentElement.clientWidth
+    let h = height === 'fill' ? canvas.parentElement.clientHeight : height
     let frame = 0
 
     const resize = () => {
       width = canvas.parentElement.clientWidth
+      if (height === 'fill') h = canvas.parentElement.clientHeight
       const dpr = window.devicePixelRatio || 1
       canvas.width = Math.round(width * dpr)
-      canvas.height = Math.round(HEIGHT * dpr)
+      canvas.height = Math.round(h * dpr)
       canvas.style.width = `${width}px`
-      canvas.style.height = `${HEIGHT}px`
+      canvas.style.height = `${h}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
     const draw = now => {
       // With reduced motion, show the finished network without moving.
       const t = reduceMotion ? Infinity : now - start
-      const R = Math.min(width * 0.4, HEIGHT - 16)
+      const R = full ? Math.min(width, h) / 2 - 24 : Math.min(width * 0.4, h - 16)
       const cx = width / 2
-      const cy = HEIGHT + 4
+      const cy = full ? h / 2 : h + 4
       const rot = reduceMotion ? BASE_ROT : BASE_ROT + (t / 1000) * SPIN
 
-      ctx.clearRect(0, 0, width, HEIGHT)
+      ctx.clearRect(0, 0, width, h)
       ctx.fillStyle = th.background
-      ctx.fillRect(0, 0, width, HEIGHT)
+      ctx.fillRect(0, 0, width, h)
 
       // Globe body with a soft rim.
       const body = theme === 'dark'
         ? ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.6, R * 0.1, cx, cy, R)
-        : ctx.createLinearGradient(0, cy - R, 0, cy)
+        : ctx.createLinearGradient(0, cy - R, 0, full ? cy + R : cy)
       for (const [at, c] of th.body) body.addColorStop(at, c)
       ctx.beginPath()
       ctx.arc(cx, cy, R, 0, Math.PI * 2)
@@ -294,7 +302,7 @@ export default function NetworkGlobe({ theme = 'light' }) {
       // Continents.
       for (const p of world.land) {
         const s = project(p, rot, cx, cy, R)
-        if (s.z <= 0 || s.y > HEIGHT) continue
+        if (s.z <= 0 || s.y > h) continue
         const xn = (s.x - (cx - R)) / (2 * R)
         const yn = (cy - s.y) / R
         const [r, g, b] = gradientAt(Math.min(1, Math.max(0, 0.75 * xn + 0.25 * yn)))
@@ -428,13 +436,13 @@ export default function NetworkGlobe({ theme = 'light' }) {
       cancelAnimationFrame(frame)
       observer.disconnect()
     }
-  }, [theme, th])
+  }, [theme, th, height, full])
 
   return (
     <div
       role="img"
       aria-label="A turning globe of businesses on Stripe. Rocketrides shares businesses with Hertz and Shopify, which share others with DoorDash, OpenAI and more platforms on the network."
-      style={{ position: 'relative', height: HEIGHT, borderRadius: 12, overflow: 'hidden', background: th.background }}
+      style={{ position: 'relative', height: height === 'fill' ? '100%' : height, borderRadius: 12, overflow: 'hidden', background: th.background }}
     >
       <canvas ref={canvasRef} style={{ display: 'block' }} />
       {PLATFORMS.map(pl => (

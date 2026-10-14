@@ -1,12 +1,13 @@
 // Enablement "Get more from your platform" checklist (Figma 11038:39006,
 // "Recommended"). Each row links to the page that completes the step; the
 // Stripe network row opens the network onboarding dialog instead, and shows as
-// done once the dialog has been completed (it can still be reopened).
-import { useCallback, useState } from 'react'
+// done once the dialog has been completed (it can still be reopened). The
+// dialog is shared: see network/NetworkOnboardingHost.jsx.
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircleIcon, color, type, radius, tokens } from '@dashboard/ui'
-import NetworkOnboarding from '../network/NetworkOnboarding'
-import { isNetworkOnboardingComplete, saveNetworkOnboarding, useNetworkOnboarding } from '../network/networkInvites'
+import { isNetworkOnboardingComplete, useNetworkOnboarding } from '../network/networkInvites'
+import { openNetworkOnboarding } from '../network/openNetworkOnboarding'
 
 const ASSETS = '/dashboard-assets/enablement'
 
@@ -66,15 +67,10 @@ function ChecklistRow({ item, onOpenNetwork, done = false }) {
 }
 
 export default function GoLiveChecklist() {
-  const [networkOpen, setNetworkOpen] = useState(false)
   const onboarding = useNetworkOnboarding()
   const networkDone = isNetworkOnboardingComplete(onboarding)
-  const openNetwork = useCallback(() => setNetworkOpen(true), [])
-  const closeNetwork = useCallback(() => setNetworkOpen(false), [])
-  const completeNetwork = useCallback(({ optedIn, selectedAccountIds }) => {
-    saveNetworkOnboarding({ optedIn, selectedAccountIds })
-    setNetworkOpen(false)
-  }, [])
+  // The dialog itself is mounted once by NetworkOnboardingHost in DashboardLayout.
+  const openNetwork = () => openNetworkOnboarding()
 
   return (
     <section
@@ -115,7 +111,6 @@ export default function GoLiveChecklist() {
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {ITEMS.map(item => <ChecklistRow key={item.id} item={item} onOpenNetwork={openNetwork} done={item.opensNetwork && networkDone} />)}
       </div>
-      <NetworkOnboarding open={networkOpen} onClose={closeNetwork} onComplete={completeNetwork} />
     </section>
   )
 }

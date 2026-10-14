@@ -12,7 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Button, FadeSlideIn, color, font, radius } from '@dashboard/ui'
 import WelcomeStep from './steps/WelcomeStep'
 import OptInStep from './steps/OptInStep'
-import FindAccountsStep from './steps/FindAccountsStep'
+import FindAccountsStep from './steps/FindAccountsVariantStep'
 
 const STEPS = [
   { id: 'welcome', label: 'Welcome', primary: 'Get started', Component: WelcomeStep, validByDefault: true },
@@ -93,13 +93,15 @@ function StepProgress({ current }) {
   )
 }
 
-function OnboardingDialog({ onClose, onComplete }) {
+function OnboardingDialog({ onClose, onComplete, initialStep }) {
   const titleId = useId()
   const dialogRef = useRef(null)
   const scrollRef = useRef(null)
-  const [stepIndex, setStepIndex] = useState(0)
-  const [valid, setValid] = useState(STEPS[0].validByDefault)
-  const [state, setStateRaw] = useState(INITIAL_STATE)
+  const [startIndex] = useState(() => Math.max(0, STEPS.findIndex(s => s.id === initialStep)))
+  const [stepIndex, setStepIndex] = useState(startIndex)
+  const [valid, setValid] = useState(STEPS[startIndex].validByDefault)
+  // Starting past "Opt in" counts as having agreed.
+  const [state, setStateRaw] = useState(() => ({ ...INITIAL_STATE, optedIn: startIndex > STEPS.findIndex(s => s.id === 'opt-in') }))
 
   const step = STEPS[stepIndex]
   const isLast = stepIndex === STEPS.length - 1
@@ -255,7 +257,7 @@ function OnboardingDialog({ onClose, onComplete }) {
           </aside>
 
           <section style={{ flex: '1 0 0', minWidth: 0, display: 'flex', flexDirection: 'column', background: color.surface, borderRadius: `${radius.lg}px 0 0 ${radius.lg}px`, overflow: 'hidden' }}>
-            <div ref={scrollRef} tabIndex={-1} style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', outline: 'none' }}>
+            <div ref={scrollRef} tabIndex={-1} style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', outline: 'none' }}>
               <FadeSlideIn
                 transitionKey={step.id}
                 appear
@@ -293,12 +295,13 @@ function OnboardingDialog({ onClose, onComplete }) {
  *   open        boolean
  *   onClose()   X button or Escape
  *   onComplete({ optedIn, selectedAccountIds })   "Done" on the last step
+ *   initialStep 'welcome' | 'opt-in' | 'find-accounts' (optional, default 'welcome')
  * Step state resets every time the dialog opens.
  */
-export default function NetworkOnboarding({ open, onClose, onComplete }) {
+export default function NetworkOnboarding({ open, onClose, onComplete, initialStep }) {
   return createPortal(
     <AnimatePresence>
-      {open && <OnboardingDialog key="network-onboarding" onClose={onClose} onComplete={onComplete} />}
+      {open && <OnboardingDialog key="network-onboarding" onClose={onClose} onComplete={onComplete} initialStep={initialStep} />}
     </AnimatePresence>,
     document.body,
   )

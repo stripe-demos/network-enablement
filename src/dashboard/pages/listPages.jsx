@@ -5,7 +5,8 @@ import transactionsConfig from '@dashboard/app/transactions/config'
 import customersConfig from '@dashboard/app/customers/config'
 import { buildNetworkConfig } from '@dashboard/app/network/config'
 import productCatalogConfig from '@dashboard/app/product-catalog/config'
-import { invitedNetworkRows, markNetworkSeen, useNetworkOnboarding } from './network/networkInvites'
+import { invitedNetworkRows, isNetworkOnboardingComplete, markNetworkSeen, useNetworkOnboarding } from './network/networkInvites'
+import NetworkLanding from './network/NetworkLanding'
 
 // Each dashboard list page is driven by its config + the shared DashboardListViewTemplate
 // engine. The active tab comes from the URL (`:tab`), mirroring the Next.js
@@ -21,14 +22,17 @@ export function CustomersTab() {
   return <DashboardListViewTemplate config={customersConfig} basePath="/customers" initialTabId={tab} />
 }
 
-// Network starts empty and fills with the businesses invited from the Stripe
-// network onboarding dialog (Connect › Enablement). Visiting the page clears the
-// sidebar's unseen-invites indicator.
+// Network shows a "Join the Stripe network" landing until the user opts in and
+// finishes the onboarding dialog (opting out shows it again). After that it's
+// the list, filled with the businesses invited in the dialog. Visiting the page
+// clears the sidebar's unseen-invites indicator.
 export function NetworkTab() {
   const { tab } = useParams()
   const onboarding = useNetworkOnboarding()
   const networkConfig = useMemo(() => buildNetworkConfig(invitedNetworkRows(onboarding)), [onboarding])
   useEffect(() => { markNetworkSeen() }, [onboarding])
+  const complete = isNetworkOnboardingComplete(onboarding)
+  if (!complete || !onboarding.optedIn) return <NetworkLanding optedOut={complete} />
   return <DashboardListViewTemplate config={networkConfig} basePath="/network" initialTabId={tab} />
 }
 
