@@ -6,6 +6,8 @@
   "rewrites": [
     { "source": "/dashboard", "destination": "/dashboard/index.html" },
     { "source": "/dashboard/(.*)", "destination": "/dashboard/index.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/flows", "destination": "/flows/index.html" },
+    { "source": "/flows/(.*)", "destination": "/flows/index.html" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

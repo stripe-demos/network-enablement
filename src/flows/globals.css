@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "../send-flow/send-flow.css";
-@import "../send-flow/prototypes/prototype2/theme.css";
+@import "tailwindcss" source(".");
+@import "./send-flow/send-flow.css";
+@import "./send-flow/prototypes/prototype2/theme.css";
 
 @custom-variant dark (&:is(.dark *));
 

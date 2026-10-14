@@ -1,11 +1,38 @@
-# Connect Enablement
+# Network flows prototype
 
-A wireframe prototype of **Connect › Enablement** in the Stripe Dashboard: the
-page where a platform configures what its connected accounts see and finds the
-next steps to grow. The focus is helping newly onboarded platforms **go live**
-faster, meaning 4 connected accounts with $1,000 in volume.
+A shared prototype for mocking up **Stripe Network** flows. It merges two
+earlier prototypes, with their git history:
 
-Everything uses simulated data. There is no backend.
+- **Connect Enablement** ([sallykang-llama/connect-enablement](https://github.com/sallykang-llama/connect-enablement)):
+  the Dashboard shell, Connect › Enablement, Network onboarding (globe, opt-in,
+  find accounts), the Network list and wireframe mode. Lives in `src/dashboard/`,
+  `src/console/` and `src/prototype-settings/`.
+- **Unified account creation flow** ([stripe-demos/Unified-account-creation-flow](https://github.com/stripe-demos/Unified-account-creation-flow)):
+  account configuration (picker, describe-account, capabilities, payouts,
+  onboarding handoff), plus the invoice, subscription, customer and send-money
+  creation flows. Lives in `src/flows/`. See [its README](src/flows/README.md).
+
+Everything uses simulated data. The only server code is `api/`, which has a
+local heuristic fallback, so no keys are needed.
+
+| Surface | URL | Code |
+|---|---|---|
+| Dashboard (default) | `/dashboard/` | `src/dashboard/` (JSX, React Router) |
+| Flows | `/flows/` | `src/flows/` (TypeScript) |
+| Console | `/console/` | `src/console/` |
+
+Flows deep links use the hash, e.g. `/flows/#account-creation`,
+`/flows/#single-config`, `/flows/#send-money`.
+
+## Working together
+
+Two designers work here at once, so:
+
+- Branch off `main` per idea (`yourname/short-idea`) and open a PR to merge.
+  Vercel gives every branch a preview URL to share.
+- Keep changes inside one surface when you can. Flows and Dashboard both draw a
+  Network list today; decide together before reconciling them.
+- Run the checks below before pushing.
 
 ## Quick start
 
@@ -18,7 +45,11 @@ npm run dev
 ```
 
 Open the localhost URL Vite prints, then go to `/dashboard/connect/enablement`
-(the sidebar's **Connect › Enablement**).
+(the sidebar's **Connect › Enablement**) or `/flows/` for the creation flows.
+
+To use the live JEV classifier in the describe-account modal, put
+`TYPESAFE_API_KEY` (or `AI_GATEWAY_API_KEY`) in `.env.local`. Without one it
+uses the local heuristic.
 
 ## The Enablement page
 
@@ -110,7 +141,11 @@ src/dashboard/             Dashboard UI (the surface this prototype extends)
   ui/                      Dashboard components and tokens (/dashboard/components)
 src/console/               Console UI (separate surface, at /console/)
 src/prototype-settings/    Wireframe mode (generic, copyable)
+src/flows/                 Creation flows (TypeScript; `@/` imports point here)
+  components/creation-workspace/account-configuration/   Account configuration
+  lib/next-shim/           next/image and next/dynamic, mapped to plain React
 src/integration/           Navigation between Dashboard and Console
+api/                       Server functions (Vercel; served by Vite in dev)
 public/dashboard-assets/   Dashboard images and icons
 scripts/                   Routing helpers and Node tests
 ```
@@ -121,7 +156,8 @@ Keep Dashboard and Console changes separate. See [AGENTS.md](AGENTS.md) and the
 ## Validation
 
 ```bash
-npm run lint
+npm run lint        # JS/JSX (Dashboard, Console)
+npm run typecheck   # TypeScript (Flows, api)
 npm test
 npm run build
 ```
@@ -129,4 +165,4 @@ npm run build
 ## Deploying
 
 The repo is connected to Vercel. Pushing to `main` deploys production, and other
-branches get preview URLs. `vercel.json` routes both surfaces.
+branches get preview URLs. `vercel.json` routes all three surfaces.

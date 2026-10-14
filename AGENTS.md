@@ -1,11 +1,13 @@
-# Wireframe mode starter
+# Network flows prototype
 
-This repo is a shared starting point for wireframing. It has two UI shells,
-Dashboard and Console, plus **wireframe mode**, a tool that turns any page into a
-wireframe. The UI uses simulated data; nothing here talks to a backend.
+This repo is a shared prototype for Stripe Network flows. It has three UI
+surfaces, Dashboard, Flows and Console, plus **wireframe mode**, a tool that
+turns any page into a wireframe. The UI uses simulated data; nothing here talks to a backend.
 
 Dashboard lives under `src/dashboard/` (served at `/dashboard/`, the default).
-Console lives under `src/console/` (served at `/console/`). Each has its own HTML
+Console lives under `src/console/` (served at `/console/`). Flows lives under
+`src/flows/` (served at `/flows/`): TypeScript creation flows merged from the
+Unified account creation prototype, with its own [guidance](src/flows/AGENTS.md). Each has its own HTML
 entry, CSS and React entry. Keep each surface's components, styles and state in its
 own folder; a similarly named component in each is not shared. Do not import one
 surface's components or CSS into the other. The only link between them is

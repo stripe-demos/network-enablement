@@ -2,9 +2,7 @@
 
 import { useState, useRef, useEffect, useId } from "react"
 import { createPortal } from "react-dom"
-import { motion, AnimatePresence } from "framer-motion"
-
-const { LayoutGroup } = require("framer-motion") as { LayoutGroup: React.ComponentType<{ children: React.ReactNode }> }
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion"
 import { ChevronRightIcon } from "@/components/ProductCatalogIcons"
 import type { NavLayoutMode } from "@/components/creation-workspace/navLayoutMode"
 import { useProductFormStyle } from "@/components/creation-workspace/productFormStyle"

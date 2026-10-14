@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Server-only keys for api/ (see README)
+.env
+.env.*
+!.env.example
+.vercel
+.tmp-send-flow

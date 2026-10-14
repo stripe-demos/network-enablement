@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server"
-
-import { recommendAccountShape } from "@/lib/jev/recommendAccountShape"
-import type { UserPath } from "@/components/creation-workspace/account-configuration/model"
+// Vercel function for the describe-account modal. In dev, vite.config.js
+// serves the same handler. Relative imports, since Vercel doesn't resolve `@/`.
+import { recommendAccountShape } from "../src/flows/lib/jev/recommendAccountShape"
+import type { UserPath } from "../src/flows/components/creation-workspace/account-configuration/model"
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
@@ -14,5 +14,5 @@ export async function POST(request: Request) {
     : []
 
   const result = await recommendAccountShape({ description, userPath, files })
-  return NextResponse.json(result)
+  return Response.json(result)
 }

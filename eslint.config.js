@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Flows came from a TypeScript project without ESLint; `npm run typecheck`
+  // covers it instead.
+  globalIgnores(['dist', 'src/flows']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -22,5 +24,9 @@ export default defineConfig([
       // places. Surfaced as warnings so lint passes without rewriting that UI.
       'react-hooks/set-state-in-effect': 'warn',
     },
+  },
+  {
+    files: ['vite.config.js', 'scripts/**'],
+    languageOptions: { globals: globals.node },
   },
 ])

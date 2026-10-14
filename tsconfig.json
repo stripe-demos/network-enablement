@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@/*": ["./src/flows/*"],
+      "next/image": ["./src/flows/lib/next-shim/image.tsx"],
+      "next/dynamic": ["./src/flows/lib/next-shim/dynamic.tsx"]
+    }
+  },
+  "include": ["src/flows/**/*.ts", "src/flows/**/*.tsx", "api/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "src/flows/components/product-catalog/**",
+    "src/flows/components/creation-workspace/ContractPlanEditorOverlay.tsx",
+    "src/flows/components/creation-workspace/CreationFlowOverlay.tsx",
+    "src/flows/send-flow/prototypes/prototype2/flow/quote.test.mjs"
+  ]
+}

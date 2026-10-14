@@ -10,7 +10,7 @@ import {
   type ClassificationHighlight,
   type ConfigurationKind,
   type UserPath,
-} from "@/components/creation-workspace/account-configuration/model"
+} from "../../components/creation-workspace/account-configuration/model"
 
 export type RecommendAccountShapeResult = {
   configurations: ConfigurationKind[]

@@ -14,12 +14,18 @@ export function defaultSurfaceRedirect(req, res, next) {
 }
 
 // Vite normally falls back to Console's root index.html for deep links.
+// Dashboard and Flows each have their own HTML entry.
+const SURFACE_ENTRIES = [
+  [/^\/dashboard(?:\/|$)/, '/dashboard/index.html'],
+  [/^\/flows(?:\/|$)/, '/flows/index.html'],
+];
+
 export function dashboardHtmlFallback(req, _res, next) {
   const url = new URL(req.url, 'http://localhost');
   if ((req.method === 'GET' || req.method === 'HEAD')
-      && req.headers.accept?.includes('text/html')
-      && /^\/dashboard(?:\/|$)/.test(url.pathname)) {
-    req.url = `/dashboard/index.html${url.search}`;
+      && req.headers.accept?.includes('text/html')) {
+    const entry = SURFACE_ENTRIES.find(([pattern]) => pattern.test(url.pathname));
+    if (entry) req.url = `${entry[1]}${url.search}`;
   }
   next();
 }
