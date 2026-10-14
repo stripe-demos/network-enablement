@@ -2,9 +2,12 @@
 
 Root [ownership rules](../../AGENTS.md) apply.
 
-- Flows has its own HTML entry at `flows/index.html`, React entry at
-  `src/flows/flows-main.tsx` and styles in `globals.css`. It has no router;
-  `components/StandardLandingPage.tsx` picks the demo from the URL hash.
+- Flows owns the root HTML entry (`index.html`, served at `/`), with its React
+  entry at `src/flows/flows-main.tsx` and styles in `globals.css`. It has no
+  router; `components/StandardLandingPage.tsx` is the Network enablement landing
+  page and picks the demo from the URL hash.
+- The landing page's journeys come from `components/landing/entryPoints.ts`.
+  Link Dashboard pages by URL; don't import Dashboard code.
 - Write TypeScript. `@/` resolves to `src/flows/`. Check with `npm run typecheck`.
 - The code came from a Next.js app. `next/image` and `next/dynamic` resolve to
   `lib/next-shim/`; use ES imports, not `require`, which Vite doesn't support.

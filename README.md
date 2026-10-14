@@ -17,12 +17,16 @@ local heuristic fallback, so no keys are needed.
 
 | Surface | URL | Code |
 |---|---|---|
-| Dashboard (default) | `/dashboard/` | `src/dashboard/` (JSX, React Router) |
-| Flows | `/flows/` | `src/flows/` (TypeScript) |
+| Network enablement landing page and creation flows | `/` | `src/flows/` (TypeScript) |
+| Dashboard | `/dashboard/` | `src/dashboard/` (JSX, React Router) |
 | Console | `/console/` | `src/console/` |
 
-Flows deep links use the hash, e.g. `/flows/#account-creation`,
-`/flows/#single-config`, `/flows/#send-money`.
+The landing page shows the platform and connected account journeys as rows of
+clickable steps, defined in
+[`src/flows/components/landing/entryPoints.ts`](src/flows/components/landing/entryPoints.ts). Creation flows open with a hash, e.g. `/#account-creation`,
+`/#single-config`, `/#send-money` (old `/flows/` links redirect). Network
+onboarding opens from a link with `?network-onboarding=welcome|opt-in|find-accounts`
+on any Dashboard page.
 
 ## Working together
 
@@ -45,7 +49,7 @@ npm run dev
 ```
 
 Open the localhost URL Vite prints, then go to `/dashboard/connect/enablement`
-(the sidebar's **Connect › Enablement**) or `/flows/` for the creation flows.
+(the sidebar's **Connect › Enablement**), or the root for the landing page.
 
 To use the live JEV classifier in the describe-account modal, put
 `TYPESAFE_API_KEY` (or `AI_GATEWAY_API_KEY`) in `.env.local`. Without one it
@@ -141,7 +145,8 @@ src/dashboard/             Dashboard UI (the surface this prototype extends)
   ui/                      Dashboard components and tokens (/dashboard/components)
 src/console/               Console UI (separate surface, at /console/)
 src/prototype-settings/    Wireframe mode (generic, copyable)
-src/flows/                 Creation flows (TypeScript; `@/` imports point here)
+src/flows/                 Landing page and creation flows (TypeScript; `@/` imports point here)
+  components/landing/      Landing page: authors and journeys
   components/creation-workspace/account-configuration/   Account configuration
   lib/next-shim/           next/image and next/dynamic, mapped to plain React
 src/integration/           Navigation between Dashboard and Console

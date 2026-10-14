@@ -1,13 +1,15 @@
 {
   "redirects": [
     { "source": "/", "has": [{ "type": "query", "key": "new" }], "destination": "/console/", "permanent": false },
-    { "source": "/", "destination": "/dashboard/", "permanent": false }
+    { "source": "/", "has": [{ "type": "query", "key": "prototypeView" }], "destination": "/dashboard/", "permanent": false },
+    { "source": "/flows", "destination": "/", "permanent": false },
+    { "source": "/flows/:path*", "destination": "/", "permanent": false }
   ],
   "rewrites": [
     { "source": "/dashboard", "destination": "/dashboard/index.html" },
     { "source": "/dashboard/(.*)", "destination": "/dashboard/index.html" },
-    { "source": "/flows", "destination": "/flows/index.html" },
-    { "source": "/flows/(.*)", "destination": "/flows/index.html" },
+    { "source": "/console", "destination": "/console/index.html" },
+    { "source": "/console/(.*)", "destination": "/console/index.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

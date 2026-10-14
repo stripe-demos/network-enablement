@@ -66,9 +66,10 @@ export default defineConfig(({ mode }) => {
     build: {
       rolldownOptions: {
         input: {
-          console: path('./index.html'),
+          // The Network enablement landing page and creation flows (src/flows).
+          main: path('./index.html'),
+          console: path('./console/index.html'),
           dashboard: path('./dashboard/index.html'),
-          flows: path('./flows/index.html'),
         },
       },
     },

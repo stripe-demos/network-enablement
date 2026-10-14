@@ -54,7 +54,12 @@ test('deep links load the Dashboard document, while Console and asset requests a
     assert.equal(req.url, '/dashboard/index.html' + (url.includes('?') ? '?view=failed' : ''));
     assert.equal(next, 1);
   }
-  for (const url of ['/console/', '/console/?new=1', '/dashboard-assets/icons/home.svg', '/src/dashboard/dashboard-main.jsx']) {
+  for (const [url, entry] of [['/console', '/console/index.html'], ['/console/?new=1', '/console/index.html?new=1']]) {
+    const req = { url, method: 'GET', headers: { accept: 'text/html' } };
+    dashboardHtmlFallback(req, null, () => {});
+    assert.equal(req.url, entry);
+  }
+  for (const url of ['/', '/dashboard-assets/icons/home.svg', '/src/dashboard/dashboard-main.jsx']) {
     const req = { url, method: 'GET', headers: { accept: 'text/html' } };
     dashboardHtmlFallback(req, null, () => {});
     assert.equal(req.url, url);
@@ -64,20 +69,20 @@ test('deep links load the Dashboard document, while Console and asset requests a
   assert.equal(asset.url, '/dashboard/example.js');
 });
 
-test('the bare root opens Dashboard; Console, Dashboard and asset requests are untouched', () => {
+test('the bare root opens the landing page; old root and /flows/ links still land', () => {
   const visit = (url, accept = 'text/html') => {
     const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, end() { this.ended = true; } };
     let next = 0;
     defaultSurfaceRedirect({ url, method: 'GET', headers: { accept } }, res, () => next++);
     return { res, next };
   };
-  for (const [url, location] of [['/', '/dashboard/'], ['/?prototypeView=x', '/dashboard/?prototypeView=x'], ['/?new=1', '/console/?new=1']]) {
+  for (const [url, location] of [['/?prototypeView=x', '/dashboard/?prototypeView=x'], ['/?new=1', '/console/?new=1'], ['/flows/', '/'], ['/flows', '/']]) {
     const { res, next } = visit(url);
     assert.equal(res.statusCode, 302);
     assert.equal(res.headers.Location, location);
     assert.equal(next, 0);
   }
-  for (const url of ['/console/', '/console/?new=1', '/dashboard/', '/src/main.jsx']) assert.equal(visit(url).next, 1);
+  for (const url of ['/', '/console/', '/console/?new=1', '/dashboard/', '/src/main.jsx']) assert.equal(visit(url).next, 1);
   assert.equal(visit('/', '*/*').next, 1);
 });
 
