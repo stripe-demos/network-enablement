@@ -21,12 +21,51 @@ local heuristic fallback, so no keys are needed.
 | Dashboard | `/dashboard/` | `src/dashboard/` (JSX, React Router) |
 | Console | `/console/` | `src/console/` |
 
-The landing page shows the platform and connected account journeys as rows of
-clickable steps, defined in
-[`src/flows/components/landing/entryPoints.ts`](src/flows/components/landing/entryPoints.ts). Creation flows open with a hash, e.g. `/#account-creation`,
-`/#single-config`, `/#send-money` (old `/flows/` links redirect). Network
-onboarding opens from a link with `?network-onboarding=welcome|opt-in|find-accounts`
-on any Dashboard page.
+The landing page shows the platform, connected account and direct journeys as
+rows of clickable steps, defined in
+[`src/flows/components/landing/entryPoints.ts`](src/flows/components/landing/entryPoints.ts).
+
+## Routes
+
+Locally, every route is on the URL `npm run dev` prints, by default
+**http://localhost:5173**. The same paths work on the Vercel deployment.
+
+### Creation flows (unified account creation)
+
+Open over the landing page from a hash. Old `/flows/#…` links redirect here.
+
+| Flow | URL |
+|---|---|
+| Account creation (picker, describe account, configurations, capabilities, payouts, onboarding handoff) | http://localhost:5173/#account-creation |
+| Single config (add a customer configuration from the Network list) | http://localhost:5173/#single-config |
+| Invoice | http://localhost:5173/#invoice |
+| Subscription | http://localhost:5173/#subscription |
+| Send money | http://localhost:5173/#send-money |
+
+### Dashboard
+
+| Page | URL |
+|---|---|
+| Connect › Enablement (go-live checklist) | http://localhost:5173/dashboard/connect/enablement |
+| Network list | http://localhost:5173/dashboard/network/all |
+| Network onboarding: welcome | http://localhost:5173/dashboard/connect/enablement?network-onboarding=welcome |
+| Network onboarding: opt in | http://localhost:5173/dashboard/connect/enablement?network-onboarding=opt-in |
+| Network onboarding: find accounts | http://localhost:5173/dashboard/connect/enablement?network-onboarding=find-accounts |
+| Console | http://localhost:5173/console/ |
+
+### Dashboard link parameters
+
+Add these to any Dashboard URL. Each is applied once, then removed from the
+address bar.
+
+| Parameter | What it does |
+|---|---|
+| `network-onboarding=welcome\|opt-in\|find-accounts` | Opens the Network onboarding dialog on that step. |
+| `network-accounts=none\|existing` | Whether the platform already has connected accounts. `existing` shows the sample accounts on the Network list for this tab. |
+| `prototype-reset=1` | Resets the network demo, like **Reset network demo** in the prototype controls. The landing page's **Open flow** links add it. |
+
+For example, a platform with existing accounts on the Network list, starting
+fresh: http://localhost:5173/dashboard/network/all?network-accounts=existing&prototype-reset=1
 
 ## Working together
 
