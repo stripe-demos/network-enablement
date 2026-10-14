@@ -28,7 +28,7 @@ const CONTENT_MAX_WIDTH = 520 // Figma content column
 
 // Dialog base and progress panel follow Figma "Modal / 88" (Dashboard visual
 // refresh, node 42590:5905): a floating sheet on a backdrop, a header bar, a
-// 320px progress panel on the left and the step on the right.
+// progress panel on the left (260px here; 320px in Figma) and the step on the right.
 const MODAL_SHADOW = '0px 16px 32px -8px rgba(20,34,52,0.04), 0px 8px 16px -4px rgba(20,34,52,0.05), 0px 2px 4px -1px rgba(20,34,52,0.05), 0px 1px 2px 0px rgba(20,34,52,0.06), 0px 0px 3px 0px rgba(20,34,52,0.06)'
 const PANEL_SHADOW = '0px 4px 7px 0px rgba(0,0,0,0.01), 0px 3px 6px 0px rgba(0,0,0,0.01), 0px 2px 5px 0px rgba(0,0,0,0.01), 0px 1px 4px 0px rgba(0,0,0,0.01), 0px 0px 2px 0px rgba(0,0,0,0.02)'
 const AREA_FILL = '#F6F9FC'
@@ -223,7 +223,7 @@ function OnboardingDialog({ onClose, onComplete }) {
         {/* Header */}
         <header style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 24, background: color.surface, borderRadius: radius.lg }}>
           <h2 id={titleId} style={{ margin: 0, fontSize: 15, fontWeight: 600, lineHeight: '20px', letterSpacing: -0.075, color: color.textStrong }}>
-            Join the Stripe network
+            Grow with the Stripe network
             <span className="sr-only">{`: ${step.label}, step ${stepIndex + 1} of ${STEPS.length}`}</span>
           </h2>
           <button
@@ -242,7 +242,7 @@ function OnboardingDialog({ onClose, onComplete }) {
           <aside
             style={{
               flexShrink: 0,
-              width: 320,
+              width: 260,
               padding: 24,
               boxSizing: 'border-box',
               background: color.surface,

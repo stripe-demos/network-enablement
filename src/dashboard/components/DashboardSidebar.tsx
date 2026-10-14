@@ -11,6 +11,7 @@ import { ScrollArea } from '@dashboard/ui/ScrollArea';
 import { AppsIcon, ChevronDownIcon as AccountChevronIcon } from '@dashboard/ui/icons';
 import { AccountMenu } from '@dashboard/ui/AccountMenu';
 import { installedApps } from '../data/apps';
+import { unseenInviteCount, useNetworkOnboarding } from '../pages/network/networkInvites';
 import { syncPrototypeSidebarParam } from '../prototype/prototypeSidebarState';
 import { HOME_INPUT_OPTIONS, useBlurpleLilacFocus, useBlurplePersistTrace, useBlurpleTrace, useEmphasizeGradient, useEmphasizeText, useGrowGradient, useHomeInputOption, usePersistToggleLabel, useRefreshGradient, useShowTooltip, useToggleAutoFocus, useTraceCursor, useTypeArrow } from '../prototype/useHomeInputOption';
 
@@ -122,6 +123,45 @@ const LabIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <path fillRule="evenodd" clipRule="evenodd" d="M1 12.6409C1 12.2241 1.13025 11.8177 1.37253 11.4785L5.5 5.7V1.5H5.24512C4.8309 1.5 4.49512 1.16421 4.49512 0.75C4.49512 0.335786 4.8309 0 5.24512 0H10.7496C11.1638 0 11.4996 0.335786 11.4996 0.75C11.4996 1.16421 11.1638 1.5 10.7496 1.5H10.5V5.7L14.6275 11.4785C14.8698 11.8177 15 12.2241 15 12.6409V13C15 14.6569 13.6569 16 12 16H4C2.34315 16 1 14.6569 1 13V12.6409ZM9 1.5H7V5.7C7 6.01263 6.90232 6.31746 6.7206 6.57186L5.7005 8H7.88C8.22518 8 8.505 8.27982 8.505 8.625C8.505 8.97018 8.22518 9.25 7.88 9.25H4.80764L3.55764 11H7.38C7.72518 11 8.005 11.2798 8.005 11.625C8.005 11.9702 7.72518 12.25 7.38 12.25H2.66478L2.59313 12.3503C2.53256 12.4351 2.5 12.5367 2.5 12.6409V13C2.5 13.8284 3.17157 14.5 4 14.5H12C12.8284 14.5 13.5 13.8284 13.5 13V12.6409C13.5 12.5367 13.4674 12.4351 13.4069 12.3503L9.2794 6.57186C9.09768 6.31746 9 6.01263 9 5.7V1.5Z" fill="currentColor"/>
   </svg>
+);
+
+// New Stripe network invites on the Network item: a count badge beside the
+// label, or a dot on the icon when the sidebar is collapsed (labels hidden).
+const NetworkInviteBadge = ({ count }: { count: number }) => (
+  <span
+    className="relative shrink-0"
+    aria-label={`${count} new ${count === 1 ? 'invite' : 'invites'}`}
+    style={{
+      zIndex: 1,
+      minWidth: 16,
+      height: 16,
+      padding: '0 5px',
+      borderRadius: 8,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#675DFF',
+      color: '#FFFFFF',
+      fontSize: 11,
+      lineHeight: '16px',
+      fontWeight: 600,
+      letterSpacing: 0,
+      fontVariantNumeric: 'tabular-nums',
+    }}
+  >
+    {count}
+  </span>
+);
+
+const IconWithDot = ({ children, label }: { children: React.ReactNode; label: string }) => (
+  <span className="relative inline-flex">
+    {children}
+    <span
+      role="img"
+      aria-label={label}
+      style={{ position: 'absolute', top: -1, right: -2, width: 7, height: 7, borderRadius: '50%', background: '#675DFF', boxShadow: '0 0 0 1.5px #FFFFFF' }}
+    />
+  </span>
 );
 
 // Unbuilt products listed under "More", in Dashboard order. The component
@@ -551,6 +591,7 @@ export default function DashboardSidebar({
     .filter(item => matchesPath(pathname, item.activePath ?? item.href))
     .sort((a, b) => (b.activePath ?? b.href).length - (a.activePath ?? a.href).length)[0];
   const { navVisible, version, v2ConsoleOpen, setV2ConsoleOpen } = usePrototype();
+  const newNetworkInvites = unseenInviteCount(useNetworkOnboarding());
   const [consolePanelWidth, setConsolePanelWidth] = useState(240);
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -924,9 +965,12 @@ export default function DashboardSidebar({
                     />
                     <NavItem collapsed={collapsed} v2={version === 'v2'}
                       href={buildDashboardHref('/network/all')}
-                      icon={<PersonIcon />}
+                      icon={collapsed && newNetworkInvites > 0
+                        ? <IconWithDot label={`${newNetworkInvites} new network ${newNetworkInvites === 1 ? 'invite' : 'invites'}`}><PersonIcon /></IconWithDot>
+                        : <PersonIcon />}
                       label="Network"
                       isActive={isActive('/network')}
+                      accessory={newNetworkInvites > 0 ? <NetworkInviteBadge count={newNetworkInvites} /> : undefined}
                     />
                     <NavItem collapsed={collapsed} v2={version === 'v2'}
                       href={buildDashboardHref('/product-catalog/all-products')}

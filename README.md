@@ -1,9 +1,9 @@
-# Wireframe mode
+# Connect Enablement
 
-A starter for wireframing Stripe Dashboard and Console ideas. It has two UI
-shells, **Dashboard** and **Console**, and **wireframe mode**, a pen button that
-turns the page grayscale, draws text and icons as blocks, and lets you bring back
-only the parts you want to talk about.
+A wireframe prototype of **Connect › Enablement** in the Stripe Dashboard: the
+page where a platform configures what its connected accounts see and finds the
+next steps to grow. The focus is helping newly onboarded platforms **go live**
+faster, meaning 4 connected accounts with $1,000 in volume.
 
 Everything uses simulated data. There is no backend.
 
@@ -17,72 +17,97 @@ npm ci
 npm run dev
 ```
 
-Open the localhost URL Vite prints.
+Open the localhost URL Vite prints, then go to `/dashboard/connect/enablement`
+(the sidebar's **Connect › Enablement**).
 
-- `/` opens Dashboard (it redirects to `/dashboard/`).
-- `/dashboard/` is Dashboard. `/dashboard/components` is its component gallery.
-- `/console/` is Console. Its sidebar has a Dashboard link, and Dashboard's Console
-  links open Console.
+## The Enablement page
 
-## Using wireframe mode
+[`src/dashboard/pages/enablement/`](src/dashboard/pages/enablement/)
 
-1. Click the pen button at the bottom corner. The page becomes a wireframe and a
-   bar docks along the bottom edge.
+- **Get more from your platform:** a checklist of the three enablement tasks below.
+- **Tabs** for configuring the connected-account experience: Performance,
+  Branding, Onboarding, Features and Communication.
+
+## The 3 enablement tasks
+
+The checklist rows live in
+[`GoLiveChecklist.jsx`](src/dashboard/pages/enablement/GoLiveChecklist.jsx).
+
+### 1. Onboard faster with accounts already on the Stripe network
+
+**Built.** Opens a full-page dialog that walks a platform through joining the
+network and finding its first 4 connected accounts. It's based on the Dashboard
+visual refresh designs in Figma: a left progress panel, a 520px step column and
+pill buttons.
+
+| Step | Job to be done | What's on it |
+|---|---|---|
+| Welcome | "Is this right for me, and what happens next?" | Animated globe of platforms (Rocketrides, Hertz, Shopify, DoorDash, OpenAI) sharing businesses, the steps ahead, and when it's a good fit to join |
+| Opt in | "What am I agreeing to?" | Short terms (what you share, what you get, your accounts stay private) and one required consent checkbox |
+| Find connected accounts | "Pick a few businesses to invite." | 4 recommendations ranked from the platform's onboarding business description, progress toward 4, and search with Industry, Country, Monthly volume and Ready to connect filters |
+
+Key files, in [`src/dashboard/pages/network/`](src/dashboard/pages/network/):
+
+- `NetworkOnboarding.jsx`: the dialog shell, step routing and footer.
+- `steps/`: the three steps.
+- `NetworkGlobe.jsx`: the canvas globe (light and dark themes).
+- `networkControls.jsx` and `networkTokens.js`: shared heading, checkbox, radio, choice rows and filters from Figma.
+- `platformProfile.js`: Rocketrides' simulated onboarding profile.
+- `recommendAccounts.js`: the scoring that ranks businesses.
+- `networkCandidates.js`: the businesses on the network.
+
+The choices made on Done are saved in `sessionStorage` under the
+`dashboard:network-onboarding-v2` key, so each new tab starts with the task not
+done. Finishing the flow checks off the task, fills the Network list with the
+invited accounts and shows a count on the Network nav item until you open it.
+
+Related: the **Network** item in the sidebar (`/dashboard/network/all`) lists
+the platform's connected accounts, with All / Merchants / Recipients / Customers
+tabs. Its data is in [`src/dashboard/app/network/`](src/dashboard/app/network/).
+
+### 2. Add capabilities like Capital and Treasury to your connected accounts
+
+**Not built yet.** The row links to `/dashboard/connect/capital`, which shows the
+Dashboard's "not built" placeholder.
+
+### 3. Supercharge your platform with prebuilt skills and agents from Platform Apps
+
+**Links to the existing Apps overview** (`/dashboard/apps`), with Discover,
+Installed, Created and Connect extensions tabs. No enablement-specific flow has
+been built for it yet.
+
+## Wireframe mode
+
+The pen button at the bottom corner turns any page into a wireframe so you can
+show only the parts you want to talk about:
+
+1. Click the pen button. The page goes grayscale and a bar docks along the bottom.
 2. Click or drag over any part of the page to bring it back at full fidelity.
-3. Press **Done** to use the page again with your picks kept, including across pages.
-4. Save picks as named **flows**, switch between them from the bar, and
-   **Export screenshot** to download a grayscale PNG of the current view.
-5. Turn the Wireframe switch off at the right end of the bar to leave wireframe mode.
+   Turn on **Color** to keep your picks in full color.
+3. Press **Done** to use the page with your picks kept. Save picks as **flows**,
+   or use **Export screenshot** to save a PNG.
 
-Your picks and flows are saved in your browser's `localStorage`, so they stay on
-your machine.
-
-## Wireframing your own idea
-
-Build your idea inside one of the shells, then use wireframe mode to show it.
-
-- **A new Dashboard page:** add a page under `src/dashboard/pages/`, add a route in
-  `src/dashboard/DashboardApp.jsx`, and build it from the components in
-  `src/dashboard/ui/` (browse them at `/dashboard/components`). Add a sidebar link in
-  `src/dashboard/components/DashboardSidebar.tsx` if you want one.
-- **A new Console experience:** conversations, the sidebar and the Canvas live in
-  `src/console/`. Sample conversations are in `src/console/components/Conversation/`.
-- **Ask Cursor:** this repo has rules in [AGENTS.md](AGENTS.md). Say which surface
-  you mean ("add a Dashboard page for X") and it will follow them.
-
-Pick one surface per change. The two surfaces keep separate components, styles and
-state on purpose.
-
-## Wireframe mode in your own project
-
-The tool is a single self-contained folder, [`src/prototype-settings/`](src/prototype-settings/README.md),
-with one dependency (`modern-screenshot`). It works on any React UI because it
-reads computed styles.
-
-- Ask Cursor to follow the [add-wireframe-mode skill](.cursor/skills/add-wireframe-mode/SKILL.md)
-  from inside your project, or
-- follow the [tool's README](src/prototype-settings/README.md#add-it-to-another-prototype) by hand.
-
-Its props, known limits and how it works are documented there.
+Picks and flows are saved in your browser's `localStorage`. The tool lives in
+[`src/prototype-settings/`](src/prototype-settings/README.md); see its README to
+reuse it in another project.
 
 ## Project layout
 
 ```text
-src/
-  main.jsx                 Console entry; mounts Console and wireframe mode
-  App.jsx                  Console routes
-  index.css                Console styles and design tokens
-  console/                 Console UI: sidebar, conversation, canvas, settings
-  dashboard/               Dashboard UI: layout, sidebar, pages, components, tokens, styles
-  prototype-settings/      wireframe mode (generic, copyable)
-  integration/             navigation between the two surfaces
-dashboard/index.html       Dashboard document entry
-scripts/                   routing helpers and Node tests
-.cursor/skills/            agent skills for wireframe mode
+src/dashboard/             Dashboard UI (the surface this prototype extends)
+  pages/enablement/        Connect › Enablement page and checklist
+  pages/network/           Stripe network onboarding dialog, globe, ranking
+  app/network/             Network list page config and data
+  components/              Sidebar, list view template, toolbar
+  ui/                      Dashboard components and tokens (/dashboard/components)
+src/console/               Console UI (separate surface, at /console/)
+src/prototype-settings/    Wireframe mode (generic, copyable)
+src/integration/           Navigation between Dashboard and Console
+public/dashboard-assets/   Dashboard images and icons
+scripts/                   Routing helpers and Node tests
 ```
 
-Each surface has its own HTML, CSS and React entry. Moving between them loads the
-other surface's document. See [AGENTS.md](AGENTS.md) and
+Keep Dashboard and Console changes separate. See [AGENTS.md](AGENTS.md) and the
 [Dashboard guidance](src/dashboard/AGENTS.md).
 
 ## Validation
@@ -93,10 +118,7 @@ npm test
 npm run build
 ```
 
-`scripts/wireframeMode.test.mjs` checks that the tool stays portable, small and cheap
-while idle.
-
 ## Deploying
 
-`vercel.json` routes both surfaces. Import the repo into Vercel as a Vite project
-and each push gets a preview URL.
+The repo is connected to Vercel. Pushing to `main` deploys production, and other
+branches get preview URLs. `vercel.json` routes both surfaces.

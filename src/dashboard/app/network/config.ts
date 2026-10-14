@@ -1,8 +1,11 @@
 import type { PageConfig, TabConfig, FilterDef, ViewChipConfig } from '@dashboard/lib/listview/types';
 import { S } from '@dashboard/lib/listview/statusStyles';
-import { NETWORK_DATA } from './data';
 
-const STATUSES = ['Enabled', 'Rejected', 'Restricted soon', 'In review', 'Restricted'];
+// Rows come from the caller (NetworkTab builds them from the Stripe network
+// onboarding result), so the list starts empty. The static sample accounts in
+// ./data.ts are kept for reuse but aren't shown.
+
+const STATUSES = ['Invited', 'Enabled', 'Rejected', 'Restricted soon', 'In review', 'Restricted'];
 
 const NETWORK_COLUMNS: TabConfig['columns'] = [
   {
@@ -16,6 +19,7 @@ const NETWORK_COLUMNS: TabConfig['columns'] = [
     type: 'status',
     label: 'Status',
     statusMap: {
+      'Invited':         S.info,
       'Enabled':         S.success,
       'Rejected':        S.critical,
       'Restricted soon': S.warning,
@@ -96,9 +100,9 @@ const NETWORK_ROW_ACTIONS: TabConfig['rowActions'] = [
 ];
 
 /** Rows whose comma-separated 'configurations' include the given role (case-insensitive). */
-function rowsWithRole(role: string): Record<string, unknown>[] {
+function rowsWithRole(rows: Record<string, unknown>[], role: string): Record<string, unknown>[] {
   const target = role.toLowerCase();
-  return NETWORK_DATA.filter(row =>
+  return rows.filter(row =>
     String(row.configurations ?? '')
       .split(',')
       .some(part => part.trim().toLowerCase() === target),
@@ -113,11 +117,17 @@ const countWhere = (rows: Record<string, unknown>[], key: string, value: string)
  *
  * No chip (and no allViewConfig) sets sortCol: 'volume'. The template sorts by
  * string compare, which misorders formatted amounts ('$924,760.00' lands above
- * '$8,742,190.00'). NETWORK_DATA is already sorted by volume, descending, so
- * the unsorted default shows the intended order.
+ * '$8,742,190.00'). Rows arrive in the intended order, so the unsorted
+ * default keeps it.
  */
 function viewChips(tabId: string, rows: Record<string, unknown>[]): ViewChipConfig[] {
   return [
+    {
+      id: `${tabId}-invited`,
+      label: 'Invited',
+      count: countWhere(rows, 'status', 'Invited'),
+      filters: [{ id: 'status', filterName: 'Status', filterType: 'single-select', selectedValues: ['Invited'] }],
+    },
     {
       id: `${tabId}-connected`,
       label: 'Connected accounts',
@@ -145,7 +155,14 @@ function viewChips(tabId: string, rows: Record<string, unknown>[]): ViewChipConf
   ];
 }
 
-function networkTab(tabId: string, label: string, data: Record<string, unknown>[]): TabConfig {
+/** Shown on every tab while the network has no accounts at all. */
+const NETWORK_EMPTY_STATE: TabConfig['emptyState'] = {
+  title: 'No accounts in your network yet',
+  description: 'Find businesses already on the Stripe network in Connect › Enablement, then invite them to your platform.',
+  action: { label: 'Go to Enablement', href: '/connect/enablement' },
+};
+
+function networkTab(tabId: string, label: string, data: Record<string, unknown>[], networkEmpty: boolean): TabConfig {
   const chips = viewChips(tabId, data);
   return {
     tabId,
@@ -159,18 +176,23 @@ function networkTab(tabId: string, label: string, data: Record<string, unknown>[
     rowActions: NETWORK_ROW_ACTIONS,
     refundableField: 'status',
     refundableValue: 'Enabled',
+    emptyState: networkEmpty ? NETWORK_EMPTY_STATE : undefined,
   };
 }
 
-const config: PageConfig = {
-  pageId: 'network',
-  pageTitle: 'Network',
-  tabs: [
-    networkTab('all',        'All',        NETWORK_DATA),
-    networkTab('merchants',  'Merchants',  rowsWithRole('merchant')),
-    networkTab('recipients', 'Recipients', rowsWithRole('recipient')),
-    networkTab('customers',  'Customers',  rowsWithRole('customer')),
-  ],
-};
+/** Network page config for the given rows. Tabs filter them by configuration. */
+export function buildNetworkConfig(rows: Record<string, unknown>[]): PageConfig {
+  const empty = rows.length === 0;
+  return {
+    pageId: 'network',
+    pageTitle: 'Network',
+    tabs: [
+      networkTab('all',        'All',        rows, empty),
+      networkTab('merchants',  'Merchants',  rowsWithRole(rows, 'merchant'), empty),
+      networkTab('recipients', 'Recipients', rowsWithRole(rows, 'recipient'), empty),
+      networkTab('customers',  'Customers',  rowsWithRole(rows, 'customer'), empty),
+    ],
+  };
+}
 
-export default config;
+export default buildNetworkConfig([]);

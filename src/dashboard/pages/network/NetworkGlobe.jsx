@@ -6,7 +6,49 @@
 import { useEffect, useRef } from 'react'
 
 const HEIGHT = 220
-const BACKGROUND = '#23252B'
+// Light (white globe on light gray) is the default; dark matches the original
+// Figma globe. Pass theme="dark" to switch back.
+const THEMES = {
+  light: {
+    background: '#F1F4F8',
+    body: [[0, '#F8F8FA'], [0.6, '#ECEBF8'], [1, '#B3B6F6']],
+    rim: 'rgba(83,58,253,0.14)',
+    dotAlpha: [0.45, 0.55],
+    dotSize: 1.4,
+    // Lines fade from the platform's end to the account's end.
+    link: [[139, 131, 255], [86, 168, 255]],
+    linkBoost: 1.6,
+    yourLink: [[83, 58, 253], [86, 168, 255]],
+    pulse: [83, 58, 253],
+    business: '#56A8FF',
+    businessRing: '#FFFFFF',
+    businessGlow: 'rgba(86,168,255,0.28)',
+    unnamed: '#8B83FF',
+    ring: '#FFFFFF',
+    haloYou: 'rgba(103,93,255,0.22)',
+    haloOther: 'rgba(20,35,51,0.08)',
+    label: { background: 'rgba(255,255,255,0.9)', border: '1px solid #E9F0F7', color: '#142333', boxShadow: '0 1px 2px rgba(20,35,51,0.08), 0 4px 10px rgba(20,35,51,0.06)' },
+  },
+  dark: {
+    background: '#23252B',
+    body: [[0, '#3D4049'], [1, '#2F3245']],
+    rim: 'rgba(255,255,255,0.06)',
+    dotAlpha: [0.25, 0.75],
+    dotSize: 1.2,
+    link: [[183, 177, 255], [255, 255, 255]],
+    linkBoost: 1,
+    yourLink: [[139, 131, 255], [183, 177, 255]],
+    pulse: [255, 255, 255],
+    business: '#FFFFFF',
+    businessRing: null,
+    businessGlow: 'rgba(255,255,255,0.18)',
+    unnamed: '#B7B1FF',
+    ring: '#FFFFFF',
+    haloYou: 'rgba(139,131,255,0.28)',
+    haloOther: 'rgba(255,255,255,0.12)',
+    label: { background: 'rgba(35,37,43,0.72)', border: '1px solid rgba(255,255,255,0.16)', color: '#FFFFFF', boxShadow: 'none' },
+  },
+}
 const DOT_COUNT = 9000
 const LAND_THRESHOLD = 0.53
 const BASE_ROT = 0.6
@@ -27,7 +69,7 @@ const PLATFORMS = [
   { id: 'hertz', name: 'Hertz', logo: `${ASSETS}/hertz.svg`, color: '#FFD100', lon: -0.95, lat: 0.5, delay: 1100 },
   { id: 'shopify', name: 'Shopify', logo: `${ASSETS}/shopify.svg`, color: '#95BF47', lon: 1.05, lat: 0.55, delay: 1700 },
   { id: 'doordash', name: 'DoorDash', logo: `${ASSETS}/doordash.svg`, color: '#FF3008', lon: -2.3, lat: 0.72, delay: 2400 },
-  { id: 'openai', name: 'OpenAI', logo: `${ASSETS}/openai.svg`, color: '#FFFFFF', lon: 2.45, lat: 0.6, delay: 3000 },
+  { id: 'openai', name: 'OpenAI', logo: `${ASSETS}/openai.svg`, color: '#FFFFFF', lightColor: '#142333', lon: 2.45, lat: 0.6, delay: 3000 },
 ]
 const UNNAMED_PLATFORMS = 8
 const BUSINESSES = 42
@@ -36,7 +78,6 @@ const LINK_REACH = 1.0     // radians; businesses link to platforms within this 
 // Hertz and Shopify, and the chain continues round the globe, so the network
 // effect reads at a glance.
 const SHARED_PAIRS = [['you', 'hertz', 3], ['you', 'shopify', 3], ['hertz', 'doordash', 2], ['shopify', 'openai', 2], ['doordash', 'openai', 2]]
-const YOUR_LINK = [183, 177, 255]
 
 // Figma's dot gradient runs blue (bottom left) through magenta to orange (top right).
 const GRADIENT = [
@@ -201,7 +242,8 @@ function arcPoint(a, b, t, omega) {
   return [0, 1, 2].map(j => (a[j] * k0 + b[j] * k1) * lift)
 }
 
-export default function NetworkGlobe() {
+export default function NetworkGlobe({ theme = 'light' }) {
+  const th = THEMES[theme] ?? THEMES.light
   const canvasRef = useRef(null)
   const labelRefs = useRef({})
 
@@ -233,18 +275,19 @@ export default function NetworkGlobe() {
       const rot = reduceMotion ? BASE_ROT : BASE_ROT + (t / 1000) * SPIN
 
       ctx.clearRect(0, 0, width, HEIGHT)
-      ctx.fillStyle = BACKGROUND
+      ctx.fillStyle = th.background
       ctx.fillRect(0, 0, width, HEIGHT)
 
       // Globe body with a soft rim.
-      const body = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.6, R * 0.1, cx, cy, R)
-      body.addColorStop(0, '#3D4049')
-      body.addColorStop(1, '#2F3245')
+      const body = theme === 'dark'
+        ? ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.6, R * 0.1, cx, cy, R)
+        : ctx.createLinearGradient(0, cy - R, 0, cy)
+      for (const [at, c] of th.body) body.addColorStop(at, c)
       ctx.beginPath()
       ctx.arc(cx, cy, R, 0, Math.PI * 2)
       ctx.fillStyle = body
       ctx.fill()
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+      ctx.strokeStyle = th.rim
       ctx.lineWidth = 1
       ctx.stroke()
 
@@ -255,8 +298,8 @@ export default function NetworkGlobe() {
         const xn = (s.x - (cx - R)) / (2 * R)
         const yn = (cy - s.y) / R
         const [r, g, b] = gradientAt(Math.min(1, Math.max(0, 0.75 * xn + 0.25 * yn)))
-        ctx.fillStyle = `rgba(${r},${g},${b},${0.25 + 0.75 * s.z})`
-        ctx.fillRect(s.x - 0.6, s.y - 0.6, 1.2, 1.2)
+        ctx.fillStyle = `rgba(${r},${g},${b},${th.dotAlpha[0] + th.dotAlpha[1] * s.z})`
+        ctx.fillRect(s.x - th.dotSize / 2, s.y - th.dotSize / 2, th.dotSize, th.dotSize)
       }
 
       for (const b of world.businesses) b.glow = 0
@@ -289,7 +332,14 @@ export default function NetworkGlobe() {
         if (!started) continue
         // Rocketrides' own connections are tinted so they read as yours.
         const mine = l.from.id === 'you'
-        ctx.strokeStyle = mine ? `rgba(${YOUR_LINK},${Math.min(1, alpha * 1.8)})` : `rgba(255,255,255,${alpha})`
+        const [fromRgb, toRgb] = mine ? th.yourLink : th.link
+        const a = mine ? Math.min(1, alpha * 1.8) : Math.min(1, alpha * th.linkBoost)
+        const p0 = project(l.from.p, rot, cx, cy, R)
+        const p1 = project(l.to.p, rot, cx, cy, R)
+        const gradient = ctx.createLinearGradient(p0.x, p0.y, p1.x, p1.y)
+        gradient.addColorStop(0, `rgba(${fromRgb},${a})`)
+        gradient.addColorStop(1, `rgba(${toRgb},${a * 0.9})`)
+        ctx.strokeStyle = gradient
         ctx.lineWidth = mine ? 1.3 : 1
         ctx.stroke()
 
@@ -299,14 +349,14 @@ export default function NetworkGlobe() {
           if (s.z > 0) {
             ctx.beginPath()
             ctx.arc(s.x, s.y, 1.5, 0, Math.PI * 2)
-            ctx.fillStyle = `rgba(255,255,255,${Math.min(1, alpha * 3)})`
+            ctx.fillStyle = `rgba(${th.pulse},${Math.min(1, alpha * 3)})`
             ctx.fill()
           }
           if (u > 0.9) l.to.glow = 1
         }
       }
 
-      // Businesses: small white nodes.
+      // Businesses (connected accounts): small sky-blue nodes, white on the dark theme.
       for (const b of world.businesses) {
         const k = reduceMotion ? 1 : easeOut((t - b.delay) / POP)
         if (k <= 0) continue
@@ -316,13 +366,21 @@ export default function NetworkGlobe() {
         if (b.glow) {
           ctx.beginPath()
           ctx.arc(s.x, s.y, 4.5, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(255,255,255,${0.18 * fade})`
+          ctx.globalAlpha = fade
+          ctx.fillStyle = th.businessGlow
           ctx.fill()
         }
         ctx.beginPath()
-        ctx.arc(s.x, s.y, 1.9 * k, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,255,255,${0.9 * fade})`
+        ctx.arc(s.x, s.y, (theme === 'light' ? 2.6 : 1.9) * k, 0, Math.PI * 2)
+        ctx.globalAlpha = 0.9 * fade
+        ctx.fillStyle = th.business
         ctx.fill()
+        if (th.businessRing && k === 1) {
+          ctx.strokeStyle = th.businessRing
+          ctx.lineWidth = 1
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1
       }
 
       // Platforms: lavender rings for unnamed ones; named ones get a halo and an HTML label.
@@ -343,14 +401,14 @@ export default function NetworkGlobe() {
           const halo = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(t / 420 + pl.delay)
           ctx.beginPath()
           ctx.arc(s.x, s.y, (9 + halo * 3) * k, 0, Math.PI * 2)
-          ctx.fillStyle = pl.id === 'you' ? 'rgba(139,131,255,0.28)' : 'rgba(255,255,255,0.12)'
+          ctx.fillStyle = pl.id === 'you' ? th.haloYou : th.haloOther
           ctx.fill()
         }
         ctx.beginPath()
         ctx.arc(s.x, s.y, (pl.named ? 4.5 : 3) * k, 0, Math.PI * 2)
-        ctx.fillStyle = pl.named ? pl.color : '#B7B1FF'
+        ctx.fillStyle = pl.named ? (theme === 'light' && pl.lightColor) || pl.color : th.unnamed
         ctx.fill()
-        ctx.strokeStyle = '#FFFFFF'
+        ctx.strokeStyle = th.ring
         ctx.lineWidth = pl.named ? 1.5 : 1
         ctx.stroke()
         ctx.globalAlpha = 1
@@ -370,13 +428,13 @@ export default function NetworkGlobe() {
       cancelAnimationFrame(frame)
       observer.disconnect()
     }
-  }, [])
+  }, [theme, th])
 
   return (
     <div
       role="img"
       aria-label="A turning globe of businesses on Stripe. Rocketrides shares businesses with Hertz and Shopify, which share others with DoorDash, OpenAI and more platforms on the network."
-      style={{ position: 'relative', height: HEIGHT, borderRadius: 12, overflow: 'hidden', background: BACKGROUND }}
+      style={{ position: 'relative', height: HEIGHT, borderRadius: 12, overflow: 'hidden', background: th.background }}
     >
       <canvas ref={canvasRef} style={{ display: 'block' }} />
       {PLATFORMS.map(pl => (
@@ -394,8 +452,9 @@ export default function NetworkGlobe() {
             gap: 6,
             padding: '4px 8px 4px 4px',
             borderRadius: 9999,
-            background: 'rgba(35,37,43,0.72)',
-            border: '1px solid rgba(255,255,255,0.16)',
+            background: th.label.background,
+            border: th.label.border,
+            boxShadow: th.label.boxShadow,
             backdropFilter: 'blur(6px)',
             whiteSpace: 'nowrap',
             pointerEvents: 'none',
@@ -403,7 +462,7 @@ export default function NetworkGlobe() {
           }}
         >
           <img src={pl.logo} alt="" width="16" height="16" style={{ display: 'block', borderRadius: 4 }} />
-          <span style={{ fontSize: 12, fontWeight: 500, lineHeight: '16px', color: '#FFFFFF' }}>{pl.name}</span>
+          <span style={{ fontSize: 12, fontWeight: 500, lineHeight: '16px', color: th.label.color }}>{pl.name}</span>
           {pl.tag && (
             <span style={{ fontSize: 10, fontWeight: 500, lineHeight: '14px', padding: '0 5px', borderRadius: 9999, color: '#FFFFFF', background: '#533AFD' }}>
               {pl.tag}

@@ -72,8 +72,9 @@ export function RadioDot({ checked }) {
  *   type      'checkbox' | 'radio'
  *   name      radio group name
  *   leading   optional node before the text (e.g. a 72px icon tile)
+ *   muted     gray fill instead of white, for a standalone consent row
  */
-export function ChoiceRow({ type = 'checkbox', name, checked, onChange, title, description, leading, disabled }) {
+export function ChoiceRow({ type = 'checkbox', name, checked, onChange, title, description, leading, disabled, muted }) {
   const isRadio = type === 'radio'
   const selectedBorder = isRadio ? ink.brand : ink.divider
   return (
@@ -86,7 +87,7 @@ export function ChoiceRow({ type = 'checkbox', name, checked, onChange, title, d
         width: '100%',
         boxSizing: 'border-box',
         padding: leading ? '8px 16px 8px 8px' : isRadio ? 12 : 16,
-        background: '#FFFFFF',
+        background: muted ? ink.areaFill : '#FFFFFF',
         border: `1px solid ${checked ? selectedBorder : ink.divider}`,
         borderRadius: 8,
         cursor: disabled ? 'default' : 'pointer',
@@ -108,6 +109,62 @@ export function ChoiceRow({ type = 'checkbox', name, checked, onChange, title, d
         {description && <span style={text.body}>{description}</span>}
       </span>
       {!isRadio && <span style={{ paddingTop: 2, display: 'flex' }}><CheckboxBox checked={checked} /></span>}
+    </label>
+  )
+}
+
+const CHECKBOX_FOCUS_RING = '0 0 0 4px rgba(1,150,237,0.36)'
+
+/**
+ * Plain checkbox with a label beside it (Dashboard visual refresh, node 41828:3207).
+ * No surrounding box. A native, visually hidden input inside the <label> keeps it
+ * keyboard and screen reader accessible; the focus keyline shows only on keyboard
+ * focus (:focus-visible). Links inside `children` should stopPropagation so they
+ * don't toggle the box.
+ */
+export function Checkbox({ checked, onChange, disabled, children }) {
+  const [focusVisible, setFocusVisible] = useState(false)
+  return (
+    <label
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 16,
+        cursor: disabled ? 'default' : 'pointer',
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={e => onChange?.(e.target.checked)}
+        onFocus={e => setFocusVisible(e.target.matches(':focus-visible'))}
+        onBlur={() => setFocusVisible(false)}
+        className="sr-only"
+      />
+      <span style={{ paddingTop: 2, display: 'flex', flexShrink: 0 }}>
+        <span
+          aria-hidden="true"
+          style={{
+            display: 'block',
+            width: 16,
+            height: 16,
+            boxSizing: 'border-box',
+            borderRadius: 4,
+            overflow: 'hidden',
+            background: checked ? ink.brand : '#FFFFFF',
+            border: `1px solid ${checked ? ink.brand : FIELD_BORDER}`,
+            boxShadow: focusVisible ? CHECKBOX_FOCUS_RING : 'none',
+          }}
+        >
+          {/* The 16px asset covers the whole box, so offset it by the 1px border. */}
+          {checked && <img src={`${ASSETS}/checkbox-checked.svg`} alt="" width="16" height="16" style={{ display: 'block', margin: -1 }} />}
+        </span>
+      </span>
+      <span style={{ flex: '1 0 0', minWidth: 0, fontSize: 13, fontWeight: 400, lineHeight: '20px', letterSpacing: -0.065, color: ink.primary }}>
+        {children}
+      </span>
     </label>
   )
 }

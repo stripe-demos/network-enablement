@@ -3006,6 +3006,7 @@ export default function DashboardListViewTemplate({
     ? activeTab.data.map((row, i) => rowStatusOverrides[i] !== undefined ? { ...row, status: rowStatusOverrides[i] } : row)
     : activeTab.data;
   const tableRows = pendingForPage.length > 0 ? [...pendingForPage, ...baseRows] : baseRows;
+  const showDataEmptyState = Boolean(activeTab.emptyState) && !activeTab.placeholder && tableRows.length === 0;
 
   const refField = activeTab.refundableField ?? 'status';
   const refValue = activeTab.refundableValue ?? 'Active';
@@ -5778,11 +5779,32 @@ export default function DashboardListViewTemplate({
         </div>
       )}
 
+      {/* Data empty state: the tab's config supplies the copy for `data: []`. */}
+      {showDataEmptyState && activeTab.emptyState && (
+        <div data-wireframe-frame="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '80px 16px', fontFamily: 'SF Pro Text, system-ui, -apple-system, sans-serif' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center', maxWidth: 400 }}>
+            <span style={{ fontFamily: 'SF Pro Display, SF Pro Text, system-ui, sans-serif', fontSize: 20, fontWeight: 700, lineHeight: '28px', letterSpacing: '0.3px', color: '#1A2C44' }}>{activeTab.emptyState.title}</span>
+            {activeTab.emptyState.description && (
+              <span style={{ fontSize: 14, fontWeight: 400, lineHeight: '20px', letterSpacing: '-0.15px', color: '#596171' }}>{activeTab.emptyState.description}</span>
+            )}
+          </div>
+          {activeTab.emptyState.action && (
+            <button
+              type="button"
+              onClick={() => router.push(activeTab.emptyState!.action!.href)}
+              style={{ display: 'flex', alignItems: 'center', height: 28, padding: '4px 8px', background: '#675DFF', border: '1px solid #675DFF', borderRadius: 6, color: '#fff', fontSize: 14, fontWeight: 600, letterSpacing: '-0.15px', lineHeight: '20px', cursor: 'pointer', boxShadow: '0px 1px 1px 0px rgba(47,14,99,0.32)', fontFamily: 'inherit' }}
+            >
+              {activeTab.emptyState.action.label}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Table */}
       <div
         ref={tableOuterRef}
         className="relative pt-[8px]"
-        style={{ display: activeTab.placeholder ? 'none' : undefined }}
+        style={{ display: activeTab.placeholder || showDataEmptyState ? 'none' : undefined }}
         onMouseMove={handleTableMouseMove}
         onMouseLeave={handleTableMouseLeave}
       >

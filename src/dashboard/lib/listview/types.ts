@@ -217,6 +217,15 @@ export interface TabConfig {
    */
   placeholder?: boolean;
   /**
+   * Shown instead of the table when the tab has no rows (`data: []`).
+   * `action.href` is a Dashboard route (no `/dashboard` prefix).
+   */
+  emptyState?: {
+    title: string;
+    description?: string;
+    action?: { label: string; href: string };
+  };
+  /**
    * For the bulk-action "Refund N selected" count:
    * field name + value that makes a row refundable.
    * Defaults to field='status', value='Active'.

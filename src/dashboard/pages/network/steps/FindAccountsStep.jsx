@@ -1,7 +1,9 @@
 // Network onboarding step 3: pick a few businesses already on Stripe to invite.
-// One job, top to bottom: a short list recommended from the platform's business
-// description (with the "why" for each), a quiet count toward the 4 accounts it
-// takes to go live, then search with inline filter chips for everything else.
+// One job, top to bottom: a note that every business is verified, a short list
+// recommended from the platform's business description (with the "why" for
+// each), a quiet count toward the 4 accounts it takes to go live, then search
+// with inline filter chips for everything else. Each row shows the business
+// profile identity (name, @handle and verified badge, as in BusinessProfileCard).
 // Selection lives in state.selectedAccountIds; invites go out when the user
 // clicks "Done" in the shell's footer.
 import { useId, useMemo, useState } from 'react'
@@ -20,6 +22,7 @@ import {
 } from '../networkControls'
 import { ink, text } from '../networkTokens'
 
+const ASSETS = '/dashboard-assets/network'
 const GO_LIVE_ACCOUNTS = 4
 const PAGE_SIZE = 5
 
@@ -44,7 +47,7 @@ function matches(candidate, query, filters) {
   if (filters.readyOnly && !candidate.readyToConnect) return false
   const q = query.trim().toLowerCase()
   if (!q) return true
-  return [candidate.name, candidate.description, candidate.industry, candidate.country].some(v => v.toLowerCase().includes(q))
+  return [candidate.name, candidate.handle, candidate.description, candidate.industry, candidate.country].some(v => v.toLowerCase().includes(q))
 }
 
 /** 40px tile with the business initial (Modal / 86 leading icon). */
@@ -70,6 +73,48 @@ function InitialTile({ name }) {
   )
 }
 
+/** 12px verified shield (10.5×12 artwork, offset like BusinessProfileCard). */
+function VerifiedShield({ label }) {
+  return (
+    <span style={{ position: 'relative', width: 12, height: 12, flexShrink: 0 }}>
+      <img src={`${ASSETS}/profile-shield.svg`} alt={label ?? ''} width="10.5" height="12" style={{ position: 'absolute', top: 0, left: 0.75, display: 'block' }} />
+    </span>
+  )
+}
+
+/** Gray @handle pill with the verified badge (Figma "Business Profiles in FOX"). */
+function HandlePill({ handle, verified }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 6px', borderRadius: 9999, background: '#F5F6F8' }}>
+      <span style={{ fontSize: 12, fontWeight: 400, lineHeight: '16px', letterSpacing: 0, color: '#353A44', whiteSpace: 'nowrap' }}>{`@${handle}`}</span>
+      {verified && <VerifiedShield label="Verified" />}
+    </span>
+  )
+}
+
+/** Name with the profile handle pill beside it, on the same line. */
+function ProfileIdentity({ candidate }) {
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 8, rowGap: 2 }}>
+      <span>{candidate.name}</span>
+      <HandlePill handle={candidate.handle} verified={candidate.verified !== false} />
+    </span>
+  )
+}
+
+/** One-line note under the heading: everyone here is verified and onboards fast. */
+function VerifiedNote() {
+  return (
+    <p style={{ ...text.body, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0, padding: '8px 12px', background: ink.areaFill, borderRadius: 8 }}>
+      <span style={{ display: 'flex', paddingTop: 4 }}><VerifiedShield /></span>
+      <span>
+        <span style={{ fontWeight: 500, color: ink.primary }}>All businesses here are verified on Stripe.</span>
+        {' '}They can onboard instantly once they accept your invitation.
+      </span>
+    </p>
+  )
+}
+
 function CandidateRow({ candidate, description, checked, onToggle }) {
   return (
     <ChoiceRow
@@ -77,7 +122,7 @@ function CandidateRow({ candidate, description, checked, onToggle }) {
       checked={checked}
       onChange={next => onToggle(candidate.id, next)}
       leading={<InitialTile name={candidate.name} />}
-      title={candidate.name}
+      title={<ProfileIdentity candidate={candidate} />}
       description={description ?? describe(candidate)}
     />
   )
@@ -166,10 +211,11 @@ export default function FindAccountsStep({ state, setState }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ paddingBottom: 20 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 12 }}>
         <StepHeading title="Find your first connected accounts.">
-          Invite businesses already on Stripe. Ready-to-connect businesses can reuse details they’ve already given Stripe.
+          Invite businesses already on Stripe to connect to your platform.
         </StepHeading>
+        <VerifiedNote />
       </div>
 
       <RecommendedGroup label={<BasedOnLabel />}>
@@ -184,7 +230,7 @@ export default function FindAccountsStep({ state, setState }) {
         <SectionLabel>
           <label htmlFor={inputId}>Find more businesses</label>
         </SectionLabel>
-        <SearchInput id={inputId} value={query} onChange={updateQuery} placeholder="Search by name or keyword" />
+        <SearchInput id={inputId} value={query} onChange={updateQuery} placeholder="Search by name, handle or keyword" />
 
         <div role="group" aria-label="Filters" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
           <FilterSelect label="Industry" allLabel="All industries" value={filters.industry} options={INDUSTRY_OPTIONS} onChange={v => updateFilter('industry', v)} />

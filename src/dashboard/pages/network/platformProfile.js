@@ -6,6 +6,12 @@
 
 export const PLATFORM_PROFILE = {
   name: 'Rocketrides',
+  // Public business profile shown to the network (Opt in step).
+  handle: 'rocketrides',
+  logo: '/dashboard-assets/network/rocketrides.svg',
+  tagline: 'Online storefronts for independent brands that sell direct.',
+  website: 'rocketrides.io',
+  address: ['500 Howard St', 'San Francisco, CA 94105'],
   businessDescription:
     'We help independent apparel, beauty, home goods and accessories brands sell direct to customers. Most of our brands are in the US, UK, Canada and Australia.',
 

@@ -1,11 +1,12 @@
 // Enablement "Get more from your platform" checklist (Figma 11038:39006,
 // "Recommended"). Each row links to the page that completes the step; the
-// Stripe network row opens the network onboarding dialog instead.
+// Stripe network row opens the network onboarding dialog instead, and shows as
+// done once the dialog has been completed (it can still be reopened).
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { color, type, radius, tokens } from '@dashboard/ui'
-import { dashboardStorage } from '../../lib/storage'
+import { CheckCircleIcon, color, type, radius, tokens } from '@dashboard/ui'
 import NetworkOnboarding from '../network/NetworkOnboarding'
+import { isNetworkOnboardingComplete, saveNetworkOnboarding, useNetworkOnboarding } from '../network/networkInvites'
 
 const ASSETS = '/dashboard-assets/enablement'
 
@@ -17,7 +18,7 @@ const ITEMS = [
 
 const text = { ...type.bodySmall, lineHeight: '18px' }
 
-function ChecklistRow({ item, onOpenNetwork }) {
+function ChecklistRow({ item, onOpenNetwork, done = false }) {
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
   const Row = item.opensNetwork ? 'button' : Link
@@ -53,17 +54,25 @@ function ChecklistRow({ item, onOpenNetwork }) {
         <span style={{ color: color.actionPrimary }}>{item.highlight}</span>
         {item.after}
       </span>
-      <img src={`${ASSETS}/progress-ring-0.svg`} alt="" style={{ display: 'block', flexShrink: 0 }} />
+      {done ? (
+        <span aria-label="Done" role="img" style={{ display: 'inline-flex', flexShrink: 0, color: color.brand500 }}>
+          <CheckCircleIcon size={20} />
+        </span>
+      ) : (
+        <img src={`${ASSETS}/progress-ring-0.svg`} alt="" style={{ display: 'block', flexShrink: 0 }} />
+      )}
     </Row>
   )
 }
 
 export default function GoLiveChecklist() {
   const [networkOpen, setNetworkOpen] = useState(false)
+  const onboarding = useNetworkOnboarding()
+  const networkDone = isNetworkOnboardingComplete(onboarding)
   const openNetwork = useCallback(() => setNetworkOpen(true), [])
   const closeNetwork = useCallback(() => setNetworkOpen(false), [])
   const completeNetwork = useCallback(({ optedIn, selectedAccountIds }) => {
-    dashboardStorage.setItem('network-onboarding', JSON.stringify({ optedIn, selectedAccountIds, completedAt: new Date().toISOString() }))
+    saveNetworkOnboarding({ optedIn, selectedAccountIds })
     setNetworkOpen(false)
   }, [])
 
@@ -104,7 +113,7 @@ export default function GoLiveChecklist() {
         <span style={{ ...text, color: color.actionPrimary }}>Get more from your platform</span>
       </div>
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {ITEMS.map(item => <ChecklistRow key={item.id} item={item} onOpenNetwork={openNetwork} />)}
+        {ITEMS.map(item => <ChecklistRow key={item.id} item={item} onOpenNetwork={openNetwork} done={item.opensNetwork && networkDone} />)}
       </div>
       <NetworkOnboarding open={networkOpen} onClose={closeNetwork} onComplete={completeNetwork} />
     </section>
