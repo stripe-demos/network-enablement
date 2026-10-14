@@ -8,8 +8,8 @@
 //
 // Sections come from PROTOTYPE_PANEL_SECTIONS in prototypePanelSections.js.
 //
-// Open by default, so the controls are in view while demoing. It stays open
-// until closed with its button, the close button or Escape.
+// Closed by default; the trigger opens it. It stays open until closed with its
+// button, the close button or Escape.
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PROTOTYPE_PANEL_SECTIONS } from './prototypePanelSections'
@@ -34,9 +34,7 @@ function CloseIcon() {
 }
 
 export default function DashboardPrototypePanel() {
-  const [open, setOpen] = useState(true)
-  // Only an open from the trigger moves focus into the panel, not the default.
-  const focusOnOpen = useRef(false)
+  const [open, setOpen] = useState(false)
   const triggerRef = useRef(null)
   const panelRef = useRef(null)
   const titleId = useId()
@@ -49,9 +47,9 @@ export default function DashboardPrototypePanel() {
 
   useEffect(() => {
     if (!open) return undefined
-    if (focusOnOpen.current) panelRef.current?.focus({ preventScroll: true })
+    panelRef.current?.focus({ preventScroll: true })
     // Capture phase, so Escape in the panel closes it before an open dialog
-    // sees it. Escape elsewhere is left to the page (the panel is open by default).
+    // sees it. Escape elsewhere is left to the page.
     const onKey = event => {
       if (event.key !== 'Escape') return
       if (!panelRef.current?.contains(document.activeElement) && document.activeElement !== triggerRef.current) return
@@ -76,10 +74,7 @@ export default function DashboardPrototypePanel() {
         aria-controls={open ? panelId : undefined}
         aria-label="Prototype controls"
         title="Prototype controls"
-        onClick={() => {
-          focusOnOpen.current = true
-          setOpen(o => !o)
-        }}
+        onClick={() => setOpen(o => !o)}
       >
         <SlidersIcon />
       </button>
