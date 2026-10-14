@@ -71,6 +71,9 @@ export default function NetworkTooltip({ content, children, style, textAlign = '
         <div
           id={tooltipId}
           role="tooltip"
+          // Portalled outside the dialog, so it needs its own marker to stay
+          // real on pages shown as wireframes (e.g. Enablement).
+          data-wireframe-show=""
           style={{
             display: open && pos ? 'block' : 'none',
             position: 'fixed',
