@@ -27,31 +27,38 @@ rows of clickable steps, defined in
 
 ## Routes
 
-Locally, every route is on the URL `npm run dev` prints, by default
-**http://localhost:5173**. The same paths work on the Vercel deployment.
+Every route below is a path. Add it to the end of the base URL:
+
+- **Locally:** the `Local:` URL that `npm run dev` prints. It's usually
+  `http://localhost:5173`, but Vite moves to the next free port (5174, 5175…)
+  when 5173 is taken, so check your terminal.
+- **Deployed:** the Vercel URL for `main`, or a branch's preview URL.
+
+For example, if Vite prints `http://localhost:5174/`, account creation is at
+`http://localhost:5174/#account-creation`.
 
 ### Creation flows (unified account creation)
 
 Open over the landing page from a hash. Old `/flows/#…` links redirect here.
 
-| Flow | URL |
+| Flow | Path |
 |---|---|
-| Account creation (picker, describe account, configurations, capabilities, payouts, onboarding handoff) | http://localhost:5173/#account-creation |
-| Single config (add a customer configuration from the Network list) | http://localhost:5173/#single-config |
-| Invoice | http://localhost:5173/#invoice |
-| Subscription | http://localhost:5173/#subscription |
-| Send money | http://localhost:5173/#send-money |
+| Account creation (picker, describe account, configurations, capabilities, payouts, onboarding handoff) | `/#account-creation` |
+| Single config (add a customer configuration from the Network list) | `/#single-config` |
+| Invoice | `/#invoice` |
+| Subscription | `/#subscription` |
+| Send money | `/#send-money` |
 
 ### Dashboard
 
-| Page | URL |
+| Page | Path |
 |---|---|
-| Connect › Enablement (go-live checklist) | http://localhost:5173/dashboard/connect/enablement |
-| Network list | http://localhost:5173/dashboard/network/all |
-| Network onboarding: welcome | http://localhost:5173/dashboard/connect/enablement?network-onboarding=welcome |
-| Network onboarding: opt in | http://localhost:5173/dashboard/connect/enablement?network-onboarding=opt-in |
-| Network onboarding: find accounts | http://localhost:5173/dashboard/connect/enablement?network-onboarding=find-accounts |
-| Console | http://localhost:5173/console/ |
+| Connect › Enablement (go-live checklist) | `/dashboard/connect/enablement` |
+| Network list | `/dashboard/network/all` |
+| Network onboarding: welcome | `/dashboard/connect/enablement?network-onboarding=welcome` |
+| Network onboarding: opt in | `/dashboard/connect/enablement?network-onboarding=opt-in` |
+| Network onboarding: find accounts | `/dashboard/connect/enablement?network-onboarding=find-accounts` |
+| Console | `/console/` |
 
 ### Dashboard link parameters
 
@@ -65,7 +72,7 @@ address bar.
 | `prototype-reset=1` | Resets the network demo, like **Reset network demo** in the prototype controls. The landing page's **Open flow** links add it. |
 
 For example, a platform with existing accounts on the Network list, starting
-fresh: http://localhost:5173/dashboard/network/all?network-accounts=existing&prototype-reset=1
+fresh: `/dashboard/network/all?network-accounts=existing&prototype-reset=1`
 
 ## Working together
 
