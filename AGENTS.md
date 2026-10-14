@@ -1,4 +1,4 @@
-# Network flows prototype
+# Network enablement
 
 This repo is a shared prototype for Stripe Network flows. It has three UI
 surfaces, Dashboard, Flows and Console, plus **wireframe mode**, a tool that

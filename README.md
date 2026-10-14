@@ -1,4 +1,4 @@
-# Network flows prototype
+# Network enablement
 
 A shared prototype for mocking up **Stripe Network** flows. It merges two
 earlier prototypes, with their git history:
