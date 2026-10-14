@@ -183,7 +183,7 @@ function StandardDocs() {
               <AuthorPill />
             </div>
             <p className="doc-lead mt-6 max-w-[680px] text-[20px] !font-[450] leading-[1.55] tracking-[-0.01em] !text-[#3F5064]">
-              A shared prototype for Stripe Network flows: how a platform joins the network, finds businesses already on Stripe, and creates, configures and pays the accounts it brings on.
+              A shared prototype and user journeys for Connect enablement through Stripe Network, and for Network unified account creation flows.
             </p>
           </div>
 
