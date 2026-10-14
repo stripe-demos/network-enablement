@@ -1,9 +1,0 @@
-node_modules
-.next
-out
-.DS_Store
-*.log
-.tmp-send-flow
-.env
-.env.*
-!.env.example
