@@ -1,6 +1,6 @@
 // The authors byline, after the "Add multi-currency account" pill in Figma
 // (Sally's Sandbox, node 329:46544): overlapping round avatars with a white
-// ring, then a label. Avatars show initials until an `image` is set.
+// ring, then a label. Avatars show initials if there's no `image`.
 
 export type Author = {
   handle: string
@@ -11,8 +11,8 @@ export type Author = {
 }
 
 export const AUTHORS: Author[] = [
-  { handle: "sallykang", initials: "SK", fill: "#D9DBFC", ink: "#1C1E54" },
-  { handle: "sadhika", initials: "SA", fill: "#CBF5E5", ink: "#0B4F3F" },
+  { handle: "sallykang", initials: "SK", image: "/authors/sallykang.jpg", fill: "#D9DBFC", ink: "#1C1E54" },
+  { handle: "sadhika", initials: "SA", image: "/authors/sadhika.jpg", fill: "#CBF5E5", ink: "#0B4F3F" },
 ]
 
 function Avatar({ author }: { author: Author }) {
