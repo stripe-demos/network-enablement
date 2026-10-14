@@ -1,7 +1,7 @@
-// Data for step 3, version C ("Swipe"): the deck order, the "why it's a
+// Data for step 3, version A ("Swipe"): the deck order, the "why it's a
 // match" reasons and the simulated public profile fields the business profile
-// card needs. Ranking comes from recommendAccounts.js, so the deck and version A
-// agree on who the best matches are.
+// card needs. Ranking comes from recommendAccounts.js, so the deck and the
+// cards version agree on who the best matches are.
 import { NETWORK_CANDIDATES, VOLUME_RANGES } from '../networkCandidates'
 import { PLATFORM_PROFILE } from '../platformProfile'
 import { rankCandidates, recommendCandidates } from '../recommendAccounts'
@@ -88,7 +88,7 @@ export function profileFor(candidate) {
   }
 }
 
-// Browse all: filters, as in version A.
+// Browse all: search and filters over every business.
 const uniqueOptions = values => [...new Set(values)].sort().map(v => ({ value: v, label: v }))
 export const INDUSTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.industry))
 export const COUNTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.country))

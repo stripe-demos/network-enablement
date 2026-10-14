@@ -23,7 +23,7 @@ what can be checked automatically (`npm test`).
    - Never import from `src/console/`, `src/dashboard/`, or `src/integration/`.
    - Never name an app class or selector in the tool's code. App specifics are
      props: `charts`, `pickGroups`, `chartHoverCards`, `fitSelectors`, `palette`,
-     `theme`, `bottomOffset`. Surface wiring lives in `mount*.jsx` and in the
+     `theme`, `bottomOffset`, `controls`. Surface wiring lives in `mount*.jsx` and in the
      surface's own `prototypeSettingsConfig.js`.
    - `mountDashboard.jsx` is the only repo-only file; it is skipped when copying.
    - A new prop needs a README table row (a test checks).
@@ -31,6 +31,8 @@ what can be checked automatically (`npm test`).
    - Off: the page pays only for the pen. The pen shimmer and orbit are
      compositor-only (`transform` on a pseudo-element); never animate `mask-position`,
      `background-position`, or `@property` values for something that loops.
+   - The `data-wireframe-default` check is one `childList` MutationObserver,
+     checked at most once a frame. Don't widen it to attributes.
    - On: the engine redraws only when something changed (mutation, event,
      resize), never on a free-running loop. Keep these:
      - `TICK_BUDGET_MS` / `TICK_BACKOFF`: a slow redraw makes the engine sit out frames.

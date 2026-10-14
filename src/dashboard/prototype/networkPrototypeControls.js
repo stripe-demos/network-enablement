@@ -7,8 +7,11 @@ import { dashboardStorage } from '../lib/storage'
 const KEY = 'prototype-controls:network'
 export const NETWORK_PROTOTYPE_CONTROLS_EVENT = 'dashboard:prototype-controls:network'
 
-export const FIND_ACCOUNTS_VARIANT_IDS = ['list', 'cards', 'deck']
-export const DEFAULT_NETWORK_PROTOTYPE_CONTROLS = { findAccountsVariant: 'list' }
+// A stored id that's no longer listed (e.g. the removed 'list' version) falls
+// back to the default.
+export const FIND_ACCOUNTS_VARIANT_IDS = ['deck', 'cards']
+export const START_STEP_IDS = ['welcome', 'opt-in', 'find-accounts']
+export const DEFAULT_NETWORK_PROTOTYPE_CONTROLS = { findAccountsVariant: 'deck', startStep: 'welcome' }
 
 let cachedRaw
 let cached = DEFAULT_NETWORK_PROTOTYPE_CONTROLS
@@ -24,6 +27,9 @@ export function readNetworkPrototypeControls() {
       findAccountsVariant: FIND_ACCOUNTS_VARIANT_IDS.includes(parsed.findAccountsVariant)
         ? parsed.findAccountsVariant
         : DEFAULT_NETWORK_PROTOTYPE_CONTROLS.findAccountsVariant,
+      startStep: START_STEP_IDS.includes(parsed.startStep)
+        ? parsed.startStep
+        : DEFAULT_NETWORK_PROTOTYPE_CONTROLS.startStep,
     }
   }
   return cached
@@ -31,6 +37,12 @@ export function readNetworkPrototypeControls() {
 
 export function writeNetworkPrototypeControls(partial) {
   dashboardStorage.setItem(KEY, JSON.stringify({ ...readNetworkPrototypeControls(), ...partial }))
+  window.dispatchEvent(new Event(NETWORK_PROTOTYPE_CONTROLS_EVENT))
+}
+
+/** Back to the defaults (step 3 version: Swipe, start step: Welcome). */
+export function resetNetworkPrototypeControls() {
+  dashboardStorage.removeItem(KEY)
   window.dispatchEvent(new Event(NETWORK_PROTOTYPE_CONTROLS_EVENT))
 }
 

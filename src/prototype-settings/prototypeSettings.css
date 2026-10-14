@@ -8,9 +8,9 @@ html[data-wireframe="on"] body {
   background: var(--wf-bg) !important;
 }
 
-/* Everything below stops at revealed or previewed content (Custom mode), so
-   that content renders at full fidelity. */
-@scope (html[data-wireframe="on"]) to ([data-wf-reveal], [data-wf-preview]) {
+/* Everything below stops at revealed or previewed content (Custom mode) and at
+   content the page marks `data-wireframe-show`, so it renders at full fidelity. */
+@scope (html[data-wireframe="on"]) to ([data-wf-reveal], [data-wf-preview], [data-wireframe-show]) {
   /* Only elements that directly hold blocked-out text (`data-wf-text`) go
      transparent, so kept descendants elsewhere don't inherit it. */
   [data-wf-text],

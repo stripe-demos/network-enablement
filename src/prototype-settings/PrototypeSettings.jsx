@@ -22,6 +22,8 @@ const BAR_HEIGHT = 44;
 const BAR_EXIT_MS = 190;
 // How long the pen button takes to shrink away when wireframe turns on.
 const PEN_EXIT_MS = 220;
+// Pages opt into a wireframe by default with this attribute (see `useDefaultWireframe`).
+const DEFAULT_WIREFRAME = '[data-wireframe-default]';
 
 const storageKeys = storageKey => (storageKey
   ? { settings: `${storageKey}-settings-v1`, flows: `${storageKey}-flows-v1` }
@@ -150,6 +152,29 @@ function Switch({ checked, labelledBy, onToggle }) {
  * page's own background, and `storageKey` keeps this prototype's saved state
  * separate from others on the same origin.
  */
+// Whether the page currently has an element marked `data-wireframe-default`.
+// Watches only for added and removed nodes, checked at most once a frame.
+function useDefaultWireframe() {
+  const [present, setPresent] = useState(() => Boolean(document.querySelector(DEFAULT_WIREFRAME)));
+  useEffect(() => {
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      setPresent(Boolean(document.querySelector(DEFAULT_WIREFRAME)));
+    };
+    const observer = new MutationObserver(() => {
+      if (!frame) frame = requestAnimationFrame(check);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    check();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+  return present;
+}
+
 export default function PrototypeSettings({
   surface = 'prototype',
   palette,
@@ -161,6 +186,7 @@ export default function PrototypeSettings({
   theme: givenTheme,
   bottomOffset = 16,
   storageKey,
+  controls = true,
 }) {
   const { settings: settingsKey, flows: flowsKey } = storageKeys(storageKey);
   const [settings, setSettings] = useState(() => readSettings(settingsKey));
@@ -200,7 +226,13 @@ export default function PrototypeSettings({
   // Where the outline dissolve starts and ends, handed to the engine by the
   // toggle: only a user toggle plays it, not loading the page with wireframe on.
   const dissolve = useRef({ intro: null, outro: null });
-  const { enabled, color } = settings;
+  // Without controls nothing can turn wireframe off, so a saved "on" is ignored.
+  const enabled = controls && settings.enabled;
+  // A page marked `data-wireframe-default` is wireframed while wireframe mode is
+  // off, with no bar, and shows its `data-wireframe-show` content in color.
+  const pageDefault = useDefaultWireframe() && !enabled;
+  const active = enabled || pageDefault;
+  const color = enabled ? settings.color : true;
   const docked = enabled || closing;
   const { picks, flows, activeFlowId } = flowState;
   const activeFlow = flows.find(f => f.id === activeFlowId);
@@ -285,19 +317,19 @@ export default function PrototypeSettings({
   // running engine rather than restarting it.
   const wireframe = useRef(null);
   useEffect(() => {
-    if (!enabled) return undefined;
+    if (!active) return undefined;
     const origins = dissolve.current;
     const engine = startWireframe({ palette: palette ?? derivePalette(), keep, color, intro: origins.intro });
     origins.intro = null;
     wireframe.current = engine;
     return () => {
       // The wireframe waits for the bar to slide away before it dissolves.
-      engine.stop({ outro: origins.outro, delay: BAR_EXIT_MS });
+      engine.stop({ outro: origins.outro, delay: enabled ? BAR_EXIT_MS : 0 });
       origins.outro = null;
       wireframe.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, palette]);
+  }, [active, palette]);
 
   useEffect(() => {
     wireframe.current?.setKeep(keep);
@@ -398,7 +430,7 @@ export default function PrototypeSettings({
   return createPortal(
     <>
       {/* Stays up while the bar slides away, until the wireframe starts to dissolve. */}
-      {docked && <div className="ps-grayscale" data-wireframe-ui="" aria-hidden="true" />}
+      {(docked || pageDefault) && <div className="ps-grayscale" data-wireframe-ui="" aria-hidden="true" />}
       {/* Presses here never reach the page, so its open menus don't treat them
           as outside clicks and close (e.g. before exporting a screenshot). */}
       <div
@@ -493,7 +525,7 @@ export default function PrototypeSettings({
             onClose={() => setSaving(false)}
           />
         )}
-        {(!docked || penLeaving || penPopIn) && (
+        {controls && (!docked || penLeaving || penPopIn) && (
           <button
             type="button"
             className="ps-trigger"

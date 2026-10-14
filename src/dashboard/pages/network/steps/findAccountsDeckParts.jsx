@@ -1,4 +1,4 @@
-// Presentational pieces for step 3, version C ("Swipe"): goal dots, match
+// Presentational pieces for step 3, version A ("Swipe"): goal dots, match
 // reasons, stack edges, key hints and the inline "Browse all businesses" list.
 import { useId, useMemo, useState } from 'react'
 import { ChoiceRow, FilterSelect, FilterToggle, GoalRing, SearchInput, TextButton } from '../networkControls'
@@ -153,7 +153,7 @@ function Identity({ candidate }) {
 
 const describe = c => [c.industry, c.country, c.readyToConnect && 'Ready to connect'].filter(Boolean).join(' · ')
 
-/** Inline search and filters over every business, best match first (version A's list). */
+/** Inline search and filters over every business, best match first. */
 export function BrowseAll({ selected, onToggle }) {
   const inputId = useId()
   const [query, setQuery] = useState('')

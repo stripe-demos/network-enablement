@@ -20,6 +20,8 @@ const STEPS = [
   { id: 'find-accounts', label: 'Find connected accounts', primary: 'Done', Component: FindAccountsStep, validByDefault: true },
 ]
 
+const OPT_IN_INDEX = STEPS.findIndex(s => s.id === 'opt-in')
+
 const INITIAL_STATE = { optedIn: false, shareSettings: {}, selectedAccountIds: [] }
 
 const Z_INDEX = 10020 // above Drawer (10011), toasts (10002) and the app chrome
@@ -93,7 +95,7 @@ function StepProgress({ current }) {
   )
 }
 
-function OnboardingDialog({ onClose, onComplete, initialStep }) {
+function OnboardingDialog({ onClose, onComplete, initialStep, keepFocus, jump }) {
   const titleId = useId()
   const dialogRef = useRef(null)
   const scrollRef = useRef(null)
@@ -101,7 +103,27 @@ function OnboardingDialog({ onClose, onComplete, initialStep }) {
   const [stepIndex, setStepIndex] = useState(startIndex)
   const [valid, setValid] = useState(STEPS[startIndex].validByDefault)
   // Starting past "Opt in" counts as having agreed.
-  const [state, setStateRaw] = useState(() => ({ ...INITIAL_STATE, optedIn: startIndex > STEPS.findIndex(s => s.id === 'opt-in') }))
+  const [state, setStateRaw] = useState(() => ({ ...INITIAL_STATE, optedIn: startIndex > OPT_IN_INDEX }))
+  // Whether the next step change moves focus into the step (off for jumps from
+  // a control that sits above the dialog, like the prototype panel).
+  const [moveFocus, setMoveFocus] = useState(true)
+
+  // A jump request (openNetworkOnboarding() while open) moves to that step and
+  // keeps the step state. Jumping past "Opt in" counts as having agreed.
+  // Adjusted during render, so the new step shows in the same paint.
+  const [seenJump, setSeenJump] = useState(jump?.nonce ?? 0)
+  if (jump && jump.nonce !== seenJump) {
+    setSeenJump(jump.nonce)
+    const index = STEPS.findIndex(s => s.id === jump.step)
+    if (index >= 0) {
+      if (index > OPT_IN_INDEX && !state.optedIn) setStateRaw(prev => ({ ...prev, optedIn: true }))
+      if (index !== stepIndex) {
+        setMoveFocus(!jump.keepFocus)
+        setValid(STEPS[index].validByDefault)
+        setStepIndex(index)
+      }
+    }
+  }
 
   const step = STEPS[stepIndex]
   const isLast = stepIndex === STEPS.length - 1
@@ -112,6 +134,7 @@ function OnboardingDialog({ onClose, onComplete, initialStep }) {
   const onValidChange = useCallback(v => setValid(Boolean(v)), [])
 
   const goTo = index => {
+    setMoveFocus(true)
     setValid(STEPS[index].validByDefault)
     setStepIndex(index)
   }
@@ -127,17 +150,22 @@ function OnboardingDialog({ onClose, onComplete, initialStep }) {
     goTo(stepIndex + 1)
   }
 
-  // Body scroll lock + restore focus to whatever opened the dialog.
+  // Body scroll lock + restore focus to whatever opened the dialog. With
+  // keepFocus, focus stays where it is (e.g. in the prototype panel above).
+  const [keepFocusOnOpen] = useState(Boolean(keepFocus))
   useLayoutEffect(() => {
     const previouslyFocused = document.activeElement
     const { overflow } = document.body.style
+    const dialog = dialogRef.current
     document.body.style.overflow = 'hidden'
-    dialogRef.current?.focus({ preventScroll: true })
+    if (!keepFocusOnOpen) dialog?.focus({ preventScroll: true })
     return () => {
       document.body.style.overflow = overflow
+      // Opened with focus elsewhere and it's still there: leave it alone.
+      if (keepFocusOnOpen && dialog && !dialog.contains(document.activeElement)) return
       if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) previouslyFocused.focus({ preventScroll: true })
     }
-  }, [])
+  }, [keepFocusOnOpen])
 
   // Escape closes (steps can call e.preventDefault() to keep it open, e.g. for a nested menu).
   useEffect(() => {
@@ -149,12 +177,13 @@ function OnboardingDialog({ onClose, onComplete, initialStep }) {
   }, [onClose])
 
   // New step: back to the top, focus inside the dialog for screen readers.
-  const firstRender = useRef(true)
+  const shownStep = useRef(stepIndex)
   useEffect(() => {
-    if (firstRender.current) { firstRender.current = false; return }
+    if (shownStep.current === stepIndex) return
+    shownStep.current = stepIndex
     scrollRef.current?.scrollTo({ top: 0 })
-    scrollRef.current?.focus({ preventScroll: true })
-  }, [stepIndex])
+    if (moveFocus) scrollRef.current?.focus({ preventScroll: true })
+  }, [stepIndex, moveFocus])
 
   // Keep Tab / Shift+Tab inside the dialog.
   const trapFocus = e => {
@@ -181,6 +210,8 @@ function OnboardingDialog({ onClose, onComplete, initialStep }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      // Opened from Enablement's checklist, which stays real while that page is wireframed.
+      data-wireframe-show=""
       tabIndex={-1}
       onKeyDown={trapFocus}
       initial={{ opacity: 0 }}
@@ -296,12 +327,15 @@ function OnboardingDialog({ onClose, onComplete, initialStep }) {
  *   onClose()   X button or Escape
  *   onComplete({ optedIn, selectedAccountIds })   "Done" on the last step
  *   initialStep 'welcome' | 'opt-in' | 'find-accounts' (optional, default 'welcome')
+ *   keepFocus   don't move focus into the dialog when it opens (optional)
+ *   jump        { step, nonce, keepFocus } (optional): each new nonce moves the
+ *               open dialog to step without resetting its state
  * Step state resets every time the dialog opens.
  */
-export default function NetworkOnboarding({ open, onClose, onComplete, initialStep }) {
+export default function NetworkOnboarding({ open, onClose, onComplete, initialStep, keepFocus, jump }) {
   return createPortal(
     <AnimatePresence>
-      {open && <OnboardingDialog key="network-onboarding" onClose={onClose} onComplete={onComplete} initialStep={initialStep} />}
+      {open && <OnboardingDialog key="network-onboarding" onClose={onClose} onComplete={onComplete} initialStep={initialStep} keepFocus={keepFocus} jump={jump} />}
     </AnimatePresence>,
     document.body,
   )

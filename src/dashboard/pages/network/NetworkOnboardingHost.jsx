@@ -4,18 +4,30 @@
 import { useCallback, useEffect, useState } from 'react'
 import NetworkOnboarding from './NetworkOnboarding'
 import { saveNetworkOnboarding } from './networkInvites'
-import { OPEN_NETWORK_ONBOARDING_EVENT } from './openNetworkOnboarding'
+import { CLOSE_NETWORK_ONBOARDING_EVENT, OPEN_NETWORK_ONBOARDING_EVENT } from './openNetworkOnboarding'
+
+const CLOSED = { open: false, session: 0, initialStep: undefined, keepFocus: false, jump: { step: undefined, nonce: 0, keepFocus: false } }
 
 export default function NetworkOnboardingHost() {
-  // session bumps on every open so a reopen (e.g. on another step) starts fresh.
-  const [request, setRequest] = useState({ open: false, session: 0, initialStep: undefined })
+  // Opening a closed dialog bumps session, so it starts fresh. Opening an
+  // already open one bumps jump.nonce instead: the dialog moves to jump.step and
+  // keeps its state (selections, consent).
+  const [request, setRequest] = useState(CLOSED)
 
   useEffect(() => {
     const onOpen = event => {
-      setRequest(prev => ({ open: true, session: prev.session + 1, initialStep: event.detail?.initialStep }))
+      const { initialStep, keepFocus = false } = event.detail ?? {}
+      setRequest(prev => (prev.open
+        ? { ...prev, jump: { step: initialStep, nonce: prev.jump.nonce + 1, keepFocus } }
+        : { ...CLOSED, open: true, session: prev.session + 1, initialStep, keepFocus }))
     }
+    const onClose = () => setRequest(prev => (prev.open ? { ...prev, open: false } : prev))
     window.addEventListener(OPEN_NETWORK_ONBOARDING_EVENT, onOpen)
-    return () => window.removeEventListener(OPEN_NETWORK_ONBOARDING_EVENT, onOpen)
+    window.addEventListener(CLOSE_NETWORK_ONBOARDING_EVENT, onClose)
+    return () => {
+      window.removeEventListener(OPEN_NETWORK_ONBOARDING_EVENT, onOpen)
+      window.removeEventListener(CLOSE_NETWORK_ONBOARDING_EVENT, onClose)
+    }
   }, [])
 
   const close = useCallback(() => setRequest(prev => ({ ...prev, open: false })), [])
@@ -31,6 +43,8 @@ export default function NetworkOnboardingHost() {
       onClose={close}
       onComplete={complete}
       initialStep={request.initialStep}
+      keepFocus={request.keepFocus}
+      jump={request.jump}
     />
   )
 }

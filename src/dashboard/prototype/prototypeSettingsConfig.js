@@ -25,4 +25,7 @@ export const DASHBOARD_PROTOTYPE_SETTINGS = {
   // Customize reveals these as a whole, like charts.
   pickGroups: ['.dashboard-home-console-input'],
   defaultFlowLabel: 'All dashboard',
+  // The pen and bar are hidden. Pages marked `data-wireframe-default`
+  // (Connect › Enablement) still show as wireframes.
+  controls: false,
 };

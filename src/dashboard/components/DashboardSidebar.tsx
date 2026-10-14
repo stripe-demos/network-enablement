@@ -900,9 +900,10 @@ export default function DashboardSidebar({
             transition: 'width var(--prototype-sidebar-transition-ms, 200ms) cubic-bezier(0.25, 0.1, 0.25, 1), border-color var(--prototype-sidebar-fade-ms, 150ms) ease',
           }}
         >
-          {/* Account Header — V1 only */}
+          {/* Account Header — V1 only. It, Network and Connect stay real on pages
+              shown as wireframes (data-wireframe-default). */}
           {version !== 'v2' && (
-            <div className="dash-sidebar-static-section sticky top-0 z-10 flex items-center h-[60px] bg-white" style={{ padding: '0 8px' }}>
+            <div className="dash-sidebar-static-section sticky top-0 z-10 flex items-center h-[60px] bg-white" style={{ padding: '0 8px' }} data-wireframe-show="">
               <button
                 ref={accountTriggerRef}
                 type="button"
@@ -963,6 +964,7 @@ export default function DashboardSidebar({
                       label="Transactions"
                       isActive={isActive('/transactions')}
                     />
+                    <div data-wireframe-show="">
                     <NavItem collapsed={collapsed} v2={version === 'v2'}
                       href={buildDashboardHref('/network/all')}
                       icon={collapsed && newNetworkInvites > 0
@@ -972,6 +974,7 @@ export default function DashboardSidebar({
                       isActive={isActive('/network')}
                       accessory={newNetworkInvites > 0 ? <NetworkInviteBadge count={newNetworkInvites} /> : undefined}
                     />
+                    </div>
                     <NavItem collapsed={collapsed} v2={version === 'v2'}
                       href={buildDashboardHref('/product-catalog/all-products')}
                       icon={<ProductCatalogIcon />}
@@ -1000,7 +1003,7 @@ export default function DashboardSidebar({
                   {/* Products */}
                   <div className="flex flex-col">
                     <SectionHeading collapsed={collapsed} label="Products" />
-                    {renderProductSection('connect', <ConnectIcon />, 'Connect')}
+                    <div data-wireframe-show="">{renderProductSection('connect', <ConnectIcon />, 'Connect')}</div>
                     {renderProductSection('payments', <WalletIcon />, 'Payments')}
                     {renderProductSection('billing', <BillingIcon />, 'Billing')}
                     {renderProductSection('reporting', <ReportingIcon />, 'Reporting')}

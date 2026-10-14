@@ -10,7 +10,8 @@ const UI_SELECTOR = '[data-wireframe-ui]';
 // Areas that stay dark in a light wireframe, using the palette's dark colors.
 const DARK_ZONE = '[data-wireframe-tone="dark"]';
 // Content shown at full fidelity in Custom mode (see customPicker.js).
-const REVEALED = '[data-wf-reveal], [data-wf-preview]';
+// `data-wireframe-show` is the page's own hook for content that always stays real.
+const REVEALED = '[data-wf-reveal], [data-wf-preview], [data-wireframe-show]';
 // The tool's own grayscale overlay, masked over picks when `color` is on.
 const GRAYSCALE = '.ps-grayscale';
 const SKIPPED_TAGS = new Set(['script', 'style', 'noscript', 'template', 'title', 'textarea', 'select', 'option']);

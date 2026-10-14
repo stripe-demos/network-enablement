@@ -71,6 +71,8 @@ export default function DashboardPrototypePanel() {
         type="button"
         className="dash-proto-trigger"
         data-wireframe-tone="dark"
+        // The trigger and panel stay real on pages shown as wireframes.
+        data-wireframe-show=""
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label="Prototype controls"
@@ -88,6 +90,7 @@ export default function DashboardPrototypePanel() {
           tabIndex={-1}
           className="dash-proto-panel"
           data-wireframe-tone="dark"
+          data-wireframe-show=""
         >
           <header className="dash-proto-panel__header">
             <h2 id={titleId} className="dash-proto-panel__title">Prototype controls</h2>

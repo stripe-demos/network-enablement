@@ -44,7 +44,15 @@ pill buttons.
 |---|---|---|
 | Welcome | "Is this right for me, and what happens next?" | Animated globe of platforms (Rocketrides, Hertz, Shopify, DoorDash, OpenAI) sharing businesses, the steps ahead, and when it's a good fit to join |
 | Opt in | "What am I agreeing to?" | Short terms (what you share, what you get, your accounts stay private) and one required consent checkbox |
-| Find connected accounts | "Pick a few businesses to invite." | 4 recommendations ranked from the platform's onboarding business description, progress toward 4, and search with Industry, Country, Monthly volume and Ready to connect filters |
+| Find connected accounts | "Pick a few businesses to invite." | Recommendations ranked from the platform's onboarding business description and progress toward 4, in one of two versions (see below) |
+
+Step 3 has two versions to compare, picked in the prototype control panel
+(the sliders button): **A · Swipe** (default), one business profile card at a
+time with Skip or Invite, plus "Browse all businesses" search and filters; and
+**B · Profile cards**, recommendations as business profile cards, 4 per page.
+Choosing a version or a "Start on step" option opens the dialog on that step,
+or moves an open dialog there. "Reset network demo" closes the dialog, clears
+the saved result and sets the controls back to Swipe and Welcome.
 
 Key files, in [`src/dashboard/pages/network/`](src/dashboard/pages/network/):
 

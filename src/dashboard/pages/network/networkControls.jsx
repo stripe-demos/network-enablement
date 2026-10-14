@@ -147,19 +147,27 @@ export function Checkbox({ checked, onChange, disabled, children }) {
         <span
           aria-hidden="true"
           style={{
+            position: 'relative',
             display: 'block',
             width: 16,
             height: 16,
             boxSizing: 'border-box',
             borderRadius: 4,
-            overflow: 'hidden',
             background: checked ? ink.brand : '#FFFFFF',
             border: `1px solid ${checked ? ink.brand : FIELD_BORDER}`,
             boxShadow: focusVisible ? CHECKBOX_FOCUS_RING : 'none',
           }}
         >
-          {/* The 16px asset covers the whole box, so offset it by the 1px border. */}
-          {checked && <img src={`${ASSETS}/checkbox-checked.svg`} alt="" width="16" height="16" style={{ display: 'block', margin: -1 }} />}
+          {/* The 16px check art is centered on the box itself, border included. */}
+          {checked && (
+            <img
+              src={`${ASSETS}/checkbox-checked.svg`}
+              alt=""
+              width="16"
+              height="16"
+              style={{ position: 'absolute', top: '50%', left: '50%', display: 'block', transform: 'translate(-50%, -50%)' }}
+            />
+          )}
         </span>
       </span>
       <span style={{ flex: '1 0 0', minWidth: 0, fontSize: 13, fontWeight: 400, lineHeight: '20px', letterSpacing: -0.065, color: ink.primary }}>

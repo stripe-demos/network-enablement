@@ -146,6 +146,7 @@ export default function DashboardToolbar() {
     return (
       <div
         className="h-[60px] w-full dashboard-toolbar--home"
+        data-wireframe-show=""
         style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system, sans-serif', overflow: 'visible' }}
       >
         <div
@@ -164,6 +165,8 @@ export default function DashboardToolbar() {
   return (
     <div
       className="dashboard-toolbar--chrome flex items-center gap-[24px] h-[60px] w-full"
+      // Stays real on pages shown as wireframes (data-wireframe-default).
+      data-wireframe-show=""
       style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system, sans-serif', position: 'relative', zIndex: 200, overflow: 'visible', paddingInline: isListViewPath(pathname) ? 24 : cappedGutter(24) }}
     >
       {/* Search */}

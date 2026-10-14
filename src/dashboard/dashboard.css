@@ -1048,7 +1048,7 @@ tbody tr.row-force-hover .copy-icon  { opacity: 1; transform: scale(1); }
 /* Same size, shape and shadow as the pen, in dark. */
 .dash-proto-trigger {
   position: fixed;
-  right: 56px; /* the pen's 16px + its 32px + an 8px gap */
+  right: 16px; /* where the wireframe pen sat; Dashboard hides the pen */
   bottom: 64px;
   z-index: 10040;
   display: grid;

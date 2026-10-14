@@ -9,7 +9,12 @@ const DEFAULT_HEIGHT = 220
 // `height` sets the hero's height (220 in the dialog), or 'fill' to take the
 // container's height. By default only the globe's top half shows, anchored to
 // the bottom edge; `full` shows the whole globe, centered, with platforms and
-// businesses spread into the southern hemisphere too.
+// businesses spread into the southern hemisphere too. `legend` adds a key in
+// the bottom-left corner.
+//
+// Besides platforms and their connected accounts, the globe shows Accounts v2
+// accounts that are on the network without Connect: customers (teal) and
+// recipients (amber). They have no platform links; they just twinkle.
 // Light (white globe on light gray) is the default; dark matches the original
 // Figma globe. Pass theme="dark" to switch back.
 const THEMES = {
@@ -27,6 +32,8 @@ const THEMES = {
     business: '#56A8FF',
     businessRing: '#FFFFFF',
     businessGlow: 'rgba(86,168,255,0.28)',
+    customer: '#1FB89A',
+    recipient: '#F5A524',
     unnamed: '#8B83FF',
     ring: '#FFFFFF',
     haloYou: 'rgba(103,93,255,0.22)',
@@ -46,6 +53,8 @@ const THEMES = {
     business: '#FFFFFF',
     businessRing: null,
     businessGlow: 'rgba(255,255,255,0.18)',
+    customer: '#5EE3C4',
+    recipient: '#FFC566',
     unnamed: '#B7B1FF',
     ring: '#FFFFFF',
     haloYou: 'rgba(139,131,255,0.28)',
@@ -78,6 +87,9 @@ const PLATFORMS = [
 ]
 const UNNAMED_PLATFORMS = 8
 const BUSINESSES = 42
+// Network accounts outside Connect, per kind: [half globe, full globe].
+const V2_ACCOUNTS = { customer: [14, 48], recipient: [10, 36] }
+const TWINKLE = 2600       // ms for a customer or recipient to brighten and dim
 const LINK_REACH = 1.0     // radians; businesses link to platforms within this arc
 // Businesses shared by two named platforms. Rocketrides' accounts are also on
 // Hertz and Shopify, and the chain continues round the globe, so the network
@@ -223,7 +235,12 @@ function buildWorld(full) {
     for (const { pl } of near) links.push(makeLink(pl, b))
   }
   const businesses = [...shared, ...others]
-  return { land, platforms, businesses, links }
+
+  // Customers and recipients on the network (Accounts v2, not connected accounts).
+  const v2 = Object.entries(V2_ACCOUNTS).flatMap(([kind, [half, whole]]) =>
+    scatter(full ? whole : half, 0.1).map(p => ({ p, kind, delay: 2000 + rand() * 7000, phase: rand() * TWINKLE })),
+  )
+  return { land, platforms, businesses, links, v2 }
 }
 
 const easeOut = t => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3)
@@ -248,7 +265,7 @@ function arcPoint(a, b, t, omega) {
   return [0, 1, 2].map(j => (a[j] * k0 + b[j] * k1) * lift)
 }
 
-export default function NetworkGlobe({ theme = 'light', height = DEFAULT_HEIGHT, full = false }) {
+export default function NetworkGlobe({ theme = 'light', height = DEFAULT_HEIGHT, full = false, legend = false }) {
   const th = THEMES[theme] ?? THEMES.light
   const canvasRef = useRef(null)
   const labelRefs = useRef({})
@@ -364,6 +381,21 @@ export default function NetworkGlobe({ theme = 'light', height = DEFAULT_HEIGHT,
         }
       }
 
+      // Customers and recipients: smaller nodes that twinkle, with no links.
+      for (const a of world.v2) {
+        const k = reduceMotion ? 1 : easeOut((t - a.delay) / POP)
+        if (k <= 0) continue
+        const s = project(a.p, rot, cx, cy, R)
+        if (s.z <= 0.03) continue
+        const twinkle = reduceMotion ? 1 : 0.65 + 0.35 * Math.sin(((t + a.phase) / TWINKLE) * Math.PI * 2)
+        ctx.beginPath()
+        ctx.arc(s.x, s.y, 2.1 * k, 0, Math.PI * 2)
+        ctx.globalAlpha = Math.min(1, s.z * 2.5) * twinkle
+        ctx.fillStyle = th[a.kind]
+        ctx.fill()
+        ctx.globalAlpha = 1
+      }
+
       // Businesses (connected accounts): small sky-blue nodes, white on the dark theme.
       for (const b of world.businesses) {
         const k = reduceMotion ? 1 : easeOut((t - b.delay) / POP)
@@ -441,7 +473,7 @@ export default function NetworkGlobe({ theme = 'light', height = DEFAULT_HEIGHT,
   return (
     <div
       role="img"
-      aria-label="A turning globe of businesses on Stripe. Rocketrides shares businesses with Hertz and Shopify, which share others with DoorDash, OpenAI and more platforms on the network."
+      aria-label="A turning globe of businesses on Stripe. Rocketrides shares businesses with Hertz and Shopify, which share others with DoorDash, OpenAI and more platforms on the network. Customers and recipients on the network appear alongside them."
       style={{ position: 'relative', height: height === 'fill' ? '100%' : height, borderRadius: 12, overflow: 'hidden', background: th.background }}
     >
       <canvas ref={canvasRef} style={{ display: 'block' }} />
@@ -478,6 +510,24 @@ export default function NetworkGlobe({ theme = 'light', height = DEFAULT_HEIGHT,
           )}
         </div>
       ))}
+      {legend && (
+        <ul
+          aria-hidden="true"
+          style={{ position: 'absolute', left: 16, bottom: 16, margin: 0, padding: '8px 12px', listStyle: 'none', display: 'flex', flexWrap: 'wrap', gap: '4px 14px', borderRadius: 8, background: th.label.background, border: th.label.border, boxShadow: th.label.boxShadow, backdropFilter: 'blur(6px)' }}
+        >
+          {[
+            ['Platforms', th.unnamed],
+            ['Connected accounts', th.business],
+            ['Customers', th.customer],
+            ['Recipients', th.recipient],
+          ].map(([label, fill]) => (
+            <li key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500, lineHeight: '16px', color: th.label.color }}>
+              <span style={{ width: 8, height: 8, borderRadius: 9999, background: fill }} />
+              {label}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

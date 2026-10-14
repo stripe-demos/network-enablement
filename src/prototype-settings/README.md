@@ -79,6 +79,7 @@ That's all that's required. Everything else is optional.
 | `defaultFlowLabel` | `'Default'` | Label for the unsaved, fully wireframed flow in the Flows menu. |
 | `fitSelectors` | `[]` | Selectors for elements the page sizes to the full viewport (`h-screen`, `100vh`). While the bar is up they're shortened by its height. See "The bar and page layout". |
 | `bottomOffset` | `16` | Pixels above the bottom edge for the pen button while wireframe is off. Raise it to clear a fixed footer or bar. The docked bar ignores it. |
+| `controls` | `true` | Set to `false` to hide the pen button and the bar. Wireframe mode can't be turned on, and a saved "on" is ignored. Pages still use `data-wireframe-default` (see "Optional hooks in your markup"). |
 
 ## The bar and page layout
 
@@ -109,6 +110,13 @@ None are needed. Add them where the default look isn't right:
   cards.
 - `data-wireframe-role="chart"` (or any attribute) plus a matching selector in
   `charts`, for widgets with no stable class.
+- `data-wireframe-default` on any element: while it's on the page and
+  wireframe mode is off, the page is wireframed with no bar (no picking,
+  flows or export). Pair it with `controls={false}` to present a page as a
+  wireframe.
+- `data-wireframe-show` on content that always stays at full fidelity, in
+  color while the page default applies. Mark portals (dialogs, menus) opened
+  from that content too, since they render outside it.
 
 ## Saved state
 

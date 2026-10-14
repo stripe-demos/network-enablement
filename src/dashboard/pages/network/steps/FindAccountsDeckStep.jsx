@@ -1,9 +1,9 @@
-// Network onboarding step 3, version C ("Swipe"): a focused matching
+// Network onboarding step 3, version A ("Swipe"): a focused matching
 // deck built around the 4 accounts it takes to go live. One recommended
 // business shows at a time as its business profile card, with why it's a
 // match. Skip or Invite (← / →) moves to the next ranked business; Undo takes
 // back the last decision. At 4 invites a short success state appears, with
-// "Invite more" to keep going. "Browse all businesses" opens version A's search
+// "Invite more" to keep going. "Browse all businesses" opens search
 // and filters inline for people who already know who they want.
 //
 // State: invites go to state.selectedAccountIds; deck progress (skips, the undo
@@ -63,36 +63,64 @@ function LinkButton({ children, ...rest }) {
 
 const isTyping = el => el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName))
 
-/** Shown in the card's place once 4 are invited. */
+/**
+ * Shown in the card's place once 4 are invited. After the "Add multi-currency
+ * account" card in Figma Sally's Sandbox (329:46431): a light panel with the
+ * deck's line art, a white pill of overlapping avatars ending in a + that
+ * invites more, and the invited handles underneath. Invites count as sent once
+ * swiped.
+ */
 function SuccessPanel({ invited, onInviteMore, headingRef }) {
-  const names = invited.map(id => DECK_BY_ID.get(id)?.candidate.name).filter(Boolean)
+  const businesses = invited.map(id => DECK_BY_ID.get(id)?.candidate).filter(Boolean)
+  const shown = businesses.slice(0, 4)
+  const handles = businesses.map(c => `@${c.handle}`).join(' · ')
+  const avatar = { width: 31, height: 31, marginRight: -12, borderRadius: 9999, border: '2px solid #FFFFFF', boxSizing: 'border-box', flexShrink: 0, overflow: 'hidden' }
   return (
     <div
       style={{
         gridArea: '1 / 1',
+        position: 'relative',
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-start',
+        alignItems: 'center',
+        justifyContent: 'center',
         gap: 12,
+        minHeight: 200,
         padding: 24,
-        background: ink.brandTint,
-        borderRadius: 24,
+        boxSizing: 'border-box',
+        background: ink.areaFill,
+        border: '1px solid #D4DEE9',
+        borderRadius: 8,
       }}
     >
-      <svg aria-hidden="true" width="32" height="32" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="16" fill={ink.brand} />
-        <path d="M9.5 16.5 14 21 22.5 11.5" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <h2 ref={headingRef} tabIndex={-1} style={{ ...text.title, margin: 0, outline: 'none' }}>
-          {`You’ve invited ${invited.length} businesses.`}
+      <span aria-hidden="true" style={{ position: 'absolute', left: -84.5, right: -90.5, top: -65, height: 288, opacity: 0.6, pointerEvents: 'none' }}>
+        <img src="/dashboard-assets/network/card-waves.svg" alt="" width="453" height="288" style={{ display: 'block', width: '100%', height: '100%' }} />
+      </span>
+
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px 7px 7px', background: '#FFFFFF', borderRadius: 9999, boxShadow: '0 1px 2px rgba(20,35,51,0.06)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', paddingRight: 12 }}>
+          {shown.map(c => (
+            <span key={c.id} style={avatar}>
+              <img src={profileFor(c).logo} alt="" width="27" height="27" style={{ display: 'block', width: 27, height: 27 }} />
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={onInviteMore}
+            aria-label="Invite more businesses"
+            title="Invite more"
+            style={{ ...avatar, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, background: '#D9DBFC', color: '#273951', cursor: 'pointer', fontSize: 16, lineHeight: '16px' }}
+          >
+            +
+          </button>
+        </span>
+        <h2 ref={headingRef} tabIndex={-1} style={{ margin: 0, outline: 'none', fontSize: 13, fontWeight: 600, lineHeight: '20px', color: '#273951', whiteSpace: 'nowrap' }}>
+          {`${businesses.length} ${businesses.length === 1 ? 'business' : 'businesses'} invited`}
         </h2>
-        <p style={{ ...text.body, margin: 0 }}>Click Done to send your invites.</p>
       </div>
-      {names.length > 0 && (
-        <p style={{ ...text.body, margin: 0, color: ink.primary }}>{names.join(', ')}</p>
-      )}
-      <TextButton onClick={onInviteMore}>Invite more</TextButton>
+
+      {handles && <p style={{ position: 'relative', ...text.body, margin: 0, textAlign: 'center' }}>{handles}</p>}
     </div>
   )
 }
@@ -281,7 +309,7 @@ export default function FindAccountsDeckStep({ state, setState, onValidChange })
         {!showSuccess && !current && <EmptyPanel skippedCount={skipped.size} onReviewSkipped={reviewSkipped} onBrowse={openBrowse} />}
       </div>
 
-      {!showCard && progressRow}
+      {!showCard && !showSuccess && progressRow}
 
       {showCard && (
         <>
@@ -330,16 +358,25 @@ export default function FindAccountsDeckStep({ state, setState, onValidChange })
 
       {showCard && progressRow}
 
-      {/* Escape hatch: the full list */}
-      <div ref={browseRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 16, borderTop: `1px solid ${ink.divider}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <span style={{ ...text.body }}>Know who you want to invite?</span>
-          <LinkButton aria-expanded={browsing} onClick={() => (browsing ? setBrowsing(false) : openBrowse())}>
-            {browsing ? 'Hide all businesses' : 'Browse all businesses'}
-          </LinkButton>
-        </div>
-        {browsing && <BrowseAll selected={invited} onToggle={toggleFromBrowse} />}
-      </div>
+      {showSuccess ? (
+        // Once 4 are invited, just point to where they can find more.
+        <p style={{ ...text.body, margin: 0, paddingTop: 16, borderTop: `1px solid ${ink.divider}` }}>
+          Find more businesses anytime in Network.
+        </p>
+      ) : (
+        <>
+          {/* Escape hatch: the full list */}
+          <div ref={browseRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 16, borderTop: `1px solid ${ink.divider}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+              <span style={{ ...text.body }}>Know who you want to invite?</span>
+              <LinkButton aria-expanded={browsing} onClick={() => (browsing ? setBrowsing(false) : openBrowse())}>
+                {browsing ? 'Hide all businesses' : 'Browse all businesses'}
+              </LinkButton>
+            </div>
+            {browsing && <BrowseAll selected={invited} onToggle={toggleFromBrowse} />}
+          </div>
+        </>
+      )}
     </div>
   )
 }

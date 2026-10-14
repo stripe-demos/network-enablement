@@ -111,7 +111,7 @@ export default function NetworkLanding({ optedOut = false }) {
 
       <div data-wireframe-frame="card" style={{ position: 'relative', minWidth: 0, borderRadius: 8, overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
-          <NetworkGlobe height="fill" full />
+          <NetworkGlobe height="fill" full legend />
         </div>
       </div>
     </section>

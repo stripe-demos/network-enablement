@@ -1,5 +1,7 @@
 // Connect › Enablement — configure what connected accounts see. Ported from the
 // unbundle-connect prototype's Enablement page, rebuilt on @dashboard/ui.
+// The page shows as a wireframe by default (`data-wireframe-default`), except
+// its header and the "Get more from your platform" checklist.
 import { useSearchParams } from 'react-router-dom'
 import { PageHeader, Tabs } from '@dashboard/ui'
 import GoLiveChecklist from './GoLiveChecklist'
@@ -24,13 +26,15 @@ export default function Enablement() {
   const setTab = (id) => setParams(id === TABS[0].id ? {} : { tab: id }, { replace: true })
 
   return (
-    <div style={{ paddingBottom: 80 }}>
-      <PageHeader
-        title="Enablement"
-        description="Configure branding, onboarding, features, and communications for connected accounts."
-      />
-      <div style={{ marginTop: 16 }}>
-        <GoLiveChecklist />
+    <div data-wireframe-default="" style={{ paddingBottom: 80 }}>
+      <div data-wireframe-show="">
+        <PageHeader
+          title="Enablement"
+          description="Configure branding, onboarding, features, and communications for connected accounts."
+        />
+        <div style={{ marginTop: 16 }}>
+          <GoLiveChecklist />
+        </div>
       </div>
       <div style={{ marginTop: 24 }}>
         <Tabs tone="brand" tabs={TABS} value={active.id} onChange={setTab} />
