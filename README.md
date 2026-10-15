@@ -53,11 +53,13 @@ Open over the landing page from a hash. Old `/flows/#…` links redirect here.
 
 | Page | Path |
 |---|---|
+| Home, with the Connect setup dialog open | `/dashboard/?connect-setup=1` |
 | Connect › Enablement (go-live checklist) | `/dashboard/connect/enablement` |
 | Network list | `/dashboard/network/all` |
 | Network onboarding: welcome | `/dashboard/connect/enablement?network-onboarding=welcome` |
 | Network onboarding: opt in | `/dashboard/connect/enablement?network-onboarding=opt-in` |
 | Network onboarding: find accounts | `/dashboard/connect/enablement?network-onboarding=find-accounts` |
+| Connect › Pricing (placeholder) | `/dashboard/connect/pricing` |
 | Console | `/console/` |
 
 ### Dashboard link parameters
@@ -67,9 +69,10 @@ address bar.
 
 | Parameter | What it does |
 |---|---|
+| `connect-setup=1` | Opens the Connect setup dialog (on Review setup once setup is done). |
 | `network-onboarding=welcome\|opt-in\|find-accounts` | Opens the Network onboarding dialog on that step. |
 | `network-accounts=none\|existing` | Whether the platform already has connected accounts. `existing` shows the sample accounts on the Network list for this tab. |
-| `prototype-reset=1` | Resets the network demo, like **Reset network demo** in the prototype controls. The landing page's **Open flow** links add it. |
+| `prototype-reset=1` | Resets the network demo, like **Reset network demo** in the prototype controls, plus Connect setup. The landing page's **Open flow** links add it. |
 
 For example, a platform with existing accounts on the Network list, starting
 fresh: `/dashboard/network/all?network-accounts=existing&prototype-reset=1`
@@ -105,11 +108,11 @@ uses the local heuristic.
 
 [`src/dashboard/pages/enablement/`](src/dashboard/pages/enablement/)
 
-- **Get more from your platform:** a checklist of the three enablement tasks below.
+- **Get more from your platform:** a checklist of the four enablement tasks below.
 - **Tabs** for configuring the connected-account experience: Performance,
   Branding, Onboarding, Features and Communication.
 
-## The 3 enablement tasks
+## The 4 enablement tasks
 
 The checklist rows live in
 [`GoLiveChecklist.jsx`](src/dashboard/pages/enablement/GoLiveChecklist.jsx).
@@ -159,7 +162,12 @@ tabs. Its data is in [`src/dashboard/app/network/`](src/dashboard/app/network/).
 **Not built yet.** The row links to `/dashboard/connect/capital`, which shows the
 Dashboard's "not built" placeholder.
 
-### 3. Supercharge your platform with prebuilt skills and agents from Platform Apps
+### 3. Set what connected accounts pay with the platform pricing tool
+
+**Placeholder.** The row links to `/dashboard/connect/pricing`, which says the
+pricing flow is coming from the pricing team.
+
+### 4. Supercharge your platform with prebuilt skills and agents from Platform Apps
 
 **Links to the existing Apps overview** (`/dashboard/apps`), with Discover,
 Installed, Created and Connect extensions tabs. No enablement-specific flow has

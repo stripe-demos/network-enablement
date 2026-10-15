@@ -15,7 +15,7 @@ import { Button, color } from '@dashboard/ui'
 import BusinessProfileCard from '../BusinessProfileCard'
 import { StepHeading, TextButton } from '../networkControls'
 import { ink, text } from '../networkTokens'
-import { DECK, DECK_BY_ID, GO_LIVE_ACCOUNTS, RANK_ORDER, matchReasons, profileFor } from './findAccountsDeckData'
+import { GO_LIVE_ACCOUNTS, getDeckData, matchReasons, profileFor } from './findAccountsDeckData'
 import { BrowseAll, GoalDots, KeyHint, MatchReasons, StackPeek } from './findAccountsDeckParts'
 
 const EMPTY_DECK = { skippedIds: [], history: [], continuing: false }
@@ -71,7 +71,7 @@ const isTyping = el => el instanceof HTMLElement && (el.isContentEditable || ['I
  * swiped.
  */
 function SuccessPanel({ invited, onInviteMore, headingRef }) {
-  const businesses = invited.map(id => DECK_BY_ID.get(id)?.candidate).filter(Boolean)
+  const businesses = invited.map(id => getDeckData().deckById.get(id)?.candidate).filter(Boolean)
   const shown = businesses.slice(0, 4)
   const handles = businesses.map(c => `@${c.handle}`).join(' · ')
   const avatar = { width: 31, height: 31, marginRight: -12, borderRadius: 9999, border: '2px solid #FFFFFF', boxSizing: 'border-box', flexShrink: 0, overflow: 'hidden' }
@@ -140,6 +140,7 @@ function EmptyPanel({ skippedCount, onReviewSkipped, onBrowse }) {
 }
 
 export default function FindAccountsDeckStep({ state, setState, onValidChange }) {
+  const { deck: DECK, deckById: DECK_BY_ID, rankOrder: RANK_ORDER } = getDeckData()
   const reduce = usePrefersReducedMotion()
   const [dir, setDir] = useState(null)
   const [announcement, setAnnouncement] = useState('')

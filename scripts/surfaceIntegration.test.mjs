@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname, relative } from 'node:path';
-import { launchConsole, consumeConsoleHandoff } from '../src/integration/consoleHandoff.js';
+import { launchConsole, consumeConsoleHandoff, launchDashboard, consumeDashboardHandoff } from '../src/integration/consoleHandoff.js';
 import { dashboardHtmlFallback, defaultSurfaceRedirect } from './dashboard-routing.mjs';
 import { dashboardPath, dashboardRelativePath } from '../src/dashboard/lib/dashboardRouting.js';
 import { createDashboardStorage } from '../src/dashboard/lib/storage.js';
@@ -44,6 +44,25 @@ test('blank opens cannot reuse an earlier prompt; consuming preserves unrelated 
   browser.history.replaceState({ idx: 8, usr: { keep: true }, dashboardConsoleHandoff: { prompt: 'New question' } }, '');
   consumeConsoleHandoff(browser.history);
   assert.deepEqual(browser.history.state, { idx: 8, usr: { keep: true } });
+});
+
+test('Console hands a network onboarding result back to the Dashboard once', () => {
+  const browser = fakeBrowser();
+  launchDashboard('/dashboard/network/all', { networkOnboarding: { optedIn: true, selectedAccountIds: ['acct_1', 7, 'acct_2'] } }, { browser });
+  assert.equal(browser.entries[1].url, '/dashboard/network/all');
+  assert.equal(browser.reloads, 1);
+  assert.deepEqual(consumeDashboardHandoff(browser.history), { networkOnboarding: { optedIn: true, selectedAccountIds: ['acct_1', 'acct_2'] } });
+  assert.equal(consumeDashboardHandoff(browser.history), null);
+});
+
+test('Dashboard return ignores malformed results and non-Dashboard paths', () => {
+  const browser = fakeBrowser();
+  launchDashboard('https://example.com/', { networkOnboarding: { optedIn: 'yes', selectedAccountIds: [] } }, { browser });
+  assert.equal(browser.entries[1].url, '/dashboard/');
+  assert.equal(consumeDashboardHandoff(browser.history), null);
+  browser.history.replaceState({ idx: 4, consoleDashboardHandoff: { networkOnboarding: { optedIn: true } } }, '');
+  assert.equal(consumeDashboardHandoff(browser.history), null);
+  assert.deepEqual(browser.history.state, { idx: 4 });
 });
 
 test('deep links load the Dashboard document, while Console and asset requests are untouched', () => {

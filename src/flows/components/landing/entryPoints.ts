@@ -17,9 +17,11 @@ export type EntryTarget = { kind: "href"; href: string } | { kind: "demo"; demo:
 export type Step = { title: string; target?: EntryTarget }
 
 const STEPS = {
+  connectSetup: { title: "Set up Connect", target: { kind: "href", href: "/dashboard/" } },
   enablement: { title: "Go-live checklist", target: { kind: "href", href: "/dashboard/connect/enablement" } },
   joinNetwork: { title: "Join the network", target: { kind: "href", href: "/dashboard/connect/enablement?network-onboarding=welcome" } },
   findAccounts: { title: "Find accounts", target: { kind: "href", href: "/dashboard/connect/enablement?network-onboarding=find-accounts" } },
+  setPricing: { title: "Set pricing", target: { kind: "href", href: "/dashboard/connect/pricing" } },
   networkList: { title: "Network list", target: { kind: "href", href: "/dashboard/network/all" } },
   createAccount: { title: "Create account", target: { kind: "demo", demo: "account" } },
   singleConfig: { title: "Add configuration", target: { kind: "demo", demo: "singleConfig" } },
@@ -57,7 +59,7 @@ export const JOURNEYS: Journey[] = [
   {
     title: "Platform journey",
     flows: [
-      { title: "New platform", steps: withAccounts([STEPS.enablement, STEPS.joinNetwork, STEPS.findAccounts, STEPS.networkList], "none") },
+      { title: "New platform", steps: withAccounts([STEPS.connectSetup, STEPS.enablement, STEPS.joinNetwork, STEPS.findAccounts, STEPS.setPricing, STEPS.networkList], "none") },
       { title: "Existing platform: no accounts", steps: withAccounts([STEPS.networkList, STEPS.joinNetwork, STEPS.findAccounts], "none") },
       {
         title: "Existing platform: has accounts",

@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PROTOTYPE_PANEL_SECTIONS } from './prototypePanelSections'
+import { resetPrototypeDemo } from './resetPrototypeDemo'
 
 function SlidersIcon() {
   return (
@@ -21,6 +22,23 @@ function SlidersIcon() {
       <circle cx="11" cy="4" r="1.75" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="5" cy="12" r="1.75" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="7" cy="8" r="1.75" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+function HomeIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M1.75 5.25L6 1.75l4.25 3.5v4.5a.5.5 0 0 1-.5.5H7.5V7.5h-3v2.75H2.25a.5.5 0 0 1-.5-.5v-4.5z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ResetIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M2 6a4 4 0 1 0 1.17-2.83" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path d="M2.25 1.5v2.25H4.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -95,6 +113,18 @@ export default function DashboardPrototypePanel() {
               <CloseIcon />
             </button>
           </header>
+          {/* Home goes back to the landing page that lists every journey (the
+              Flows root). Reset starts the demo over (resetPrototypeDemo.js). */}
+          <div className="dash-proto-panel__quick">
+            <a className="dash-proto-panel__quick-button" href="/" title="Back to the journeys landing page">
+              <HomeIcon />
+              Home
+            </a>
+            <button type="button" className="dash-proto-panel__quick-button" onClick={resetPrototypeDemo} title="Reset Connect setup and the network demo">
+              <ResetIcon />
+              Reset
+            </button>
+          </div>
           {PROTOTYPE_PANEL_SECTIONS.map(({ id, title, Component }) => (
             <section key={id} className="dash-proto-panel__section" aria-label={title}>
               <h3 className="dash-proto-panel__section-title">{title}</h3>

@@ -14,8 +14,8 @@
 // hairline border, rounded logo tile, handle pill) at a grid-friendly scale.
 import { useId, useMemo, useState } from 'react'
 import { NETWORK_CANDIDATES, VOLUME_RANGES } from '../networkCandidates'
-import { PLATFORM_PROFILE } from '../platformProfile'
-import { rankCandidates, recommendCandidates } from '../recommendAccounts'
+import { getPlatformBusinessDescription, getPlatformProfile } from '../platformProfile'
+import { isComplementary, rankCandidates, recommendCandidates } from '../recommendAccounts'
 import { FilterSelect, FilterToggle, GoalRing, SearchInput, SectionLabel, StepHeading, TextButton } from '../networkControls'
 import { ink, text } from '../networkTokens'
 import { VerifiedHandleTooltip } from '../NetworkTooltip'
@@ -30,15 +30,33 @@ const BUTTON_BORDER = '#D3DEE9'
 const HANDLE_FILL = '#F5F6F8'
 const HANDLE_TEXT = '#353A44'
 
-const RANKED = rankCandidates(NETWORK_CANDIDATES, PLATFORM_PROFILE)
-const RECOMMENDED = recommendCandidates(RANKED, RECOMMENDED_COUNT)
-const CARD_PAGES = Math.ceil(RECOMMENDED.length / CARDS_PER_PAGE)
-const RECOMMENDED_IDS = new Set(RECOMMENDED.map(r => r.candidate.id))
-const ORDER = RANKED.map(r => r.candidate.id)
+const CARD_PAGES = Math.ceil(RECOMMENDED_COUNT / CARDS_PER_PAGE)
+
+// Ranking depends on the platform profile, which Connect setup can change, so
+// it's computed on use and cached per profile.
+let cachedProfile
+let cachedRanking
+
+function getRanking() {
+  const profile = getPlatformProfile()
+  if (profile !== cachedProfile) {
+    cachedProfile = profile
+    const ranked = rankCandidates(NETWORK_CANDIDATES, profile)
+    const recommended = recommendCandidates(ranked, RECOMMENDED_COUNT)
+    cachedRanking = {
+      ranked,
+      recommended,
+      recommendedIds: new Set(recommended.map(r => r.candidate.id)),
+      order: ranked.map(r => r.candidate.id),
+    }
+  }
+  return cachedRanking
+}
 
 const uniqueOptions = values => [...new Set(values)].sort().map(v => ({ value: v, label: v }))
-const INDUSTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.industry))
-const COUNTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.country))
+const SUGGESTABLE = NETWORK_CANDIDATES.filter(isComplementary)
+const INDUSTRY_OPTIONS = uniqueOptions(SUGGESTABLE.map(c => c.industry))
+const COUNTRY_OPTIONS = uniqueOptions(SUGGESTABLE.map(c => c.country))
 const VOLUME_OPTIONS = VOLUME_RANGES.map(v => ({ value: v, label: v.replace('/mo', '') }))
 
 const NO_FILTERS = { industry: '', country: '', volumeRange: '', readyOnly: false }
@@ -236,7 +254,7 @@ function BusinessDescription() {
           Edit in Settings
         </a>
       </span>
-      <p style={{ ...text.body, margin: 0 }}>{`“${PLATFORM_PROFILE.businessDescription}”`}</p>
+      <p style={{ ...text.body, margin: 0 }}>{`“${getPlatformBusinessDescription()}”`}</p>
       <p style={{ ...text.body, fontSize: 12, lineHeight: '16px', margin: '4px 0 0', color: ink.secondary }}>
         We recommend businesses that match it.
       </p>
@@ -316,6 +334,7 @@ function GoalProgress({ count }) {
 }
 
 export default function FindAccountsCardsStep({ state, setState }) {
+  const { ranked: RANKED, recommended: RECOMMENDED, recommendedIds: RECOMMENDED_IDS, order: ORDER } = getRanking()
   const inputId = useId()
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState(NO_FILTERS)
@@ -326,10 +345,7 @@ export default function FindAccountsCardsStep({ state, setState }) {
   const filtering = query.trim().length > 0 || Object.keys(NO_FILTERS).some(k => filters[k] !== NO_FILTERS[k])
   // Unfiltered, results continue where the cards stop. Searching or filtering
   // shows every match, recommended ones included.
-  const results = useMemo(
-    () => RANKED.map(r => r.candidate).filter(c => (filtering || !RECOMMENDED_IDS.has(c.id)) && matches(c, query, filters)),
-    [query, filters, filtering],
-  )
+  const results = RANKED.map(r => r.candidate).filter(c => (filtering || !RECOMMENDED_IDS.has(c.id)) && matches(c, query, filters))
   const visible = results.slice(0, visibleCount)
   // Businesses invited from search stay on screen after the search changes.
   const visibleIds = new Set(visible.map(c => c.id))

@@ -13,6 +13,8 @@ import { useTheme } from '../contexts/useTheme';
 import { SEED_CHATS } from '../data/chats';
 import { isTaskRunning } from '../data/chartPreparation';
 import { useSimulatedResponses } from '../components/Conversation/useSimulatedResponses';
+import { isNetworkPrompt } from '../data/networkOnboarding';
+import { postToNetworkConversation } from '../data/networkOnboardingStore';
 
 const loadDesignSystem = () => import('../components/Settings/DesignSystemPage');
 const DesignSystemPage = lazy(() => loadDesignSystem().then(module => ({ default: module.DesignSystemPage })));
@@ -80,6 +82,8 @@ export default function Home({ mentionVariant = 'inline', initialSubmission = nu
       handleNewChat();
     } else if (commandId === 'theme') {
       setTheme(theme === 'dark' ? 'light' : 'dark');
+    } else if (commandId === 'go-live') {
+      startNetworkChat({ entry: 'go-live', title: 'Go live' });
     }
   }
 
@@ -99,6 +103,9 @@ export default function Home({ mentionVariant = 'inline', initialSubmission = nu
   // already "sent": we open Console with the user message populated + a reply,
   // rather than a blank pending chat.
   const hasSubmission = !!(pendingSubmission && (pendingSubmission.prompt || pendingSubmission.thumbnail));
+  // A network prompt (e.g. the Dashboard's network flow) opens the scripted
+  // network conversation instead of the default simulated reply.
+  const networkSubmission = hasSubmission && !pendingSubmission.thumbnail && isNetworkPrompt(pendingSubmission.prompt);
 
   const [freshChat] = useState(() =>
     freshEntry
@@ -109,7 +116,8 @@ export default function Home({ mentionVariant = 'inline', initialSubmission = nu
             : 'New conversation',
           timestamp: 'Just now',
           rich: false,
-          kind: hasSubmission ? 'simulation' : undefined,
+          kind: networkSubmission ? 'network-onboarding' : hasSubmission ? 'simulation' : undefined,
+          ...(networkSubmission ? { networkEntry: 'prompt', networkPrompt: pendingSubmission.prompt } : {}),
           isNewConversation: true,
           // With a submission the chat is a real (non-pending) conversation so
           // it renders the message + reply; without one it stays a blank pending
@@ -175,7 +183,7 @@ export default function Home({ mentionVariant = 'inline', initialSubmission = nu
   const ConversationPanelSlot = elementOverrides.ConversationPanel || ConversationPanel;
   const CanvasSlot = elementOverrides.Canvas || Canvas;
   const responses = useSimulatedResponses({
-    initialSubmission: freshChat && hasSubmission ? {
+    initialSubmission: freshChat && hasSubmission && !networkSubmission ? {
       chatId: freshChat.id,
       turn: {
         user: pendingSubmission.prompt || '',
@@ -490,9 +498,40 @@ export default function Home({ mentionVariant = 'inline', initialSubmission = nu
     setOpeningChatId(current => current === activeChatId ? null : current);
   }
 
+  // Starts the scripted Stripe network conversation, reusing a pending New
+  // conversation when there is one. entry: 'go-live' | 'prompt'.
+  function startNetworkChat({ entry, prompt, title }) {
+    const chat = {
+      id: `chat-${crypto.randomUUID()}`,
+      title: (title ?? prompt).slice(0, 40),
+      timestamp: 'Just now',
+      rich: false,
+      kind: 'network-onboarding',
+      networkEntry: entry,
+      networkPrompt: prompt,
+      canvasEmpty: true,
+    };
+    if (activeChat.pending) {
+      setChats(previous => previous.map(item => item.id === activeChatId ? { ...item, ...chat, pending: false } : item));
+      setPendingNewChatId(null);
+    } else {
+      setChats(previous => [chat, ...previous]);
+    }
+    setActiveChatId(chat.id);
+    setOpeningChatId(chat.id);
+  }
+
   function handleSubmitMessage(text, mentions = [], segments = []) {
     const trimmed = text.trim();
     if (!trimmed && mentions.length === 0) return;
+    if (activeChat.kind === 'network-onboarding') {
+      if (trimmed) postToNetworkConversation(activeChatId, trimmed);
+      return;
+    }
+    if (activeChat.pending && mentions.length === 0 && isNetworkPrompt(trimmed)) {
+      startNetworkChat({ entry: 'prompt', prompt: trimmed });
+      return;
+    }
     let targetId = activeChatId;
     if (activeChat.pending) {
       targetId = `chat-${crypto.randomUUID()}`;

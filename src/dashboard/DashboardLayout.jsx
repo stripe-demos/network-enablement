@@ -12,6 +12,10 @@ import { useCollapsedPrototypeControls } from './prototype/useCollapsedPrototype
 import { readPrototypeSidebarCollapsed, writePrototypeSidebarCollapsed } from './prototype/prototypeSidebarState'
 import DashboardPrototypePanel from './prototype/DashboardPrototypePanel'
 import NetworkOnboardingHost from './pages/network/NetworkOnboardingHost'
+import ConnectSetupHost from './pages/connect-setup/ConnectSetupHost'
+import FloatieStack from './pages/connect-setup/FloatieStack'
+import EnablementFloatie from './enablement-module/EnablementFloatie'
+import EnablementNudge from './enablement-module/EnablementNudge'
 import { cappedGutter, isListViewPath } from './constants/layout'
 import './dashboard.css'
 
@@ -177,6 +181,8 @@ export default function DashboardLayout() {
             <div key={`content-${pathname}`} className={`flex-1 flex flex-col min-w-0 relative z-[1]${hasNavigated ? '' : ' dash-content-entrance'}${isHome ? ' dashboard-content-column--home' : ''}`}>
               {!isComponentLibrary && <DashboardToolbar />}
               <ScrollArea as="main" ref={mainRef} className="flex-1" viewportClassName={`pb-[48px]${isHome ? ' dashboard-main--home' : ''}`} viewportStyle={{ padding: mainPadding }}>
+                {/* Home places its own nudge under the console input. */}
+                {!isHome && <EnablementNudge style={{ marginTop: 16 }} />}
                 <Suspense fallback={null}>
                   <Outlet />
                 </Suspense>
@@ -194,6 +200,10 @@ export default function DashboardLayout() {
           {/* Portaled to <body> above the onboarding dialog. */}
           <DashboardPrototypePanel />
           <NetworkOnboardingHost />
+          <ConnectSetupHost />
+          {/* Bottom-right column for the Setup guide (Home) and Enablement floatie. */}
+          <FloatieStack />
+          <EnablementFloatie />
         </div>
       </div>
       </ToastProvider>

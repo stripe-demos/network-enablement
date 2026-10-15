@@ -1,0 +1,121 @@
+.description-editor-input,
+.description-editor-mirror {
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  padding: 12px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  tab-size: 8;
+}
+
+.description-editor-input {
+  color: var(--color-default);
+  caret-color: var(--color-default);
+}
+
+.description-editor-mirror {
+  color: transparent;
+}
+
+.description-editor-mirror mark {
+  color: transparent;
+  background: var(--color-description-highlight);
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* The active highlight deepens a touch so the tooltip reads as attached to it. */
+.description-editor-mirror mark {
+  transition: background-color 160ms ease-out;
+}
+
+.description-editor-mirror mark[data-active] {
+  background: var(--color-description-highlight-active);
+}
+
+/* Soft settle toward the text: a few pixels of travel plus a hint of scale,
+   growing from the edge nearest the highlight. Exits are quicker than entries.
+   Transitions reverse mid-exit when the pointer returns, so re-entry never
+   flashes. Above-side tooltips are anchored by `top` and lifted by their own
+   height so a swap between neighbors can glide `top`/`left` smoothly. */
+.description-trait-tooltip {
+  --tooltip-anchor: 0%;
+  --tooltip-offset: 4px;
+  --tooltip-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 1;
+  transform: translateY(var(--tooltip-anchor));
+  transform-origin: top left;
+  transition: opacity 180ms var(--tooltip-ease),
+    transform 200ms var(--tooltip-ease);
+}
+
+.description-trait-tooltip[data-side='above'] {
+  --tooltip-anchor: -100%;
+  --tooltip-offset: -4px;
+  transform-origin: bottom left;
+}
+
+.description-trait-tooltip[data-glide] {
+  transition: opacity 180ms var(--tooltip-ease),
+    transform 200ms var(--tooltip-ease),
+    top 200ms var(--tooltip-ease),
+    left 200ms var(--tooltip-ease);
+}
+
+@starting-style {
+  .description-trait-tooltip {
+    opacity: 0;
+    transform: translateY(var(--tooltip-anchor)) translateY(var(--tooltip-offset)) scale(0.98);
+  }
+}
+
+.description-trait-tooltip[data-state='closing'] {
+  opacity: 0;
+  transform: translateY(var(--tooltip-anchor)) translateY(var(--tooltip-offset)) scale(0.98);
+  transition: opacity 120ms ease-out, transform 120ms ease-out;
+}
+
+.description-trait-tooltip-content {
+  opacity: 1;
+  transition: opacity 160ms ease-out;
+}
+
+@starting-style {
+  .description-trait-tooltip-content {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion keeps a brief fade so the change is still noticeable, but
+   drops all travel, scale and gliding. */
+@media (prefers-reduced-motion: reduce) {
+  .description-editor-mirror mark {
+    transition: none;
+  }
+
+  .description-trait-tooltip,
+  .description-trait-tooltip[data-glide],
+  .description-trait-tooltip[data-state='closing'] {
+    transition: opacity 100ms linear;
+  }
+
+  @starting-style {
+    .description-trait-tooltip {
+      transform: translateY(var(--tooltip-anchor));
+    }
+  }
+
+  .description-trait-tooltip[data-state='closing'] {
+    transform: translateY(var(--tooltip-anchor));
+  }
+
+  .description-trait-tooltip-content {
+    transition: none;
+  }
+}

@@ -7,6 +7,7 @@ import { ChatPatternsConversation } from './ChatPatternsConversation';
 import { InteractiveCanvasConversation } from './InteractiveCanvasConversation';
 import { SimpleConversation } from './SimpleConversation';
 import { WelcomeConversation } from './WelcomeConversation';
+import { NetworkOnboardingConversation } from './NetworkOnboardingConversation';
 import { SimulatedTurn } from './SimulatedTurn';
 import { PromptInput } from './PromptInput';
 import { ComposerDock } from './ComposerDock';
@@ -367,6 +368,7 @@ export function ConversationPanel({
       isLatest: extraTurns.length === 0,
     };
     if (chat.kind === 'welcome') return <WelcomeConversation {...shared} artifactIds={chat.artifactIds} />;
+    if (chat.kind === 'network-onboarding') return <NetworkOnboardingConversation key={chat.id} {...shared} chat={chat} />;
     if (chat.kind === 'patterns') return <ChatPatternsConversation {...shared} />;
     if (chat.kind === 'interactive-canvas') return <InteractiveCanvasConversation {...shared} />;
     if (chat.id === 'suspicious-refunds') return <SuspiciousRefundsConversation {...shared} />;

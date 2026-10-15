@@ -9,7 +9,7 @@ import {
   GO_LIVE_ACCOUNTS,
   INDUSTRY_OPTIONS,
   NO_FILTERS,
-  RANKED,
+  getDeckData,
   VOLUME_OPTIONS,
   matchesFilters,
 } from './findAccountsDeckData'
@@ -161,7 +161,7 @@ export function BrowseAll({ selected, onToggle }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const filtering = query.trim().length > 0 || Object.keys(NO_FILTERS).some(k => filters[k] !== NO_FILTERS[k])
-  const results = useMemo(() => RANKED.map(r => r.candidate).filter(c => matchesFilters(c, query, filters)), [query, filters])
+  const results = useMemo(() => getDeckData().ranked.map(r => r.candidate).filter(c => matchesFilters(c, query, filters)), [query, filters])
   const visible = results.slice(0, visibleCount)
   const n = results.length
 

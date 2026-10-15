@@ -3,24 +3,41 @@
 // card needs. Ranking comes from recommendAccounts.js, so the deck and the
 // cards version agree on who the best matches are.
 import { NETWORK_CANDIDATES, VOLUME_RANGES } from '../networkCandidates'
-import { PLATFORM_PROFILE } from '../platformProfile'
-import { rankCandidates, recommendCandidates } from '../recommendAccounts'
+import { getPlatformProfile } from '../platformProfile'
+import { isComplementary, rankCandidates, recommendCandidates } from '../recommendAccounts'
 
 export const GO_LIVE_ACCOUNTS = 4
 
-export const RANKED = rankCandidates(NETWORK_CANDIDATES, PLATFORM_PROFILE)
-const RECOMMENDED = recommendCandidates(RANKED, GO_LIVE_ACCOUNTS)
+// Ranking depends on the platform profile, which Connect setup can change, so
+// it's computed on use and cached per profile.
+let cachedProfile
+let cachedDeck
 
-// The four recommendations (one per industry in the description) come first,
-// then everyone else, best match first.
-export const DECK = [...RECOMMENDED, ...RANKED.filter(r => !RECOMMENDED.includes(r))]
-export const DECK_BY_ID = new Map(DECK.map(r => [r.candidate.id, r]))
-export const RANK_ORDER = RANKED.map(r => r.candidate.id)
-
-const PHRASES = new Map([
-  ...PLATFORM_PROFILE.industriesServed.map(i => [`industry:${i.industry}`, i.phrase]),
-  ...PLATFORM_PROFILE.businessTypesServed.map(t => [`businessType:${t.businessType}`, t.phrase]),
-])
+/**
+ * { ranked, deck, deckById, rankOrder, phrases }. `deck` puts the four
+ * recommendations (one per industry in the description) first, then everyone
+ * else, best match first.
+ */
+export function getDeckData() {
+  const profile = getPlatformProfile()
+  if (profile !== cachedProfile) {
+    cachedProfile = profile
+    const ranked = rankCandidates(NETWORK_CANDIDATES, profile)
+    const recommended = recommendCandidates(ranked, GO_LIVE_ACCOUNTS)
+    const deck = [...recommended, ...ranked.filter(r => !recommended.includes(r))]
+    cachedDeck = {
+      ranked,
+      deck,
+      deckById: new Map(deck.map(r => [r.candidate.id, r])),
+      rankOrder: ranked.map(r => r.candidate.id),
+      phrases: new Map([
+        ...profile.industriesServed.map(i => [`industry:${i.industry}`, i.phrase]),
+        ...profile.businessTypesServed.map(t => [`businessType:${t.businessType}`, t.phrase]),
+      ]),
+    }
+  }
+  return cachedDeck
+}
 
 const withArticle = country => (country.startsWith('United') ? `the ${country}` : country)
 
@@ -32,7 +49,7 @@ export function matchReasons({ candidate, reasons }) {
   const out = reasons.map(r => {
     switch (r.key) {
       case 'industry':
-        return { key: r.key, title: `Matches “${PHRASES.get(`industry:${candidate.industry}`)}” in your description` }
+        return { key: r.key, title: `Matches “${getDeckData().phrases.get(`industry:${candidate.industry}`)}” in your description` }
       case 'businessType':
         return { key: r.key, title: 'Sells direct to customers, like your brands' }
       case 'readyToConnect':
@@ -90,8 +107,9 @@ export function profileFor(candidate) {
 
 // Browse all: search and filters over every business.
 const uniqueOptions = values => [...new Set(values)].sort().map(v => ({ value: v, label: v }))
-export const INDUSTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.industry))
-export const COUNTRY_OPTIONS = uniqueOptions(RANKED.map(r => r.candidate.country))
+const SUGGESTABLE = NETWORK_CANDIDATES.filter(isComplementary)
+export const INDUSTRY_OPTIONS = uniqueOptions(SUGGESTABLE.map(c => c.industry))
+export const COUNTRY_OPTIONS = uniqueOptions(SUGGESTABLE.map(c => c.country))
 export const VOLUME_OPTIONS = VOLUME_RANGES.map(v => ({ value: v, label: v.replace('/mo', '') }))
 export const NO_FILTERS = { industry: '', country: '', volumeRange: '', readyOnly: false }
 

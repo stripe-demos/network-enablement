@@ -2270,6 +2270,82 @@ textarea:focus { outline: none; }
     background: var(--color-surface-2);
 }
 
+/* Stripe network conversation (NetworkOnboardingConversation): recommended
+   business cards with Invite toggles, and the "open in Dashboard" link. */
+.network-cards { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 4px; }
+.network-cards__list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.console-response .network-cards__list li { padding-left: 0; margin-bottom: 0; }
+.console-response .network-cards__list li::before { content: none; }
+.network-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border-default);
+    border-radius: 6px;
+    background: var(--color-surface-1);
+}
+.network-card__logo {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--color-surface-2);
+    color: var(--color-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+}
+.network-card__body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.network-card__name { color: var(--color-text-primary); font-weight: 500; }
+.network-card__meta, .network-card__why { color: var(--color-text-secondary); font-size: 12px; line-height: 1.5; }
+.network-card__why { color: var(--color-text-tertiary); }
+.network-invite-toggle {
+    flex-shrink: 0;
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border-default);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.network-invite-toggle:not(:disabled):hover { border-color: var(--color-border-hover); color: var(--color-text-primary); }
+.network-invite-toggle[aria-pressed="true"] { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 16%, transparent); color: var(--color-text-primary); }
+.network-invite-toggle:disabled { cursor: default; opacity: 0.7; }
+.network-cards__actions { display: flex; gap: 8px; }
+.network-cards__primary, .network-cards__secondary, .network-link-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.network-cards__primary { border: 1px solid var(--color-accent); background: var(--color-accent); color: #FFFFFF; }
+.network-cards__primary:disabled { opacity: 0.5; cursor: default; }
+.network-cards__secondary, .network-link-button { border: 1px solid var(--color-border-default); background: var(--color-surface-2); color: var(--color-text-primary); }
+.network-cards__secondary:hover, .network-link-button:hover { border-color: var(--color-border-hover); }
+.network-link-button { margin: 10px 0 6px; }
+.network-recommended {
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    color: var(--color-text-primary);
+    font-size: 11px;
+    font-weight: 500;
+}
+
 /* Launcher → Console handoff: the populated first user message fades and
    slides up as Console mounts, so the transition from the Dashboard launcher
    reads as one continuous motion rather than an abrupt page swap. */

@@ -1,29 +1,23 @@
-// Enablement "Get more from your platform" checklist (Figma 11038:39006,
-// "Recommended"). Each row links to the page that completes the step; the
-// Stripe network row opens the network onboarding dialog instead, and shows as
-// done once the dialog has been completed (it can still be reopened). The
-// dialog is shared: see network/NetworkOnboardingHost.jsx.
+// Enablement module, embedded: the "Get more from your platform" checklist
+// (Figma 11038:39006, "Recommended"). Each row links to the page that completes
+// the step; the Stripe network row opens the network onboarding dialog instead,
+// and shows as done once the dialog has been completed (it can still be
+// reopened). Rows come from enablementItems.js; which pages show the module is
+// a prototype control (prototype/enablementPrototypeControls.js).
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircleIcon, color, type, radius, tokens } from '@dashboard/ui'
-import { isNetworkOnboardingComplete, useNetworkOnboarding } from '../network/networkInvites'
-import { openNetworkOnboarding } from '../network/openNetworkOnboarding'
+import { CONNECT_ITEMS, useEnablementDone } from './enablementItems'
 
 const ASSETS = '/dashboard-assets/enablement'
 
-const ITEMS = [
-  { id: 'network', opensNetwork: true, before: 'Onboard faster with accounts already on the ', highlight: 'Stripe network', after: '' },
-  { id: 'capital', to: '/connect/capital', before: 'Add capabilities like ', highlight: 'Capital and Treasury', after: ' to your connected accounts' },
-  { id: 'apps', to: '/apps', before: 'Supercharge your platform with ', highlight: 'prebuilt skills and agents', after: ' from Platform Apps' },
-]
-
 const text = { ...type.bodySmall, lineHeight: '18px' }
 
-function ChecklistRow({ item, onOpenNetwork, done = false }) {
+function ChecklistRow({ item, done = false }) {
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
-  const Row = item.opensNetwork ? 'button' : Link
-  const rowProps = item.opensNetwork ? { type: 'button', onClick: onOpenNetwork } : { to: item.to }
+  const Row = item.onOpen ? 'button' : Link
+  const rowProps = item.onOpen ? { type: 'button', onClick: item.onOpen } : { to: item.to }
   return (
     <Row
       {...rowProps}
@@ -66,15 +60,12 @@ function ChecklistRow({ item, onOpenNetwork, done = false }) {
   )
 }
 
-export default function GoLiveChecklist() {
-  const onboarding = useNetworkOnboarding()
-  const networkDone = isNetworkOnboardingComplete(onboarding)
-  // The dialog itself is mounted once by NetworkOnboardingHost in DashboardLayout.
-  const openNetwork = () => openNetworkOnboarding()
+export default function EnablementModule({ title = 'Get more from your platform' }) {
+  const done = useEnablementDone()
 
   return (
     <section
-      aria-label="Go live checklist"
+      aria-label={title}
       style={{
         position: 'relative',
         display: 'flex',
@@ -106,10 +97,10 @@ export default function GoLiveChecklist() {
       </div>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px' }}>
         <img src={`${ASSETS}/checklist-flag.svg`} alt="" style={{ display: 'block', flexShrink: 0 }} />
-        <span style={{ ...text, color: color.actionPrimary }}>Get more from your platform</span>
+        <span style={{ ...text, color: color.actionPrimary }}>{title}</span>
       </div>
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {ITEMS.map(item => <ChecklistRow key={item.id} item={item} onOpenNetwork={openNetwork} done={item.opensNetwork && networkDone} />)}
+        {CONNECT_ITEMS.map(item => <ChecklistRow key={item.id} item={item} done={done[item.id]} />)}
       </div>
     </section>
   )

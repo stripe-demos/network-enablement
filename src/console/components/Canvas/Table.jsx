@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { NETWORK_MATCHES_TAB_ID } from '../../data/networkOnboarding';
+import { NetworkMatchesTable } from './NetworkMatchesTable';
 
 // ─── inline01: top customers by revenue ─────────────────────────────────────
 
@@ -156,6 +158,7 @@ const RowMenuIcon = () => (
 export function Table({ tabId, onCmdLSelect }) {
   if (tabId === 'inline01') return <InlineExpandedTable onCmdLSelect={onCmdLSelect} />;
   if (tabId === 'inline02') return <InlineDetailTable onCmdLSelect={onCmdLSelect} />;
+  if (tabId === NETWORK_MATCHES_TAB_ID) return <NetworkMatchesTable />;
 
   return <PaymentsTable onCmdLSelect={onCmdLSelect} />;
 }

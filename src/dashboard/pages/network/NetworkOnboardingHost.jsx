@@ -2,7 +2,8 @@
 // openNetworkOnboarding() (Enablement's checklist, the prototype control panel)
 // or a `?network-onboarding=<step>` link (the Network enablement landing page,
 // which can also set `?network-accounts=none|existing`, and adds
-// `?prototype-reset=1` to its Open flow links to start the demo fresh).
+// `?prototype-reset=1` to its Open flow links to start the demo fresh, Connect
+// setup included).
 // Finishing the dialog saves the result for Enablement, Network and the sidebar.
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -10,6 +11,8 @@ import NetworkOnboarding from './NetworkOnboarding'
 import { resetNetworkPrototypeControls } from '../../prototype/networkPrototypeControls'
 import { resetNetworkOnboarding, saveNetworkOnboarding, setPlatformAccounts } from './networkInvites'
 import { CLOSE_NETWORK_ONBOARDING_EVENT, OPEN_NETWORK_ONBOARDING_EVENT, openNetworkOnboarding } from './openNetworkOnboarding'
+import { resetConnectSetup } from '../connect-setup/connectSetupStore'
+import { closeConnectSetup } from '../connect-setup/openConnectSetup'
 
 const LINK_PARAM = 'network-onboarding'
 const ACCOUNTS_PARAM = 'network-accounts'
@@ -47,14 +50,17 @@ export default function NetworkOnboardingHost() {
   const linkedReset = searchParams.has(RESET_PARAM)
   useEffect(() => {
     if (linkedStep === null && linkedAccounts === null && !linkedReset) return
-    // Same as the panel's "Reset network demo", before the link's own settings.
+    // Same as the panel's "Reset network demo", plus Connect setup, before
+    // the link's own settings.
     if (linkedReset) {
       setRequest(prev => ({ ...prev, open: false }))
       resetNetworkOnboarding()
       resetNetworkPrototypeControls()
+      closeConnectSetup()
+      resetConnectSetup()
     }
     if (linkedAccounts !== null) setPlatformAccounts(linkedAccounts)
-    if (linkedStep !== null) openNetworkOnboarding({ initialStep: LINK_STEPS.has(linkedStep) ? linkedStep : undefined })
+    if (linkedStep !== null) openNetworkOnboarding({ initialStep: LINK_STEPS.has(linkedStep) ? linkedStep : undefined, surface: 'dialog' })
     setSearchParams(params => {
       params.delete(LINK_PARAM)
       params.delete(ACCOUNTS_PARAM)

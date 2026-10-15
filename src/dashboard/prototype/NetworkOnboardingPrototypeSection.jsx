@@ -1,14 +1,15 @@
-// Prototype panel section: Stripe network onboarding (step 3 version, start
-// step, reset the demo). Every toggle acts at once: it opens the onboarding
+// Prototype panel section: Stripe network onboarding (which step the dialog
+// opens on, and the Find accounts design). Reset lives in the panel
+// (resetPrototypeDemo.js). Every toggle acts at once: it opens the onboarding
 // dialog on that step, or moves an open dialog there, so there's no separate
 // "Open" button. Clicking the selected toggle again re-triggers it. The dialog
 // opens beneath the panel (the panel has the higher z-index) and focus stays
 // on the toggle.
 import { useId, useRef } from 'react'
 import { FIND_ACCOUNTS_VARIANTS } from '../pages/network/steps/findAccountsVariants'
-import { invitedAccountIds, isNetworkOnboardingComplete, resetNetworkOnboarding, useNetworkOnboarding } from '../pages/network/networkInvites'
-import { closeNetworkOnboarding, openNetworkOnboarding } from '../pages/network/openNetworkOnboarding'
-import { resetNetworkPrototypeControls, useNetworkPrototypeControls, writeNetworkPrototypeControls } from './networkPrototypeControls'
+import { invitedAccountIds, isNetworkOnboardingComplete, useNetworkOnboarding } from '../pages/network/networkInvites'
+import { openNetworkOnboarding } from '../pages/network/openNetworkOnboarding'
+import { useNetworkPrototypeControls, writeNetworkPrototypeControls } from './networkPrototypeControls'
 
 const START_STEPS = [
   { id: 'welcome', label: 'Welcome' },
@@ -16,35 +17,34 @@ const START_STEPS = [
   { id: 'find-accounts', label: 'Find accounts' },
 ]
 
-// Short names for the toggles; the full label stays as the tooltip, the
-// accessible name and the hint under the group. Unknown ids fall back to
+// Short names for the toggles; the full label stays as the tooltip and the
+// accessible name. Unknown ids fall back to
 // splitting "A · Long name" on the dot.
 const VARIANT_SHORT_NAMES = { deck: 'Swipe', cards: 'Cards' }
 
 function splitVariantLabel(variant) {
   const [letter, ...rest] = variant.label.split(' · ')
   const full = rest.join(' · ') || variant.label
-  return { letter: rest.length ? letter : '', short: VARIANT_SHORT_NAMES[variant.id] ?? full, full }
+  return { letter: rest.length ? letter : '', short: VARIANT_SHORT_NAMES[variant.id] ?? full }
 }
 
 const ARROW_STEP = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }
 
+// The panel previews dialog steps, so it always opens the dialog.
 function showStep(initialStep) {
-  openNetworkOnboarding({ initialStep, keepFocus: true })
+  openNetworkOnboarding({ initialStep, keepFocus: true, surface: 'dialog' })
 }
 
-function resetDemo() {
-  closeNetworkOnboarding()
-  resetNetworkOnboarding()
-  resetNetworkPrototypeControls()
-}
+const FLOW_SURFACES = [
+  { id: 'dialog', label: 'Dialog' },
+  { id: 'console', label: 'Console' },
+]
 
 export default function NetworkOnboardingPrototypeSection() {
   const fieldId = useId()
   const variantRefs = useRef([])
-  const { findAccountsVariant, startStep } = useNetworkPrototypeControls()
+  const { findAccountsVariant, startStep, flowSurface } = useNetworkPrototypeControls()
   const selectedIndex = Math.max(0, FIND_ACCOUNTS_VARIANTS.findIndex(v => v.id === findAccountsVariant))
-  const selectedVariant = splitVariantLabel(FIND_ACCOUNTS_VARIANTS[selectedIndex])
 
   // One toggle is always on, so arrows (and Home/End) move focus and the
   // selection together, like a segmented control. Choosing a version shows it
@@ -78,12 +78,45 @@ export default function NetworkOnboardingPrototypeSection() {
   return (
     <>
       <div className="dash-proto-panel__field">
-        <span className="dash-proto-panel__label" id={`${fieldId}-variant`}>Step 3 version</span>
+        <span className="dash-proto-panel__label" id={`${fieldId}-surface`}>Flow opens in</span>
+        <div className="dash-proto-panel__segmented" role="group" aria-labelledby={`${fieldId}-surface`}>
+          {FLOW_SURFACES.map(surface => (
+            <button
+              key={surface.id}
+              type="button"
+              aria-pressed={flowSurface === surface.id}
+              className="dash-proto-panel__segment"
+              onClick={() => writeNetworkPrototypeControls({ flowSurface: surface.id })}
+            >
+              {surface.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="dash-proto-panel__field">
+        <span className="dash-proto-panel__label" id={`${fieldId}-start`}>Open dialog on</span>
+        <div className="dash-proto-panel__segmented" role="group" aria-labelledby={`${fieldId}-start`}>
+          {START_STEPS.map(step => (
+            <button
+              key={step.id}
+              type="button"
+              aria-pressed={startStep === step.id}
+              className="dash-proto-panel__segment"
+              onClick={() => selectStartStep(step.id)}
+            >
+              {step.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="dash-proto-panel__field">
+        <span className="dash-proto-panel__label" id={`${fieldId}-variant`}>Find accounts design</span>
         <div
           className="dash-proto-panel__segmented"
           role="group"
           aria-labelledby={`${fieldId}-variant`}
-          aria-describedby={`${fieldId}-variant-hint`}
           onKeyDown={onVariantKeyDown}
         >
           {FIND_ACCOUNTS_VARIANTS.map((variant, index) => {
@@ -107,36 +140,8 @@ export default function NetworkOnboardingPrototypeSection() {
             )
           })}
         </div>
-        <p className="dash-proto-panel__hint" id={`${fieldId}-variant-hint`}>
-          {selectedVariant.letter ? `${selectedVariant.letter} · ` : ''}{selectedVariant.full}
-        </p>
       </div>
 
-      <div className="dash-proto-panel__field">
-        <span className="dash-proto-panel__label" id={`${fieldId}-start`}>Start on step</span>
-        <div className="dash-proto-panel__segmented" role="group" aria-labelledby={`${fieldId}-start`}>
-          {START_STEPS.map(step => (
-            <button
-              key={step.id}
-              type="button"
-              aria-pressed={startStep === step.id}
-              className="dash-proto-panel__segment"
-              onClick={() => selectStartStep(step.id)}
-            >
-              {step.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="dash-proto-panel__actions">
-        <button type="button" className="dash-proto-panel__button" onClick={resetDemo} aria-describedby={`${fieldId}-reset-hint`}>
-          Reset network demo
-        </button>
-      </div>
-      <p className="dash-proto-panel__hint" id={`${fieldId}-reset-hint`}>
-        Closes the dialog, clears the result and sets these controls back to Swipe and Welcome.
-      </p>
       <p className="dash-proto-panel__hint" aria-live="polite">
         {done ? `Status: completed · ${invites} ${invites === 1 ? 'invite' : 'invites'}` : 'Status: not completed'}
       </p>

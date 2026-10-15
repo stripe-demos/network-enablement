@@ -5,7 +5,9 @@
 // module (dashboardStorage, 'dashboard:' event names) so the page it drives can
 // subscribe to it.
 import NetworkOnboardingPrototypeSection from './NetworkOnboardingPrototypeSection'
+import EnablementModulePrototypeSection from './EnablementModulePrototypeSection'
 
 export const PROTOTYPE_PANEL_SECTIONS = [
-  { id: 'network-onboarding', title: 'Network onboarding', Component: NetworkOnboardingPrototypeSection },
+  { id: 'network-onboarding', title: 'Grow with the network', Component: NetworkOnboardingPrototypeSection },
+  { id: 'enablement-module', title: 'Enablement module', Component: EnablementModulePrototypeSection },
 ]

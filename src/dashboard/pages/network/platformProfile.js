@@ -3,6 +3,7 @@
 // fields are what Stripe derives from it and from onboarding answers. The
 // "Find connected accounts" step ranks businesses against this profile
 // (see recommendAccounts.js).
+import { savedBusinessDescription } from '../connect-setup/connectSetupStore'
 
 export const PLATFORM_PROFILE = {
   name: 'Rocketrides',
@@ -28,3 +29,57 @@ export const PLATFORM_PROFILE = {
   // Monthly volume of a typical connected account, as VOLUME_RANGES entries.
   typicalAccountSize: { label: '$10k–$100k/mo', volumeRanges: ['$10k–$50k/mo', '$50k–$100k/mo'] },
 }
+
+// Words that name each candidate industry. The longest match wins, so
+// "food and beverage" beats "food". Used to read the industries out of a description typed in setup.
+const INDUSTRY_WORDS = {
+  Apparel: ['apparel', 'clothing', 'fashion', 'knitwear', 'streetwear'],
+  Beauty: ['beauty', 'skincare', 'skin care', 'cosmetics', 'makeup'],
+  'Home goods': ['home goods', 'homewares', 'homeware', 'furniture', 'candles', 'home decor'],
+  Accessories: ['accessories', 'jewelry', 'jewellery', 'bags', 'watches'],
+  'Food and beverage': ['food and beverage', 'food', 'beverages', 'coffee', 'snacks', 'drinks', 'restaurants'],
+  Outdoor: ['outdoor', 'camping', 'hiking', 'cycling'],
+  Wellness: ['wellness', 'fitness', 'yoga', 'supplements'],
+}
+const DIRECT_TO_CUSTOMER = /sells? direct(?:ly)? to (?:customers|consumers)|direct[- ]to[- ](?:consumer|customer)s?|\bd2c\b|\bdtc\b/i
+
+/** The longest of `words` that appears in the description, or null. */
+function findPhrase(description, words) {
+  const lower = description.toLowerCase()
+  return [...words].sort((x, y) => y.length - x.length).find(word => new RegExp(`\\b${word}\\b`).test(lower)) ?? null
+}
+
+/** Derive the matching fields from a typed description; the rest stays simulated. */
+function profileFromDescription(description) {
+  const industriesServed = Object.entries(INDUSTRY_WORDS)
+    .map(([industry, words]) => ({ industry, phrase: findPhrase(description, words) }))
+    .filter(i => i.phrase)
+  const direct = description.match(DIRECT_TO_CUSTOMER)
+  return {
+    ...PLATFORM_PROFILE,
+    businessDescription: description,
+    industriesServed,
+    businessTypesServed: direct ? [{ businessType: 'Direct-to-consumer brand', phrase: direct[0].toLowerCase() }] : [],
+  }
+}
+
+let cachedDescription = ''
+let cachedProfile = PLATFORM_PROFILE
+
+/**
+ * The profile the Find accounts step ranks against. Once Connect setup has
+ * saved a business description, its industries and business type come from
+ * that text; otherwise it's the simulated PLATFORM_PROFILE. Read it at use
+ * time, since setup can change it. Same object until the description changes.
+ */
+export function getPlatformProfile() {
+  const description = savedBusinessDescription()
+  if (description !== cachedDescription) {
+    cachedDescription = description
+    cachedProfile = description ? profileFromDescription(description) : PLATFORM_PROFILE
+  }
+  return cachedProfile
+}
+
+/** What the platform said it does: the description typed in Connect setup, or the simulated one. */
+export const getPlatformBusinessDescription = () => getPlatformProfile().businessDescription

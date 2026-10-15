@@ -1,10 +1,11 @@
 // Connect › Enablement — configure what connected accounts see. Ported from the
 // unbundle-connect prototype's Enablement page, rebuilt on @dashboard/ui.
 // The page shows as a wireframe by default (`data-wireframe-default`), except
-// its header and the "Get more from your platform" checklist.
+// its header and the Enablement module (when that placement is on).
 import { useSearchParams } from 'react-router-dom'
 import { PageHeader, Tabs } from '@dashboard/ui'
-import GoLiveChecklist from './GoLiveChecklist'
+import EnablementModule from '../../enablement-module/EnablementModule'
+import { useEnablementPrototypeControls } from '../../prototype/enablementPrototypeControls'
 import PerformanceView from './PerformanceView'
 import BrandingView from './BrandingView'
 import OnboardingView from './OnboardingView'
@@ -24,6 +25,7 @@ export default function Enablement() {
   // Performance is the default; it has no ?tab= so stale or missing values land there.
   const active = TABS.find(t => t.id === params.get('tab')) ?? TABS[0]
   const setTab = (id) => setParams(id === TABS[0].id ? {} : { tab: id }, { replace: true })
+  const { placement } = useEnablementPrototypeControls()
 
   return (
     <div data-wireframe-default="" style={{ paddingBottom: 80 }}>
@@ -32,9 +34,11 @@ export default function Enablement() {
           title="Enablement"
           description="Configure branding, onboarding, features, and communications for connected accounts."
         />
-        <div style={{ marginTop: 16 }}>
-          <GoLiveChecklist />
-        </div>
+        {placement === 'enablementPage' && (
+          <div style={{ marginTop: 16 }}>
+            <EnablementModule />
+          </div>
+        )}
       </div>
       <div style={{ marginTop: 24 }}>
         <Tabs tone="brand" tabs={TABS} value={active.id} onChange={setTab} />

@@ -1,0 +1,509 @@
+/* Connect setup (ported from connect-onboarding prototype4). Its Tailwind
+   tokens and type scale, light mode only. Imported by dashboard.css so the
+   classes compile with the Dashboard's Tailwind. P4's `border` color is
+   renamed `hairline`, since the Dashboard's --border holds raw HSL parts. */
+@theme {
+
+  /* Neutral scale (color.neutral) */
+  --color-neutral-0: #ffffff;
+  --color-neutral-25: #F4F7FA;
+  --color-neutral-50: #ECF1F6;
+  --color-neutral-100: #D4DEE9;
+  --color-neutral-200: #BAC8DA;
+  --color-neutral-300: #95A4BA;
+  --color-neutral-400: #7D8BA4;
+  --color-neutral-500: #667691;
+  --color-neutral-600: #50617A;
+  --color-neutral-700: #3C4F69;
+  --color-neutral-800: #273951;
+  --color-neutral-900: #1A2C44;
+
+  /* Brand scale (color.brand / purple) */
+  --color-brand-0: #ffffff;
+  --color-brand-25: #f7f5fd;
+  --color-brand-50: #efecfc;
+  --color-brand-100: #e0d9fb;
+  --color-brand-200: #c3b6fb;
+  --color-brand-300: #a497fc;
+  --color-brand-400: #857afe;
+  --color-brand-500: #675dff;
+  --color-brand-600: #533afd;
+  --color-brand-700: #4e11e2;
+  --color-brand-800: #44139f;
+  --color-brand-900: #2f0e63;
+
+  /* Colors - use as bg-primary, text-primary, border-primary, etc. */
+  --color-surface: #ffffff;
+  --color-offset: #F5F6F8;
+  --color-hairline: #D8DEE4;
+  --color-danger: #dc2626;
+  --color-overlay-backdrop: rgba(186, 200, 218, 0.7);
+
+  /* Text */
+  --color-default: #353A44;
+  --color-subdued: #596171;
+  --color-placeholder: #A1A8B7;
+  --color-brand: #533AFD;
+  --color-info: #045AD0;
+  --color-success: #217005;
+  --color-attention: #B13600;
+  --color-critical: #C0123C;
+
+  /* Icon */
+  --color-icon-default: #474E5A;
+  --color-icon-subdued: #6C7688;
+  --color-icon-brand: #675DFF;
+  --color-icon-info: #0072E9;
+  --color-icon-success: #2B8700;
+  --color-icon-attention: #CC4B00;
+  --color-icon-critical: #E61947;
+
+  /* Buttons */
+  --color-button-primary-bg: #533afd;
+  --color-button-primary-border: #675DFF;
+  --color-button-primary-border-hover: #4E11E2;
+  --color-button-primary-text: #FFFFFF;
+  --color-button-primary-pressed: #533AFD;
+
+  --color-button-secondary-bg: #FFFFFF;
+  --color-button-secondary-border: #D8DEE4;
+  --color-button-secondary-border-hover: #99A5B8;
+  --color-button-secondary-text: #353A44;
+  --color-button-secondary-pressed: #F5F6F8;
+
+  --color-button-danger-bg: #E61947;
+  --color-button-danger-border: #E61947;
+  --color-button-danger-border-hover: #9B0C36;
+  --color-button-danger-text: #FFFFFF;
+  --color-button-danger-pressed: #C0123C;
+
+  /* Badge variants */
+  --color-badge-default-bg: #F5F6F8;
+  --color-badge-default-border: #F5F6F8;
+  --color-badge-default-text: #596171;
+
+  --color-badge-success-bg: #EAFCDD;
+  --color-badge-success-border: #EAFCDD;
+  --color-badge-success-text: #217005;
+
+  --color-badge-warning-bg: #FDF8C9;
+  --color-badge-warning-border: #FDF8C9;
+  --color-badge-warning-text: #B13600;
+
+  --color-badge-danger-bg: #FEF4F6;
+  --color-badge-danger-border: #FEF4F6;
+  --color-badge-danger-text: #C0123C;
+
+  --color-badge-info-bg: #E2FBFE;
+  --color-badge-info-border: #E2FBFE;
+  --color-badge-info-text: #045AD0;
+  --color-description-highlight: #DDEEFF;
+  --color-description-highlight-active: #C4E1FF;
+
+  /* Tooltip (elevated surface in dark mode) */
+  --color-tooltip-surface: #ffffff;
+  --color-tooltip-border: #D8DEE4;
+  --color-tooltip-label-bg: #3C4F69;
+  --color-tooltip-label-text: #ffffff;
+
+  /* Icon buttons */
+  --color-icon-button-text: #9ca3af;
+  --color-icon-button-hover-text: #4b5563;
+  --color-icon-button-hover-bg: #f3f4f6;
+
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Voice mode — the recording card's border cycles through four brand hues.
+   Values are from Figma's motion data on node `1568:374907` (2s linear, infinite).
+   Animating `outline-color` rather than `border-color` keeps the ring out of the
+   box model, so entering voice mode causes no layout shift. */
+@keyframes voiceBorderCycle {
+  0% {
+    outline-color: rgba(84, 135, 255, 0.4);
+  }
+
+  25% {
+    outline-color: rgba(140, 84, 255, 0.4);
+  }
+
+  50% {
+    outline-color: rgba(237, 64, 153, 0.4);
+  }
+
+  75% {
+    outline-color: rgba(255, 107, 77, 0.4);
+  }
+
+  100% {
+    outline-color: rgba(84, 135, 255, 0.4);
+  }
+}
+
+/* Prompt-strength chips, while a check is being evaluated. Named to avoid
+   colliding with Tailwind's own `spin` keyframe. */
+@keyframes chipSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Per-word transcript reveal. Figma snaps opacity 0 → 1; the short fade and
+   1px lift read as dictation rather than a flicker. */
+@keyframes wordIn {
+  from {
+    opacity: 0;
+    transform: translateY(1px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Toast rises from the bottom edge of the viewport as it appears. */
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Text caret for the dictation surface — a hard on/off blink that reads as
+   "waiting for input". */
+@keyframes caretBlink {
+  0%, 50% {
+    opacity: 1;
+  }
+
+  50.01%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Voice mode: the card's gradient border slowly rotates. Registering the angle
+   as an <angle> custom property lets the conic-gradient interpolate smoothly. */
+@property --voice-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes voiceBorderSpin {
+  to {
+    --voice-angle: 360deg;
+  }
+}
+
+/* Soft load-in for dialog content: each block floats up a few px and fades in,
+   staggered top to bottom. Ends on `transform: none` (not `translateY(0)`) so the
+   filled final state doesn't leave a transform behind — that would make every
+   block a containing block for fixed-position descendants. The long ease-out
+   tail is what makes it read as settling rather than snapping into place. */
+@keyframes softRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-soft-rise {
+  animation: softRise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggers the sections of a step: `.stagger-rise` wraps the step, whose root
+   is a flex column of sections (heading, composer, chips…), so the rising items
+   are its grandchildren. Each item waits `--rise-i` × 70ms (past 8 items they
+   share the last delay); set `--rise-start` to offset the whole sequence. */
+.stagger-rise > * > * {
+  animation: softRise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--rise-start, 0ms) + var(--rise-i, 8) * 70ms);
+}
+.stagger-rise > * > :nth-child(1) { --rise-i: 0; }
+.stagger-rise > * > :nth-child(2) { --rise-i: 1; }
+.stagger-rise > * > :nth-child(3) { --rise-i: 2; }
+.stagger-rise > * > :nth-child(4) { --rise-i: 3; }
+.stagger-rise > * > :nth-child(5) { --rise-i: 4; }
+.stagger-rise > * > :nth-child(6) { --rise-i: 5; }
+.stagger-rise > * > :nth-child(7) { --rise-i: 6; }
+.stagger-rise > * > :nth-child(8) { --rise-i: 7; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[voiceBorderCycle_2s_linear_infinite\],
+  .animate-\[chipSpin_700ms_linear_infinite\],
+  .animate-\[wordIn_200ms_ease-out_both\],
+  .animate-\[toastIn_200ms_ease-out\],
+  .animate-\[caretBlink_1\.06s_step-end_infinite\],
+  .animate-\[voiceBorderSpin_8s_linear_infinite\] {
+    animation: none;
+  }
+}
+
+/* Typography utilities */
+
+@utility text-display-xlarge {
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 64px;
+}
+
+@utility text-display-xlarge-subdued {
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 64px;
+}
+
+@utility text-display-large {
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 56px;
+}
+
+@utility text-display-large-subdued {
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 56px;
+}
+
+@utility text-display-medium {
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 48px;
+}
+
+@utility text-display-medium-subdued {
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 48px;
+}
+
+@utility text-display-small {
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 40px;
+}
+
+@utility text-display-small-subdued {
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 40px;
+}
+
+@utility text-heading-xlarge {
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 36px;
+}
+
+@utility text-heading-xlarge-subdued {
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 36px;
+}
+
+@utility text-heading-large {
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+@utility text-heading-large-subdued {
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+@utility text-heading-medium {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+@utility text-heading-medium-subdued {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+@utility text-heading-small {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-heading-small-subdued {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-heading-xsmall {
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+@utility text-heading-xsmall-subdued {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+@utility text-body-large {
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+@utility text-body-large-emphasized {
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+@utility text-body-medium {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-body-medium-emphasized {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-body-small {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-body-small-emphasized {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-label-large {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-label-large-emphasized {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@utility text-label-medium {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-label-medium-emphasized {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-label-small {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@utility text-label-small-emphasized {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@utility text-monospace-small-emphasized {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-monospace-small {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@utility text-monospace-xsmall-emphasized {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@utility text-monospace-xsmall {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+}
+

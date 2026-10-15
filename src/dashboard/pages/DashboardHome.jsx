@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import DashboardHomeSearch from '../components/DashboardHomeSearch'
+import SetupGuide from './connect-setup/SetupGuide'
+import EnablementNudge from '../enablement-module/EnablementNudge'
 import { HOME_CONTENT_GUTTER, HOME_HERO_ALIGN_TOP, cappedGutter, HOME_TOOLBAR_SEARCH_TOP } from '../constants/layout'
 import { useSearchPrototypeControls } from '../prototype/useSearchPrototypeControls'
 import { getTimeOfDayGreeting } from '../prototype/searchPrototypeControls'
@@ -608,6 +610,7 @@ export default function DashboardHome() {
         </div>
 
         <div className="dashboard-home-page-content">
+      <EnablementNudge style={{ marginTop: 32 }} />
       {/* ─── Section 2: Account Snapshot ─────────────────────────────── */}
       <div style={{ marginBottom: 40, marginTop: 48 }}>
         <SectionHeader
@@ -723,6 +726,9 @@ export default function DashboardHome() {
       </div>
       </div>
       </div>
+      {/* Floats bottom-right in the FloatieStack, under the Enablement floatie
+          when that's shown (see EnablementFloatie). */}
+      <SetupGuide />
     </div>
   )
 }

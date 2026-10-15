@@ -1,4 +1,5 @@
 import { DASHBOARD_URL } from '../../../integration/consoleHandoff';
+import { openDashboard } from '../../data/networkOnboardingStore';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PlusIcon, SearchIcon, CloseIcon, MenuDotsIcon } from '../icons';
 import { ChatItemMenu } from '../Menu/ChatItemMenu';
@@ -492,7 +493,7 @@ export function Sidebar({
         }}
       >
         <div className="flex flex-col" style={{ gap: 2 }}>
-          <NavRow className="rail-bottom-row" icon={<DashboardSwitcherIcon />} label="Dashboard" railOpen={railOpen} tooltipRef={tooltipRef} onClick={() => window.location.assign(DASHBOARD_URL)} />
+          <NavRow className="rail-bottom-row" icon={<DashboardSwitcherIcon />} label="Dashboard" railOpen={railOpen} tooltipRef={tooltipRef} onClick={() => openDashboard(DASHBOARD_URL)} />
           <NavRow className="rail-bottom-row" icon={<SettingsGearIcon />} label="Settings" railOpen={railOpen} tooltipRef={tooltipRef} onClick={onOpenSettings} />
         </div>
       </div>

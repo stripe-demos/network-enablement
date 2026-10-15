@@ -71,7 +71,9 @@ function UserThumbnail({ snapshot }) {
   );
 }
 
-export function SimulatedTurn({ user, userSegments, userThumbnail, entrance = false, assistant, isLatest = false, noFeedback = false, hideUser = false, taskRun, sourceItems, onOpenSourceTab, taskPhase, taskCopy, taskCalls, artifactId, artifactIds, onArtifactClick }) {
+// `children` renders under the reply text (e.g. a question or cards the user
+// answers to move a scripted flow on).
+export function SimulatedTurn({ user, userSegments, userThumbnail, entrance = false, assistant, isLatest = false, noFeedback = false, hideUser = false, taskRun, sourceItems, onOpenSourceTab, taskPhase, taskCopy, taskCalls, artifactId, artifactIds, onArtifactClick, children }) {
   const [userExpanded, setUserExpanded] = useState(false);
   const [taskExpanded, setTaskExpanded] = useState(false);
   const [futureTasks] = useFutureTasks();
@@ -140,6 +142,7 @@ export function SimulatedTurn({ user, userSegments, userThumbnail, entrance = fa
         <div className="console-response flex-1" style={{ minWidth: 0 }}>
           {futureTasks && taskRun?.responseKind === 'card-expirations' ? <CardResponse text={responseText} /> :
             (Array.isArray(responseText) ? responseText : responseText.split('\n\n')).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+          {!writing && children}
           {!writing && !noFeedback && taskPhase !== 'cancelled' ? (
             <ArtifactChips
               sourceItems={sourceItems}

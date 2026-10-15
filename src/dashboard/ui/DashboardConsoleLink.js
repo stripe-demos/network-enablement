@@ -6,6 +6,9 @@ const navigation = {
   askConsole: ({ prompt = '' } = {}) => launchConsole(prompt),
 };
 
+/** The same navigation, for code outside components (e.g. openNetworkOnboarding). */
+export const dashboardConsole = navigation;
+
 export function useDashboardConsole() {
   return navigation;
 }

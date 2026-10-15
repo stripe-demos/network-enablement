@@ -7,6 +7,7 @@ import {
 import { CANVAS_TAB_ORDER } from './canvasTabOrder';
 import welcomeMarkdown from '../../data/welcome-to-console.md?raw';
 import { SIMULATED_RESPONSE_CHARTS } from '../../data/simulatedResponses';
+import { NETWORK_MATCHES_TAB_ID, NETWORK_PROFILE_MARKDOWN, NETWORK_PROFILE_TAB_ID } from '../../data/networkOnboarding';
 
 /**
  * Canonical canvas artifact kinds. Each tab resolves to exactly one.
@@ -42,6 +43,24 @@ const TAB_MODELS_BY_ID = {
     headingLarge: 'Welcome to Console',
     sub: 'Your guide to Console',
     markdownContent: welcomeMarkdown,
+  },
+  // Stripe network conversation (NetworkOnboardingConversation).
+  [NETWORK_PROFILE_TAB_ID]: {
+    artifactType: 'markdown',
+    label: 'Your network profile',
+    heading: 'Your Stripe network profile',
+    headingLarge: 'Your Stripe network profile',
+    sub: 'Profile and terms',
+    markdownContent: NETWORK_PROFILE_MARKDOWN,
+  },
+  [NETWORK_MATCHES_TAB_ID]: {
+    artifactType: 'table',
+    label: 'Network matches',
+    heading: 'Businesses that fit your platform',
+    headingLarge: 'Businesses that fit your platform',
+    sub: 'Matched from the Stripe network',
+    sourceLabel: 'Stripe network',
+    sourceTooltip: 'Matched against your platform description.',
   },
   chart: {
     artifactType: 'chart',

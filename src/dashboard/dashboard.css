@@ -1,4 +1,5 @@
 @import "tailwindcss" source(".");
+@import "./pages/connect-setup/connectSetup.css";
 
 @keyframes dashboardLoaderPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -1202,6 +1203,34 @@ tbody tr.row-force-hover .copy-icon  { opacity: 1; transform: scale(1); }
 
 .dash-proto-panel__segment[aria-pressed="true"] .dash-proto-panel__segment-prefix { color: #C0C8D2; }
 
+/* Radio rows (Enablement module placement): label left, radio right. */
+.dash-proto-panel__radio-group { display: flex; flex-direction: column; gap: 12px; }
+
+.dash-proto-panel__radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.dash-proto-panel__radio {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid #6C7688;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.dash-proto-panel__radio-row:hover .dash-proto-panel__radio { border-color: #C0C8D2; }
+.dash-proto-panel__radio:checked { border-color: #675DFF; background: radial-gradient(circle, #675DFF 0 3.5px, transparent 4px); }
+.dash-proto-panel__radio:focus-visible { outline: 2px solid #675DFF; outline-offset: 2px; }
+
 .dash-proto-panel__actions { display: flex; flex-direction: column; gap: 6px; }
 
 .dash-proto-panel__button {
@@ -1216,6 +1245,27 @@ tbody tr.row-force-hover .copy-icon  { opacity: 1; transform: scale(1); }
   font-weight: 500;
   cursor: pointer;
 }
+
+/* Home and Reset: a compact row under the header. */
+.dash-proto-panel__quick { display: flex; gap: 6px; padding: 0 16px 12px; }
+.dash-proto-panel__quick-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid #414856;
+  border-radius: 6px;
+  background: transparent;
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+.dash-proto-panel__quick-button:hover { background: #2B303B; }
+.dash-proto-panel__quick-button:focus-visible { outline: 2px solid #675DFF; outline-offset: 1px; }
 
 .dash-proto-panel__button:not(:disabled):hover { background: #2B303B; }
 .dash-proto-panel__button:disabled { color: #6C7688; cursor: default; }
